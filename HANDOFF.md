@@ -347,3 +347,155 @@ anything other than localhost.
 - I started OrbStack to run the local Postgres and stopped the stack afterwards
   (`supabase stop`). No containers are left running. The images remain cached.
 - A test user `near.miss@example.test` existed only in the local stack, which is gone.
+
+---
+---
+
+# UI POLISH PASS — 2026-08-30
+
+Six commits on top of `d642f62`. Scope was `apps/web` UI only: no engine, no API
+route logic, no schema, no migration, no seed data, no scripts, no extension fill
+logic. No API response shape changed.
+
+Verified throughout against the **local** Supabase stack with the real 3
+seeded scholarships — every state below was triggered against a real database,
+not reasoned about. Stack torn down afterwards.
+
+## What changed
+
+### 1. The three verdicts now look like three different things · `fabe330`
+They were one card with a differently coloured badge. Each now leads with what
+matters:
+
+- **Eligible** — name large, primary action "Start application", states which
+  criteria were met.
+- **Near miss** — the gap is the hero. Name drops to a small eyebrow line; the
+  distance is set at `text-3xl/4xl`: **"3% short"**, **"₹40,000 over"**, over a
+  quiet "You need 75% Class 12 percentage — you have 72%". Then what closing it
+  buys, using `amount` TEXT verbatim.
+- **Rejected** — the clause is the hero, `text-lg/xl` in a quote block,
+  attributed to the source host as a link. Muted, never red.
+
+Failures are grouped under their quote: one sentence can disqualify on several
+counts (the Reliance PG clause states both year and CGPA), and printing the same
+quote three times read like a bug.
+
+Count summary added: **"1 eligible · 2 near miss · 0 rejected"**, numbers set
+large in their verdict tone.
+
+New verdict tone tokens (`positive` / `attention` / `neutral`) are CSS variables,
+not new accents — actions stay on `--primary`. Defined for light and dark, so
+dark mode came free from the existing token setup.
+
+### 2. Every empty and failure state · `fbc0f09`
+Each triggered for real: empty database (deleted every opportunity), missing
+profile (deleted the profile row), 401, network failure, per-bucket empties.
+Skeletons shaped like the real cards replace the spinner. Missing profile now
+shows an explicit prompt instead of silently redirecting.
+
+Onboarding validates inline: blank stays legal (blank means "not stated", which
+the engine honestly reports as unknown), but a value that is present and
+impossible is rejected — percentage outside 0–100, CGPA outside 0–10, negative
+income. Errors sit under their own field with `aria-invalid`, clear as you fix
+them, and submit scrolls the first bad field into view.
+
+### 3. Visual direction · in `fabe330` / `6e11856`
+One accent. Type scale with real hierarchy — gap numbers at 3xl/4xl, metadata at
+xs/sm. Generous spacing, cards readable at 2 m. shadcn + Tailwind only; no new
+dependency, no animation library, transitions only on state change.
+
+### 4. Mobile and PWA · `6e11856`
+**Zero horizontal overflow on every page at 380px**, measured in the browser.
+The two the brief flagged both hold. Installable: static webmanifest, real PNG
+icons at 180/192/512 including a maskable, theme colour `#2563eb` — the computed
+hex of `--primary`. Icons generated with a ~40-line PNG encoder over `node:zlib`
+rather than adding an image dependency.
+
+Touch targets measured, not eyeballed: requirement toggles are 47–66 px tall ×
+298 px wide (the label is the tap target, not the 20 px checkbox); Report, both
+back links and the footer link are all 44 px.
+
+### 5. `/proof` — the trust surface · `8cb44b5`
+"Eligibility is arithmetic, not AI." One **real** criterion pulled live from the
+database with its verbatim quote and source attribution, the six operators as the
+whole vocabulary, the three verdicts with the actual near-miss rule (numeric
+within 10%, or a sole year-short-by-one), and how the quote is validated. Reads
+`opportunity`/`criterion`, which RLS already exposes publicly, so it works signed
+out. Linked from the matches header and footer.
+
+### 6. Demo hardening · `4877300`
+Audited and confirmed by grep:
+
+- `'near-miss'` with a hyphen: **0 occurrences** anywhere in `apps/web` or the
+  extension.
+- **No LLM or model call** in any page, component or lib.
+- `toLocaleString` / `Number()` never touch `opportunity.amount`.
+- `res.json()` and `fetch()` appear nowhere outside `lib/api.ts`, so `res.ok` is
+  checked before every parse by construction.
+- 7 `finally` blocks for 7 loading-clear calls.
+- Zero unguarded nested property accesses on API-derived objects.
+
+One real fix: `/application/[id]` set state straight from the response body, so a
+body without a `requirements` key would throw on `current.requirements.map`
+during an optimistic toggle. Now normalised once at the boundary.
+
+## Could not verify
+
+- **Nothing was verified against your real Supabase project.** `.env.local` still
+  says `dummy.supabase.co`. All verification used a local stack seeded from
+  `packages/db/seed.ts`.
+- **The PWA install prompt was never exercised on a real Android device.** The
+  manifest, icons, theme colour and apple-touch-icon are all served correctly
+  (checked over HTTP), but "installable" is asserted from the manifest being
+  valid, not from an install having happened. It also needs HTTPS, so it cannot
+  work until deployed.
+- **Dark mode is defined but unreachable.** Tokens exist for every new colour and
+  `darkMode: ["class"]` is configured, but nothing sets the `.dark` class — there
+  is no theme toggle, and the brief said not to spend time on one. It is free if
+  you ever add one; it is currently dead.
+- **The rejected bucket was verified by temporarily setting the demo profile to
+  year 3.** With the intended demo profile (year 1) the rejected bucket is empty,
+  and its card design is verified only from that temporary state.
+- **`/proof` renders one real criterion, whichever comes back first.** With three
+  scholarships seeded it showed the Kotak percentage rule. It will show something
+  different once you seed more.
+- **`next lint` is still not configured** — it drops into an interactive setup
+  prompt. Type checking runs in `next build`.
+
+## Correction to an earlier commit message
+
+`6e11856` says it removed "five 0-byte create-next-app SVG leftovers" from
+`apps/web/public/`. They were **not** 0-byte — they were the stock create-next-app
+SVGs, 128–1375 bytes. My earlier survey used `wc -l`, which reported 0 because
+they are single-line files with no trailing newline. They were genuinely unused
+(grep confirms no reference anywhere) so removing them was right, but the size
+claim in that message is wrong. Not amended, to avoid rewriting history.
+
+## Verification output
+
+```
+$ pnpm -r build
+apps/extension build: dist/popup.js 5.3kb  dist/bridge.js 1.1kb  dist/background.js 904b ⚡ Done
+apps/web build: ✓ Compiled successfully   ✓ Generating static pages (13/13)
+  ƒ /                         68.3 kB      ○ /matches       7.43 kB
+  ƒ /application/[id]         3.61 kB      ○ /onboarding    4.97 kB
+  ○ /auth/error                 162 B      ƒ /proof           162 B
+  (+ 7 API routes, /auth/callback, middleware 92.5 kB)
+Done
+
+$ cd apps/web && tsc --noEmit
+apps/web exit=0
+
+$ pnpm -r test
+packages/engine test: ✓ evaluate.test.ts (19 tests) 3ms
+packages/engine test:  Test Files  1 passed (1)
+packages/engine test:       Tests  19 passed (19)
+
+$ tsx --test scripts/*.test.ts
+# tests 28
+# pass 28
+# fail 0
+```
+
+The engine, its 19 tests and the 28 script tests were untouched by this pass and
+still pass unchanged.
