@@ -82,7 +82,10 @@ export default async function ProofPage() {
     <main className="min-h-screen px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-2xl space-y-10">
         <header className="space-y-3">
-          <Link href="/matches" className="text-sm text-muted-foreground underline underline-offset-2">
+          <Link
+            href="/matches"
+            className="-ml-1 inline-flex min-h-11 items-center px-1 text-sm text-muted-foreground underline underline-offset-2"
+          >
             ← Back to matches
           </Link>
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Eligibility is arithmetic, not AI.</h1>

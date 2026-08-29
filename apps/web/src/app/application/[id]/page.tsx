@@ -116,7 +116,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ id: stri
   return (
     <main className="min-h-screen p-4 py-10">
       <div className="mx-auto w-full max-w-2xl space-y-6">
-        <Button variant="ghost" size="sm" asChild className="-ml-2">
+        <Button variant="ghost" size="touch" asChild className="-ml-3 self-start">
           <Link href="/matches">← Back to matches</Link>
         </Button>
 

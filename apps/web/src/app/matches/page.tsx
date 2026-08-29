@@ -237,12 +237,14 @@ export default function MatchesPage() {
         </div>
       ) : null}
 
-      <footer className="mt-14 border-t pt-6 text-center text-xs text-muted-foreground">
-        <Link href="/proof" className="underline underline-offset-2 hover:text-foreground">
+      <footer className="mt-14 border-t pt-4 text-center text-xs text-muted-foreground">
+        <Link
+          href="/proof"
+          className="inline-flex min-h-11 items-center px-3 underline underline-offset-2 hover:text-foreground"
+        >
           How eligibility is decided
         </Link>
-        <span className="mx-2">·</span>
-        We never submit an application for you.
+        <p className="pb-2">We never submit an application for you.</p>
       </footer>
     </Shell>
   );
