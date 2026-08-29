@@ -4,6 +4,7 @@ import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChecklistSkeleton } from "@/components/skeletons";
 import { apiGet, apiSend, isAuthError } from "@/lib/api";
 import type { ApplicationDetail, Requirement } from "@/lib/types";
 
@@ -52,20 +53,20 @@ function RequirementRow({
   }
 
   return (
-    <li className="space-y-1 border-b py-3 last:border-b-0">
-      <label className="flex items-start gap-3">
+    <li className="space-y-1 border-b py-1.5 last:border-b-0">
+      <label className="flex min-h-11 cursor-pointer items-center gap-3 py-1">
         <input
           type="checkbox"
-          className="mt-1 h-4 w-4 shrink-0 rounded border-input accent-primary"
+          className="h-5 w-5 shrink-0 rounded border-input accent-primary"
           checked={requirement.user_has === true}
           disabled={saving}
           onChange={(e) => void toggle(e.target.checked)}
         />
-        <span className="min-w-0 flex-1 text-sm">{requirement.document_type}</span>
+        <span className="min-w-0 flex-1 text-sm leading-snug">{requirement.document_type}</span>
         <SourceTag source={requirement.source} />
       </label>
       {error ? (
-        <p role="alert" className="pl-7 text-xs text-destructive">
+        <p role="alert" className="pl-8 text-xs text-destructive">
           {error}
         </p>
       ) : null}
@@ -119,30 +120,35 @@ export default function ApplicationPage({ params }: { params: Promise<{ id: stri
           <Link href="/matches">← Back to matches</Link>
         </Button>
 
-        {loading ? (
-          <Card>
-            <CardContent className="p-6 text-center text-sm text-muted-foreground">Loading…</CardContent>
-          </Card>
-        ) : null}
+        {loading ? <ChecklistSkeleton /> : null}
 
         {error ? (
           <Card>
-            <CardContent className="space-y-3 p-6 text-center">
+            <CardContent className="space-y-3 p-8 text-center">
               {isAuthError(error) ? (
                 <>
                   <p className="font-medium">You&rsquo;re signed out.</p>
-                  <Button size="sm" asChild>
-                    <Link href="/">Sign in</Link>
-                  </Button>
+                  <p className="text-sm text-muted-foreground">Sign in again to open this application.</p>
+                  <div className="flex justify-center pt-2">
+                    <Button size="touch" asChild>
+                      <Link href="/">Sign in</Link>
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <>
-                  <p role="alert" className="text-sm text-destructive">
+                  <p className="font-medium">We couldn&rsquo;t open this application.</p>
+                  <p role="alert" className="text-sm text-muted-foreground">
                     {error}
                   </p>
-                  <Button variant="outline" size="sm" onClick={() => void load()}>
-                    Try again
-                  </Button>
+                  <div className="flex flex-wrap justify-center gap-2 pt-2">
+                    <Button variant="outline" size="touch" onClick={() => void load()}>
+                      Try again
+                    </Button>
+                    <Button variant="ghost" size="touch" asChild>
+                      <Link href="/matches">Back to matches</Link>
+                    </Button>
+                  </div>
                 </>
               )}
             </CardContent>
