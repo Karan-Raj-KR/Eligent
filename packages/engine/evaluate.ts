@@ -53,6 +53,15 @@ const UNITS: Record<string, string> = {
 
 const NEAR_MISS_TOLERANCE = 0.1;
 
+/** A well-formed `between` value: exactly two finite numbers. */
+function isNumericPair(value: CriterionValue): value is [number, number] {
+  return (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    value.every((v) => typeof v === 'number' && Number.isFinite(v))
+  );
+}
+
 function gapTo(field: string, from: number, to: number): Gap {
   return {
     amount: Math.abs(to - from),
@@ -98,7 +107,11 @@ function check(profile: Profile, c: Criterion): Check {
     }
 
     case 'between': {
-      const [min, max] = c.value as [number, number];
+      // criterion.value arrives from a jsonb column. A malformed shape would
+      // otherwise destructure to undefined, make both comparisons false, and
+      // silently return ok:true — passing a criterion that should have failed.
+      if (!isNumericPair(c.value)) return { ok: false, unknown: true };
+      const [min, max] = c.value;
       if (typeof pv !== 'number' || !Number.isFinite(pv)) return { ok: false, unknown: true };
       if (pv < min) return fail(c.field, pv, min);
       if (pv > max) return fail(c.field, pv, max);
@@ -107,7 +120,10 @@ function check(profile: Profile, c: Criterion): Check {
 
     case 'in':
     case 'not_in': {
-      const list = c.value as Array<number | string>;
+      // Same jsonb provenance: a non-array here used to throw
+      // "list.includes is not a function" in the middle of a request.
+      if (!Array.isArray(c.value)) return { ok: false, unknown: true };
+      const list = c.value;
       const found = list.includes(pv as number | string);
       const ok = c.operator === 'in' ? found : !found;
       return ok ? { ok: true } : { ok: false, within10pct: false, yearShortByOne: false };

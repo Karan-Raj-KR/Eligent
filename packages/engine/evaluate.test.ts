@@ -113,4 +113,50 @@ describe('evaluate', () => {
     expect(r.status).toBe('rejected');
     expect(r.failed[0].requirement).toBe('unknown');
   });
+
+  // --- malformed criterion.value (it arrives from a jsonb column) ---
+
+  describe('malformed criterion values fail as unknown', () => {
+    const malformedBetween: Array<[string, Criterion['value']]> = [
+      ['not an array', 5],
+      ['one element', [5]],
+      ['three elements', [1, 2, 3]],
+      ['non-numeric members', ['1', '2']],
+    ];
+
+    for (const [label, value] of malformedBetween) {
+      it(`between with ${label} is rejected, never silently passed`, () => {
+        const r = evaluate(profile, [c('cgpa', 'between', value)]);
+        expect(r.status).toBe('rejected');
+        expect(r.failed).toHaveLength(1);
+        expect(r.failed[0].requirement).toBe('unknown');
+        expect(r.failed[0].gap).toBeUndefined();
+      });
+    }
+
+    it('between with a well-formed pair still works', () => {
+      expect(evaluate(profile, [c('cgpa', 'between', [8, 9])]).status).toBe('eligible');
+      // 8.5 against a floor of 9 is a 0.5 gap on a 9 threshold — inside 10%.
+      expect(evaluate(profile, [c('cgpa', 'between', [9, 10])]).status).toBe('near_miss');
+      // 300000 against a floor of 500000 is far outside it.
+      expect(evaluate(profile, [c('annual_family_income', 'between', [500000, 800000])]).status).toBe('rejected');
+    });
+
+    it('in with a non-array value fails as unknown instead of throwing', () => {
+      const r = evaluate(profile, [c('branch', 'in', 'CSE' as never)]);
+      expect(r.status).toBe('rejected');
+      expect(r.failed[0].requirement).toBe('unknown');
+    });
+
+    it('not_in with a non-array value fails as unknown instead of throwing', () => {
+      const r = evaluate(profile, [c('branch', 'not_in', 42 as never)]);
+      expect(r.status).toBe('rejected');
+      expect(r.failed[0].requirement).toBe('unknown');
+    });
+
+    it('a malformed value never rescues a near miss', () => {
+      const r = evaluate(profile, [c('cgpa', 'gte', 8.6), c('branch', 'in', 'CSE' as never)]);
+      expect(r.status).toBe('rejected');
+    });
+  });
 });
