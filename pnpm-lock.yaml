@@ -36,9 +36,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@opportunity/db':
-        specifier: workspace:*
-        version: link:../../packages/db
       '@opportunity/engine':
         specifier: workspace:*
         version: link:../../packages/engine
