@@ -10,7 +10,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { evaluate, type Criterion, type Profile } from "@opportunity/engine";
 import { fetchPage, readLineList, ROOT } from "./lib/fetch-cache";
-import { htmlToText, normalizeWhitespace } from "./lib/html";
+import { normalizeWhitespace } from "./lib/html";
+import { pageRecords, type PageRecord } from "./lib/page-records";
 
 const URLS_FILE = path.join(ROOT, "scripts", "urls.txt");
 const SEED_FILE = path.join(ROOT, "packages", "db", "seed.ts");
@@ -23,7 +24,7 @@ try {
 }
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+const MODEL = process.env.OPENAI_MODEL ?? "gpt-5-nano";
 
 const ALLOWED_FIELDS = [
   "cgpa",
@@ -60,7 +61,16 @@ Allowed fields ONLY: cgpa, percentage, year_of_study, branch, state,
 annual_family_income, institution_type, category, gender.
 Allowed operators ONLY: gte, lte, eq, in, not_in, between.
 source_text must be a verbatim sentence from the page. If you cannot quote
-it, do not output that criterion — put a note in unextractable instead.`;
+it, do not output that criterion — put a note in unextractable instead.
+
+TYPES. cgpa, percentage, year_of_study and annual_family_income are numeric.
+Their value MUST be a JSON number, never a string:
+  75            not "75" and not "75%"
+  1500000       not "Rs. 15 Lakhs"   (1 lakh = 100000, 1 crore = 10000000)
+  1             not "first year"     (year_of_study is an integer: 1, 2, 3...)
+Converting the page's own stated units into these numbers is expected. Inventing
+a number the page never states is not — omit the criterion instead.
+gender, category, branch, state and institution_type stay strings.`;
 
 // ---------- types ----------
 
@@ -123,9 +133,10 @@ async function extract(pageText: string, url: string): Promise<RawExtraction | {
       },
       body: JSON.stringify({
         model: MODEL,
-        temperature: 0,
         response_format: { type: "json_object" },
-        max_tokens: 2000,
+        // max_completion_tokens (not max_tokens) — the reasoning-family models
+        // reject the old parameter, and they also reject a custom temperature.
+        max_completion_tokens: 8000,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: `Page URL: ${url}\n\nPage text:\n${pageText}` },
@@ -174,6 +185,35 @@ export function valueMatchesOperator(operator: AllowedOperator, value: unknown):
   }
 }
 
+/** Fields the profile stores as numbers. A string here never compares equal. */
+const NUMERIC_FIELDS: readonly string[] = ["cgpa", "percentage", "year_of_study", "annual_family_income"];
+
+/**
+ * The model reliably returns "60" where the schema needs 60 — same value off the
+ * same page, wrong JSON type. eq accepts strings, so these slip past
+ * valueMatchesOperator and land in the seed as criteria no profile can ever
+ * satisfy (year_of_study eq "1" vs. an int 1).
+ *
+ * This only re-types a value that is already a clean number. Prose the model
+ * failed to quantify ("first year") does NOT get interpreted into a number —
+ * it returns null and the criterion is rejected and logged. Turning words into
+ * numbers is exactly the guessing this pipeline refuses to do.
+ */
+export function coerceNumericValue(value: unknown): unknown {
+  const one = (v: unknown): unknown => {
+    if (typeof v !== "string") return v;
+    const trimmed = v.trim();
+    if (!trimmed || !/^-?\d+(\.\d+)?$/.test(trimmed)) return null;
+    const n = Number(trimmed);
+    return Number.isFinite(n) ? n : null;
+  };
+  if (Array.isArray(value)) {
+    const mapped = value.map(one);
+    return mapped.some((v) => v === null) ? null : mapped;
+  }
+  return one(value);
+}
+
 export function validateCriterion(raw: RawCriterion, normalizedPageText: string): ValidatedCriterion | Rejection {
   const { field, operator, value, display_text, source_text } = raw;
 
@@ -186,7 +226,11 @@ export function validateCriterion(raw: RawCriterion, normalizedPageText: string)
   if (!isAllowedOperator(operator)) {
     return { raw, reason: `unknown operator "${String(operator)}"` };
   }
-  if (!valueMatchesOperator(operator, value)) {
+  const typedValue = NUMERIC_FIELDS.includes(field) ? coerceNumericValue(value) : value;
+  if (typedValue === null && value !== null) {
+    return { raw, reason: `field "${field}" is numeric but value ${JSON.stringify(value)} is not a number` };
+  }
+  if (!valueMatchesOperator(operator, typedValue)) {
     return { raw, reason: `value does not match operator "${operator}"` };
   }
   if (!normalizedPageText.includes(normalizeWhitespace(source_text))) {
@@ -199,7 +243,7 @@ export function validateCriterion(raw: RawCriterion, normalizedPageText: string)
   return {
     field,
     operator,
-    value: value as Criterion["value"],
+    value: typedValue as Criterion["value"],
     display_text,
     source_text,
   };
@@ -213,14 +257,61 @@ export function isPastDeadline(deadline: string): boolean {
   return parsed.getTime() < todayDateOnly;
 }
 
-async function harvestOne(url: string): Promise<HarvestEntry> {
+async function harvestUrl(url: string): Promise<HarvestEntry[]> {
+  const failed = (status: string): HarvestEntry[] => [
+    {
+      url,
+      fetchStatus: status,
+      name: null,
+      provider: null,
+      deadline: null,
+      amount: null,
+      officialDocuments: [],
+      accepted: [],
+      rejectedCriteria: [],
+      rejectedDeadline: null,
+      unextractable: [],
+    },
+  ];
+
+  const fetched = await fetchPage(url);
+  if ("error" in fetched) {
+    console.log(`[${url}] fetch failed: ${fetched.error}`);
+    return failed(`error: ${fetched.error}`);
+  }
+
+  // One page can publish many opportunities (the current edition plus every
+  // expired past one). Split first, then harvest each on its own.
+  const records = pageRecords(fetched.html, url);
+  if (records.length === 0) {
+    console.log(`[${url}] no readable content on the page — nothing to harvest`);
+    return failed("error: no readable content");
+  }
+  console.log(`[${url}] ${records.length} opportunit${records.length === 1 ? "y" : "ies"} on this page`);
+
+  const entries: HarvestEntry[] = [];
+  for (const record of records) {
+    // Drop expired editions BEFORE spending a model call on them.
+    if (record.deadline && isPastDeadline(record.deadline)) {
+      console.log(`  - skip "${record.name}": deadline ${record.deadline} has passed`);
+      continue;
+    }
+    entries.push(await harvestRecord(record));
+  }
+
+  if (entries.length === 0) console.log(`  (every opportunity on this page has passed its deadline)`);
+  return entries;
+}
+
+async function harvestRecord(record: PageRecord): Promise<HarvestEntry> {
+  const url = record.url;
   const base: HarvestEntry = {
     url,
     fetchStatus: "ok",
-    name: null,
-    provider: null,
+    name: record.name,
+    provider: record.provider,
     deadline: null,
-    amount: null,
+    amount: record.amount,
     officialDocuments: [],
     accepted: [],
     rejectedCriteria: [],
@@ -228,33 +319,30 @@ async function harvestOne(url: string): Promise<HarvestEntry> {
     unextractable: [],
   };
 
-  const fetched = await fetchPage(url);
-  if ("error" in fetched) {
-    console.log(`[${url}] fetch failed: ${fetched.error}`);
-    return { ...base, fetchStatus: `error: ${fetched.error}` };
-  }
+  const normalizedPageText = normalizeWhitespace(record.text);
+  console.log(`  - harvesting "${record.name}" ...`);
 
-  const pageText = htmlToText(fetched.html);
-  const normalizedPageText = normalizeWhitespace(pageText);
-
-  const extraction = await extract(pageText, url);
+  const extraction = await extract(record.text, url);
   if ("error" in extraction) {
-    console.log(`[${url}] extraction failed: ${extraction.error}`);
+    console.log(`    extraction failed: ${extraction.error}`);
     return { ...base, fetchStatus: `error: ${extraction.error}` };
   }
 
-  const name = typeof extraction.name === "string" && extraction.name.trim() ? extraction.name.trim() : null;
-  const provider = typeof extraction.provider === "string" ? extraction.provider.trim() : null;
-  const amount = typeof extraction.amount === "string" ? extraction.amount.trim() : null;
+  // The site's own structured fields beat anything the model reports: they are
+  // published data, not a reading of prose. The model only fills the gaps.
+  const name = record.name ?? (typeof extraction.name === "string" && extraction.name.trim() ? extraction.name.trim() : null);
+  const provider = record.provider ?? (typeof extraction.provider === "string" ? extraction.provider.trim() || null : null);
+  const amount = record.amount ?? (typeof extraction.amount === "string" ? extraction.amount.trim() || null : null);
 
+  const claimedDeadline = record.deadline ?? (typeof extraction.deadline === "string" && /^\d{4}-\d{2}-\d{2}$/.test(extraction.deadline) ? extraction.deadline : null);
   let deadline: string | null = null;
   let rejectedDeadline: string | null = null;
-  if (typeof extraction.deadline === "string" && /^\d{4}-\d{2}-\d{2}$/.test(extraction.deadline)) {
-    if (isPastDeadline(extraction.deadline)) {
-      rejectedDeadline = `deadline ${extraction.deadline} is in the past`;
-      console.log(`[${url}] rejected deadline "${extraction.deadline}": in the past`);
+  if (claimedDeadline) {
+    if (isPastDeadline(claimedDeadline)) {
+      rejectedDeadline = `deadline ${claimedDeadline} is in the past`;
+      console.log(`    rejected deadline "${claimedDeadline}": in the past`);
     } else {
-      deadline = extraction.deadline;
+      deadline = claimedDeadline;
     }
   }
 
@@ -272,13 +360,14 @@ async function harvestOne(url: string): Promise<HarvestEntry> {
     const result = validateCriterion(rawCriterion as RawCriterion, normalizedPageText);
     if ("reason" in result) {
       rejectedCriteria.push(result);
-      console.log(`[${url}] rejected criterion: ${JSON.stringify(rawCriterion)} — ${result.reason}`);
+      console.log(`    rejected criterion: ${JSON.stringify(rawCriterion)} — ${result.reason}`);
     } else {
       accepted.push(result);
     }
   }
+  console.log(`    accepted ${accepted.length}, rejected ${rejectedCriteria.length}`);
 
-  if (!name) console.log(`[${url}] no scholarship name extracted — nothing will be seeded`);
+  if (!name) console.log(`    no scholarship name — nothing will be seeded`);
 
   return {
     url,
@@ -295,10 +384,14 @@ async function harvestOne(url: string): Promise<HarvestEntry> {
   };
 }
 
+
 // ---------- output: seed.ts ----------
 
 function writeSeedFile(entries: HarvestEntry[]) {
-  const seedable = entries.filter((e) => e.name);
+  // A failed extraction still carries the page's structured name. Seeding it
+  // would create an opportunity with zero criteria, which evaluate() correctly
+  // calls eligible-for-everyone — a fabricated match dressed up as real data.
+  const seedable = entries.filter((e) => e.name && e.fetchStatus === "ok");
 
   const body = seedable
     .map((e) => {
@@ -469,7 +562,7 @@ async function main() {
   const entries: HarvestEntry[] = [];
   for (const url of urls) {
     console.log(`\nHarvesting ${url} ...`);
-    entries.push(await harvestOne(url));
+    entries.push(...(await harvestUrl(url)));
   }
 
   writeSeedFile(entries);

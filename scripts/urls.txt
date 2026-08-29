@@ -1,2 +1,14 @@
 # One official scholarship URL per line. Lines starting with # (and blank lines) are ignored.
 # Hand-curated — do not auto-populate. Run: pnpm tsx scripts/harvest.ts
+
+# Moved here from sources.txt by Claude on 2026-08-29. These are scholarship
+# DETAIL pages, which harvest.ts reads; sources.txt is for listing/index pages
+# that discover.ts crawls for links. Both are the human's own curated URLs —
+# only the file they live in changed.
+https://www.buddy4study.com/page/reliance-foundation-scholarships
+https://www.buddy4study.com/page/kotak-kanya-scholarship
+
+# Removed by Claude on 2026-08-29: discover.ts appended three
+# /application/STEP{1,2,3}/instruction URLs found on the /elearn page. They are
+# application form steps for an eLearn programme, not scholarships. Restore them
+# if you disagree — nothing else depends on their absence.

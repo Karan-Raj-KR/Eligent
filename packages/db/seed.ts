@@ -22,5 +22,90 @@ export interface SeedOpportunity {
 }
 
 export const seedOpportunities: SeedOpportunity[] = [
-
+  {
+    name: "Reliance Foundation Undergraduate Scholarships 2026-27",
+    provider: "Reliance Foundation",
+    url: "https://www.scholarships.reliancefoundation.org/UG_Scholarship",
+    deadline: "2026-10-05",
+    amount: "Up to 2,00,000",
+    official_documents: ["Applicant's photograph (passport size)","Address proof (permanent address)","Aadhar Card(mandatory)","Marksheets of Class 10 and 12 board examinations","Bonafide Student Certificate from the current college/institution of enrolment","Official Disability Certificate issued by the relevant Government authority (if applicable)","Family income proof issued by the Gram Panchayat/Ward Councillor/Sarpanch, or Income Proof issued by the SDM/DM/CO/Tehsildar","PAN and Bank details are also required to be submitted after the application has been submitted"],
+    criteria: [
+      {
+        field: "percentage",
+        operator: "gte",
+        value: 60,
+        display_text: "Have a minimum of 60% marks in Class 12 board exams.",
+        source_text: "Have a minimum of 60% marks in Class 12 board exams.",
+      },
+      {
+        field: "year_of_study",
+        operator: "eq",
+        value: 1,
+        display_text: "Currently be enrolled in the 1st year (academic year 2026-27) of a regular, full-time degree course, in any stream",
+        source_text: "Currently be enrolled in the 1st year (academic year 2026-27) of a regular, full-time degree course, in any stream",
+      },
+      {
+        field: "annual_family_income",
+        operator: "lte",
+        value: 1500000,
+        display_text: "Belong to a household with an income of less than Rs. 15 Lakhs",
+        source_text: "Belong to a household with an income of less than Rs. 15 Lakhs",
+      }
+    ],
+  },
+  {
+    name: "Reliance Foundation Postgraduate Scholarships 2026-27",
+    provider: "Reliance Foundation",
+    url: "https://www.scholarships.reliancefoundation.org/PG_Scholarship",
+    deadline: "2026-10-05",
+    amount: "Up to 6,00,000",
+    official_documents: ["Applicant's photograph (passport size)","Address proof (permanent address)","Aadhar Card(mandatory)","Current resume","Marksheets of Class 10 and 12 board examinations","Marksheet of the GATE Entrance Examination (if applicable)","Official transcript/marksheet of the undergraduate degree","Bonafide Student Certificate from the current college/institution of enrolment","Two essays: Personal Statement and Statement of Purpose","Two reference letters: one academic and one character","Experience certificate/letter(s) from work experience or internships (if applicable)","Official Disability Certificate issued by the relevant Government authority (if applicable)","Family income proof issued by the Gram Panchayat/Ward Councillor/Sarpanch, or Income Proof issued by the SDM/DM/CO/Tehsildar","PAN and Bank details are also required to be submitted after the application has been submitted"],
+    criteria: [
+      {
+        field: "year_of_study",
+        operator: "eq",
+        value: 1,
+        display_text: "First-year PG students",
+        source_text: "First-year PG students who have a GATE score between 550 and 1,000 OR an undergraduate CGPA of 7.5 or above (or percentage normalised to CGPA).",
+      },
+      {
+        field: "cgpa",
+        operator: "gte",
+        value: 7.5,
+        display_text: "undergraduate CGPA of 7.5 or above (or percentage normalised to CGPA)",
+        source_text: "First-year PG students who have a GATE score between 550 and 1,000 OR an undergraduate CGPA of 7.5 or above (or percentage normalised to CGPA).",
+      }
+    ],
+  },
+  {
+    name: "Kotak Kanya Scholarship 2026-27",
+    provider: "Kotak Kanya Scholarship 2026",
+    url: "https://www.buddy4study.com/application/KKGS5/instruction",
+    deadline: "2026-08-31",
+    amount: "INR 1.5 lakh* per year",
+    official_documents: ["Marksheet of previous qualifying examination (Class 12)","Income proof of parents/guardians","ITR of parents for FY 2025-26 (if available)","Fee structure (for academic year 2026-27)","Bonafide student certificate/letter from college","College seat allocation document","College entrance examination scorecard","Masked Aadhaar card","Bank passbook","A passport-size photograph","Disability certificate (if applicable)","Death certificate of the parent (for single-parent/orphan candidates)","Photographs of the house"],
+    criteria: [
+      {
+        field: "percentage",
+        operator: "gte",
+        value: 75,
+        display_text: "Minimum Class 12 percentage",
+        source_text: "Applicants must have scored at least 75% or more marks or equivalent CGPA in Class 12 board examinations.",
+      },
+      {
+        field: "annual_family_income",
+        operator: "lte",
+        value: 600000,
+        display_text: "Annual family income must not exceed 600000",
+        source_text: "Applicant's annual family income must not exceed INR 6,00,000.",
+      },
+      {
+        field: "year_of_study",
+        operator: "eq",
+        value: 1,
+        display_text: "Admission to first year of graduation programs",
+        source_text: "Meritorious girl students who have secured admission to the first year of graduation programs in the academic year 2026-27 in institutes of repute like NIRF/NAAC accredited for professional graduation degrees, such as Engineering, MBBS, Integrated LLB (5 Years), Integrated BS-MS/BS-Research, in ISER, IISC(Bangalore), or other professional courses (Design, Architecture, etc.).",
+      }
+    ],
+  }
 ];

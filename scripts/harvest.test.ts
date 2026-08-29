@@ -2,7 +2,7 @@
 // messy HTML page would actually break. Run: pnpm tsx --test scripts/harvest.test.ts
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { isPastDeadline, validateCriterion, valueMatchesOperator } from "./harvest";
+import { coerceNumericValue, isPastDeadline, validateCriterion, valueMatchesOperator } from "./harvest";
 import { htmlToText, normalizeWhitespace } from "./lib/html";
 
 test("htmlToText strips scripts/styles and decodes entities", () => {
@@ -89,4 +89,65 @@ test("isPastDeadline flags yesterday and clears next year", () => {
   future.setUTCFullYear(future.getUTCFullYear() + 1);
   assert.equal(isPastDeadline(past.toISOString().slice(0, 10)), true);
   assert.equal(isPastDeadline(future.toISOString().slice(0, 10)), false);
+});
+
+// --- numeric coercion (added with the SPA adapter work) ---
+
+test("coerces a numeric string to a number for numeric fields", () => {
+  const page = "Applicants must have scored at least 75% in Class 12.";
+  const result = validateCriterion(
+    {
+      field: "percentage",
+      operator: "gte",
+      value: "75",
+      display_text: "At least 75%",
+      source_text: page,
+    },
+    page,
+  );
+  assert.ok(!("reason" in result), `expected acceptance, got ${JSON.stringify(result)}`);
+  assert.equal(result.value, 75);
+  assert.equal(typeof result.value, "number");
+});
+
+test("rejects prose the model failed to quantify rather than interpreting it", () => {
+  const page = "Open to students in the first year of a graduation programme.";
+  const result = validateCriterion(
+    {
+      field: "year_of_study",
+      operator: "eq",
+      value: "first year",
+      display_text: "First year",
+      source_text: page,
+    },
+    page,
+  );
+  assert.ok("reason" in result, "'first year' must not be silently turned into 1");
+  assert.match(result.reason, /not a number/);
+});
+
+test("leaves categorical values alone", () => {
+  const page = "Open for meritorious girl students across India.";
+  const result = validateCriterion(
+    { field: "gender", operator: "eq", value: "female", display_text: "Female", source_text: page },
+    page,
+  );
+  assert.ok(!("reason" in result));
+  assert.equal(result.value, "female");
+});
+
+test("coerces every element of an array value, or rejects the whole criterion", () => {
+  const page = "Applicants in years 1 and 2 are eligible.";
+  const ok = validateCriterion(
+    { field: "year_of_study", operator: "in", value: ["1", "2"], display_text: "Year 1 or 2", source_text: page },
+    page,
+  );
+  assert.ok(!("reason" in ok));
+  assert.deepEqual(ok.value, [1, 2]);
+
+  const bad = validateCriterion(
+    { field: "year_of_study", operator: "in", value: ["1", "final"], display_text: "x", source_text: page },
+    page,
+  );
+  assert.ok("reason" in bad);
 });
