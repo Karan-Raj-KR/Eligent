@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <title>Eligent</title>
   <style>
-    :root { --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --accent:#2563eb; --accent-soft:#eff6ff; }
+    :root { --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --accent:#2563eb; --accent-soft:#eff6ff; --warn:#b45309; --warn-soft:#fffbeb; --warn-line:#fcd34d; }
     * { box-sizing: border-box; }
-    body { width: 340px; margin: 0; padding: 16px; font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--ink); }
+    body { width: 360px; margin: 0; padding: 16px; font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--ink); background: #fff; }
     h1 { font-size: 16px; margin: 0 0 2px; }
     .sub { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
     button { width: 100%; padding: 10px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
@@ -14,15 +14,25 @@
     button.secondary { background: transparent; color: var(--muted); font-weight: 500; font-size: 12px; padding: 6px; }
     .card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
     .card.blocked { border-color: var(--accent); background: var(--accent-soft); }
+    .card.warn { border-color: var(--warn-line); background: var(--warn-soft); }
     .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 4px; }
+    .label.warn { color: var(--warn); }
     .name { font-weight: 600; }
     blockquote { margin: 8px 0 0; padding-left: 10px; border-left: 3px solid var(--accent); font-style: italic; color: #334155; font-size: 13px; }
     .gap { margin-top: 8px; font-size: 13px; font-weight: 600; }
     .note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 10px; }
     .hidden { display: none; }
+    ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
+    ul li { margin: 2px 0; }
+    .missing { font-weight: 600; color: var(--warn); }
+    .skiplist li { color: var(--muted); font-size: 12px; }
+    .skiphdr { font-size: 11px; color: var(--muted); margin-top: 10px; text-transform: uppercase; letter-spacing: .04em; }
     #status { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: center; }
     #status.error { color: #b91c1c; }
     #status.done { color: #15803d; }
+    .demo-bar { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; font-size: 12px; color: var(--muted); }
+    .demo-bar label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .demo-bar select { margin-top: 6px; width: 100%; font-size: 12px; padding: 4px; }
   </style>
 </head>
 <body>
@@ -54,6 +64,35 @@
     <p class="note">We stop before the submit button. Always.</p>
   </div>
 
+  <!-- STATE: Filling (done, nothing unexpected) -->
+  <div id="filled" class="hidden">
+    <div class="card">
+      <div class="label">Filled</div>
+      <div id="filled-summary"></div>
+      <div id="filled-docs" class="note" style="text-align:left;margin-top:8px"></div>
+      <div id="filled-skipped-hdr" class="skiphdr hidden">Left for you</div>
+      <ul id="filled-skipped" class="skiplist hidden"></ul>
+    </div>
+    <button class="secondary" id="back">Done</button>
+  </div>
+
+  <!-- STATE: Document detected -->
+  <div id="docs" class="hidden">
+    <div class="card warn">
+      <div class="label warn">Documents this form wants</div>
+      <div class="name" id="docs-headline"></div>
+      <div id="docs-lede" style="margin-top:6px"></div>
+      <ul id="docs-list" class="missing-list"></ul>
+    </div>
+    <div class="card">
+      <div id="docs-summary"></div>
+      <div class="skiphdr hidden" id="docs-skipped-hdr">Left for you</div>
+      <ul id="docs-skipped" class="skiplist hidden"></ul>
+    </div>
+    <button class="secondary" id="back-2">Done</button>
+  </div>
+
+  <!-- STATE: Blocked -->
   <div id="blocked" class="hidden">
     <div class="card blocked">
       <div class="label" id="blocked-reason">Not eligible</div>
@@ -62,11 +101,20 @@
       <div class="gap hidden" id="blocked-gap"></div>
     </div>
     <p class="note">Nothing was filled in. Applying anyway would be rejected on this clause.</p>
-    <button class="secondary" id="back">Back</button>
   </div>
 
   <div id="status"></div>
   <button class="secondary hidden" id="sign-out">Disconnect</button>
+
+  <div class="demo-bar">
+    <label><input type="checkbox" id="demo-toggle"> Demo mode — use bundled fixture, no network</label>
+    <div id="demo-case-wrap" class="hidden">
+      <select id="demo-case">
+        <option value="eligible">Eligible — fill + document diff</option>
+        <option value="blocked">Blocked — show the clause</option>
+      </select>
+    </div>
+  </div>
 
   <script type="module" src="popup.js"></script>
 </body>
