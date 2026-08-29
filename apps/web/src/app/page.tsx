@@ -24,7 +24,7 @@ export default async function Home() {
     <main className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-4xl font-bold tracking-tight">Cutoff</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Eligent</h1>
           <p className="text-muted-foreground">
             Stop applying to scholarships you were never eligible for.
           </p>

@@ -1,31 +1,31 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 
 /**
- * Google OAuth only. Supabase's built-in email sender caps at 2 messages an
- * hour project-wide, which would lock out an entire room of people trying to
- * sign in at once.
+ * Anonymous auth — no email, no OAuth provider, no external redirect or
+ * callback. signInAnonymously() still produces a real auth.users row and a
+ * real auth.uid(), which is all RLS ever checked for; there is nothing to
+ * verify and nothing to collect before /onboarding.
  */
-export function SignInButton({ next = "/matches" }: { next?: string }) {
+export function SignInButton() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function signIn() {
+  async function start() {
     setLoading(true);
     setError(null);
     try {
       const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
-      });
-      // On success the browser is already navigating to Google.
-      if (authError) setError(authError.message);
-    } catch {
-      setError("Could not start sign-in. Check your connection and try again.");
+      const { error: authError } = await supabase.auth.signInAnonymously();
+      if (authError) throw authError;
+      router.push("/onboarding");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -33,8 +33,8 @@ export function SignInButton({ next = "/matches" }: { next?: string }) {
 
   return (
     <div className="space-y-3">
-      <Button className="w-full" size="lg" onClick={signIn} disabled={loading}>
-        {loading ? "Redirecting…" : "Continue with Google"}
+      <Button className="w-full" size="lg" onClick={start} disabled={loading}>
+        {loading ? "Starting…" : "Check my eligibility"}
       </Button>
       {error ? (
         <p role="alert" className="text-sm text-destructive">

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Cutoff — Scholarship Autofill",
+  "name": "Eligent — Scholarship Autofill",
   "version": "0.1.0",
   "description": "Fills a scholarship form from your saved profile, but only for scholarships you are actually eligible for. Never submits anything.",
   "permissions": ["storage", "activeTab", "scripting"],
@@ -23,6 +23,6 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Cutoff"
+    "default_title": "Eligent"
   }
 }

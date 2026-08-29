@@ -5,14 +5,14 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Cutoff — scholarship eligibility",
+  title: "Eligent — scholarship eligibility",
   description:
     "See which scholarships you are actually eligible for, with the exact gap or the exact clause.",
   // Static file rather than a generated route: installable on Android from the
   // same codebase and the same login, with no extra API surface.
   manifest: "/manifest.webmanifest",
-  applicationName: "Cutoff",
-  appleWebApp: { capable: true, title: "Cutoff", statusBarStyle: "default" },
+  applicationName: "Eligent",
+  appleWebApp: { capable: true, title: "Eligent", statusBarStyle: "default" },
   icons: {
     apple: "/icons/icon-180.png",
   },

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "How eligibility is decided · Cutoff",
+  title: "How eligibility is decided · Eligent",
   description: "Eligibility is arithmetic, not AI. Here is exactly how it is decided.",
 };
 

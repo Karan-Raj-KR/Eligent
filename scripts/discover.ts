@@ -8,7 +8,7 @@
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { fetchPage, readLineList, ROOT } from "./lib/fetch-cache";
+import { closeHeadlessBrowser, fetchPageAuto, readLineList, ROOT } from "./lib/fetch-cache";
 import { decodeEntities, stripTags } from "./lib/html";
 
 const SOURCES_FILE = path.join(ROOT, "scripts", "sources.txt");
@@ -70,6 +70,7 @@ interface Skip {
 interface DiscoverResult {
   source: string;
   fetchStatus: "ok" | string;
+  via: "fetch" | "headless" | null;
   anchorsFound: number;
   kept: Candidate[];
   skipped: Skip[];
@@ -116,6 +117,15 @@ function classify(rawHref: string, text: string, sourceUrl: URL): { url: string 
     return { skip: "pagination link" };
   }
 
+  // Buddy4Study category pages (the ones in sources.txt) mix scholarship
+  // detail links in with brand pages, category chrome and site nav. Detail
+  // pages have one recognizable shape: /scholarship/<slug> (singular) — scope
+  // to it instead of trusting the generic denylist alone to catch everything
+  // else on the page.
+  if (sourceUrl.hostname.includes("buddy4study.com") && !/^\/scholarship\/[^/]+\/?$/i.test(resolved.pathname)) {
+    return { skip: "not a buddy4study scholarship detail link (/scholarship/<slug>)" };
+  }
+
   const haystack = `${lowerPath} ${text.toLowerCase()}`;
   const hit = DENYLIST_KEYWORDS.find((kw) => haystack.includes(kw));
   if (hit) return { skip: `denylisted keyword "${hit}"` };
@@ -126,17 +136,18 @@ function classify(rawHref: string, text: string, sourceUrl: URL): { url: string 
 }
 
 async function discoverOne(source: string): Promise<DiscoverResult> {
-  const fetched = await fetchPage(source);
+  const fetched = await fetchPageAuto(source);
   if ("error" in fetched) {
     console.log(`[${source}] fetch failed: ${fetched.error}`);
-    return { source, fetchStatus: `error: ${fetched.error}`, anchorsFound: 0, kept: [], skipped: [] };
+    return { source, fetchStatus: `error: ${fetched.error}`, via: null, anchorsFound: 0, kept: [], skipped: [] };
   }
+  console.log(`[${source}] ${fetched.via === "headless" ? "HEADLESS" : "FETCH"}`);
 
   let sourceUrl: URL;
   try {
     sourceUrl = new URL(source);
   } catch {
-    return { source, fetchStatus: "error: invalid source URL", anchorsFound: 0, kept: [], skipped: [] };
+    return { source, fetchStatus: "error: invalid source URL", via: fetched.via, anchorsFound: 0, kept: [], skipped: [] };
   }
 
   const anchors = extractAnchors(fetched.html, source);
@@ -158,7 +169,7 @@ async function discoverOne(source: string): Promise<DiscoverResult> {
     kept.push({ url: result.url, text });
   }
 
-  return { source, fetchStatus: "ok", anchorsFound: anchors.length, kept, skipped };
+  return { source, fetchStatus: "ok", via: fetched.via, anchorsFound: anchors.length, kept, skipped };
 }
 
 function printSkipSummary(skipped: Skip[]) {
@@ -223,6 +234,7 @@ async function main() {
     }
   }
 
+  await closeHeadlessBrowser();
   appendNewUrls(allNewUrls);
   console.log(`\nAppended ${allNewUrls.length} new URL(s) to ${path.relative(ROOT, URLS_FILE)}.`);
 }

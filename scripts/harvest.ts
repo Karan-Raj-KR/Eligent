@@ -9,7 +9,7 @@ import { existsSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { evaluate, type Criterion, type Profile } from "@opportunity/engine";
-import { fetchPage, readLineList, ROOT } from "./lib/fetch-cache";
+import { closeHeadlessBrowser, fetchPageAuto, readLineList, ROOT } from "./lib/fetch-cache";
 import { normalizeWhitespace } from "./lib/html";
 import { pageRecords, type PageRecord } from "./lib/page-records";
 
@@ -274,11 +274,12 @@ async function harvestUrl(url: string): Promise<HarvestEntry[]> {
     },
   ];
 
-  const fetched = await fetchPage(url);
+  const fetched = await fetchPageAuto(url);
   if ("error" in fetched) {
     console.log(`[${url}] fetch failed: ${fetched.error}`);
     return failed(`error: ${fetched.error}`);
   }
+  console.log(`[${url}] ${fetched.via === "headless" ? "HEADLESS" : "FETCH"}`);
 
   // One page can publish many opportunities (the current edition plus every
   // expired past one). Split first, then harvest each on its own.
@@ -564,6 +565,7 @@ async function main() {
     console.log(`\nHarvesting ${url} ...`);
     entries.push(...(await harvestUrl(url)));
   }
+  await closeHeadlessBrowser();
 
   writeSeedFile(entries);
   writeReport(entries);

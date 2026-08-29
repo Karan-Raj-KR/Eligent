@@ -126,7 +126,7 @@ function renderBlocked(body: BlockedResponse) {
 
   const clause = body.clause ?? null;
   $("blocked-clause").textContent =
-    clause?.displayText ?? (body.reason === "no_profile" ? "Finish your profile in Cutoff first." : "You do not meet a stated criterion.");
+    clause?.displayText ?? (body.reason === "no_profile" ? "Finish your profile in Eligent first." : "You do not meet a stated criterion.");
 
   const source = body.source_text?.trim();
   show("blocked-source", Boolean(source));
@@ -160,7 +160,7 @@ async function checkAndFill() {
     });
 
     if (res.status === 401) {
-      setStatus("Your session expired. Open Cutoff and sign in again.", "error");
+      setStatus("Your session expired. Open Eligent and sign in again.", "error");
       return;
     }
     if (!res.ok) {
@@ -201,7 +201,7 @@ async function checkAndFill() {
       outcome.filled > 0 ? "done" : "error",
     );
   } catch {
-    setStatus("Could not reach Cutoff. Is the app running?", "error");
+    setStatus("Could not reach Eligent. Is the app running?", "error");
   } finally {
     // Always re-enabled, on every path.
     button.disabled = false;

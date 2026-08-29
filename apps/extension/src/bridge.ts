@@ -1,4 +1,4 @@
-// Runs only on the Cutoff web app's own pages (see manifest content_scripts).
+// Runs only on the Eligent web app's own pages (see manifest content_scripts).
 // Its whole job is to hand the extension the signed-in session and whichever
 // application the user is looking at. It never touches a scholarship portal.
 
