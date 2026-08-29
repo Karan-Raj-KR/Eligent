@@ -25,10 +25,15 @@ function withUnit(amount: number, unit: string): string {
   return `${tidy(amount)} ${unit}`;
 }
 
-/** Formats a requirement threshold in the same units as the gap. */
+/**
+ * The threshold, in the same units as the gap. Symbol units (%, ₹) repeat
+ * naturally; a word unit does not — "0.3 points short of 7.5" reads, "0.3 points
+ * short of 7.5 points" does not.
+ */
 function threshold(value: Failed["requirement"], unit: string): string | null {
   if (typeof value !== "number") return null;
-  return withUnit(value, unit);
+  if (unit === "INR" || unit === "percentage") return withUnit(value, unit);
+  return tidy(value);
 }
 
 /**
@@ -43,7 +48,10 @@ export function gapSentence(failed: Failed): string | null {
   const limit = threshold(failed.requirement, unit);
 
   if (direction === "over") {
-    return limit ? `${distance} over the ${limit} limit` : `${distance} over the limit`;
+    if (!limit) return `${distance} over the limit`;
+    // "₹40,000 over the ₹6,00,000 limit" reads; "2 years over the 1 limit" does not.
+    const symbolic = unit === "INR" || unit === "percentage";
+    return symbolic ? `${distance} over the ${limit} limit` : `${distance} over the limit of ${limit}`;
   }
   return limit ? `${distance} short of ${limit}` : `${distance} short`;
 }

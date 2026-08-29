@@ -51,7 +51,11 @@ function clauseFor(failed: Failed, criteria: Criterion[]): string | null {
     (c) => c.field === failed.field && (!failed.displayText || c.display_text === failed.displayText),
   );
   const quote = match?.source_text?.trim();
-  return quote ? quote : null;
+  if (!quote) return null;
+  // When the model quoted the whole sentence as its own display_text, printing
+  // both just says the same thing twice.
+  if (failed.displayText && quote === failed.displayText.trim()) return null;
+  return quote;
 }
 
 function StatusBadge({ status }: { status: Evaluation["status"] }) {
@@ -82,8 +86,6 @@ function MatchCard({ match }: { match: Match }) {
   if (!opportunity?.id) return null;
 
   const deadline = deadlineLabel(opportunity.deadline);
-  const gaps = evaluation.failed.filter((f) => f.gap);
-  const blockers = evaluation.failed.filter((f) => !f.gap);
 
   async function startApplication() {
     setStarting(true);
@@ -122,36 +124,32 @@ function MatchCard({ match }: { match: Match }) {
           <StatusBadge status={evaluation.status} />
         </div>
 
-        {gaps.length > 0 ? (
-          <ul className="space-y-1.5 rounded-md bg-muted/50 p-3 text-sm">
-            {gaps.map((failed, i) => {
+        {evaluation.failed.length > 0 ? (
+          <ul className="space-y-2.5 rounded-md bg-muted/50 p-3 text-sm">
+            {evaluation.failed.map((failed, i) => {
               const sentence = gapSentence(failed);
               const have = profileValueLabel(failed);
-              return (
-                <li key={`${failed.field}-${i}`}>
-                  <span className="font-medium">{failed.displayText ?? failed.field}</span>
-                  {sentence ? <> — you are {sentence}</> : null}
-                  {have ? <span className="text-muted-foreground"> (you have {have})</span> : null}
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-
-        {blockers.length > 0 ? (
-          <ul className="space-y-2 text-sm">
-            {blockers.map((failed, i) => {
               const clause = clauseFor(failed, criteria);
               return (
                 <li key={`${failed.field}-${i}`} className="space-y-1">
-                  <p className="font-medium">{failed.displayText ?? failed.field}</p>
+                  <p>
+                    <span className="font-medium">{failed.displayText ?? failed.field}</span>
+                    {sentence ? (
+                      <> — you are {sentence}</>
+                    ) : (
+                      <> — {failureReason(failed)}</>
+                    )}
+                    {sentence && have ? (
+                      <span className="text-muted-foreground"> (you have {have})</span>
+                    ) : null}
+                  </p>
+                  {/* The verbatim sentence from the scholarship's own page. This is
+                      the whole product: not "you don't qualify" but the clause. */}
                   {clause ? (
-                    <blockquote className="border-l-2 pl-3 text-muted-foreground italic">
+                    <blockquote className="border-l-2 pl-3 text-xs italic text-muted-foreground">
                       &ldquo;{clause}&rdquo;
                     </blockquote>
-                  ) : (
-                    <p className="text-muted-foreground">{failureReason(failed)}</p>
-                  )}
+                  ) : null}
                 </li>
               );
             })}
