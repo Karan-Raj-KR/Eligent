@@ -42,6 +42,9 @@ function hasRun(hay: string[], needle: string[]): boolean {
   return false;
 }
 
+// ponytail: static hand-tuned dictionary, no fuzzy/synonym model. Add phrases as
+// real portal markup shows up; graduate to a token-similarity score only if the
+// phrase list becomes unmaintainable.
 // Ordered: the first entry whose phrase appears wins, so put the labels that
 // would otherwise be shadowed by a shorter phrase first (full_name before
 // percentage's "marks", institution_type before a bare "type", etc.).
