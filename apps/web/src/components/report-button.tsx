@@ -45,19 +45,28 @@ export function ReportButton({ opportunityId }: { opportunityId: string }) {
   }
 
   if (done) {
-    return <p className="text-xs text-muted-foreground">Thanks — reported.</p>;
+    return (
+      <p className="flex h-11 items-center px-3 text-xs text-muted-foreground" role="status">
+        Thanks — reported.
+      </p>
+    );
   }
 
   if (!open) {
     return (
-      <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-muted-foreground underline" onClick={() => setOpen(true)}>
+      <Button
+        variant="ghost"
+        size="touch"
+        className="px-3 text-xs font-normal text-muted-foreground underline underline-offset-2"
+        onClick={() => setOpen(true)}
+      >
         Something wrong with this?
       </Button>
     );
   }
 
   return (
-    <div className="space-y-3 rounded-md border p-3">
+    <div className="w-full space-y-3 rounded-md border bg-background p-3">
       <div className="space-y-2">
         <Label htmlFor={`report-${opportunityId}`} className="text-xs">
           What&rsquo;s wrong?
@@ -82,10 +91,10 @@ export function ReportButton({ opportunityId }: { opportunityId: string }) {
         </p>
       ) : null}
       <div className="flex gap-2">
-        <Button size="sm" onClick={submit} disabled={sending}>
+        <Button size="touch" onClick={submit} disabled={sending}>
           {sending ? "Sending…" : "Send report"}
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => setOpen(false)} disabled={sending}>
+        <Button size="touch" variant="ghost" onClick={() => setOpen(false)} disabled={sending}>
           Cancel
         </Button>
       </div>

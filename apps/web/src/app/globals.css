@@ -24,6 +24,25 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* Verdict tones. The accent stays --primary; these only tint verdict
+       surfaces so the three buckets are told apart at a glance from across a
+       room. --rejected is deliberately neutral, not red: being ruled out is
+       useful information, not an error. */
+    --positive: 158 64% 27%;
+    --positive-foreground: 0 0% 100%;
+    --positive-soft: 152 56% 96%;
+    --positive-border: 156 42% 82%;
+
+    --attention: 26 90% 34%;
+    --attention-foreground: 0 0% 100%;
+    --attention-soft: 40 96% 96%;
+    --attention-border: 36 76% 80%;
+
+    --neutral: 215 16% 40%;
+    --neutral-foreground: 0 0% 100%;
+    --neutral-soft: 210 40% 97%;
+    --neutral-border: 214 25% 88%;
   }
 
   .dark {
@@ -46,6 +65,21 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+
+    --positive: 152 52% 60%;
+    --positive-foreground: 158 70% 10%;
+    --positive-soft: 158 34% 13%;
+    --positive-border: 156 26% 26%;
+
+    --attention: 38 88% 62%;
+    --attention-foreground: 30 70% 10%;
+    --attention-soft: 32 34% 13%;
+    --attention-border: 34 26% 27%;
+
+    --neutral: 215 18% 66%;
+    --neutral-foreground: 215 30% 12%;
+    --neutral-soft: 217 30% 15%;
+    --neutral-border: 217 24% 26%;
   }
 }
 

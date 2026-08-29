@@ -3,182 +3,86 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import type { Criterion, Evaluation, Failed } from "@opportunity/engine";
+import type { Evaluation } from "@opportunity/engine";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ReportButton } from "@/components/report-button";
-import { apiGet, apiSend, isAuthError } from "@/lib/api";
-import { failureReason, gapSentence, profileValueLabel } from "@/lib/gap";
-import type { Match, Matches, Opportunity } from "@/lib/types";
+import { MatchCard } from "@/components/match-card";
+import { MatchesSkeleton } from "@/components/skeletons";
+import { apiGet, isAuthError, isMissingProfileError } from "@/lib/api";
+import type { Match, Matches } from "@/lib/types";
 
 const EMPTY: Matches = { eligible: [], near_miss: [], rejected: [] };
 
-const SECTIONS = [
+// Order and copy for the three buckets. Keys are the engine's own status
+// strings and are never renamed or mapped back into logic.
+const SECTIONS: Array<{
+  key: Evaluation["status"];
+  title: string;
+  blurb: string;
+  empty: string;
+}> = [
   {
-    key: "eligible" as const,
+    key: "eligible",
     title: "Eligible",
-    blurb: "You meet every stated criterion.",
-    empty: "Nothing here yet. Near misses below show exactly what would change that.",
+    blurb: "You meet every criterion these list. Worth your time.",
+    empty: "Nothing you fully qualify for yet — the near misses below show exactly what would change that.",
   },
   {
-    key: "near_miss" as const,
+    key: "near_miss",
     title: "Near miss",
-    blurb: "One or two numbers away — here is the exact distance.",
-    empty: "No near misses. You are either clearly in or clearly out on everything below.",
+    blurb: "Close enough to be worth knowing the number.",
+    empty: "No near misses. You are either clearly in or clearly out on everything here.",
   },
   {
-    key: "rejected" as const,
+    key: "rejected",
     title: "Not eligible",
-    blurb: "With the clause that rules you out, quoted from the scholarship's own page.",
+    blurb: "Ruled out, with the clause that does it — quoted from the scholarship's own page.",
     empty: "Nothing ruled out. That is a good problem to have.",
   },
 ];
 
-/** The deadline column is a date string or null, and may not parse. */
-function deadlineLabel(deadline: string | null): string | null {
-  if (!deadline) return null;
-  const parsed = new Date(deadline);
-  if (Number.isNaN(parsed.getTime())) return deadline;
-  return parsed.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-}
-
-/**
- * The engine's Failed entries carry display_text but not the verbatim quote, so
- * pair them back up with the criteria the API sent alongside.
- */
-function clauseFor(failed: Failed, criteria: Criterion[]): string | null {
-  const match = criteria.find(
-    (c) => c.field === failed.field && (!failed.displayText || c.display_text === failed.displayText),
-  );
-  const quote = match?.source_text?.trim();
-  if (!quote) return null;
-  // When the model quoted the whole sentence as its own display_text, printing
-  // both just says the same thing twice.
-  if (failed.displayText && quote === failed.displayText.trim()) return null;
-  return quote;
-}
-
-function StatusBadge({ status }: { status: Evaluation["status"] }) {
-  const styles: Record<Evaluation["status"], string> = {
-    eligible: "bg-primary text-primary-foreground",
-    near_miss: "border border-primary text-primary",
-    rejected: "bg-muted text-muted-foreground",
-  };
-  const labels: Record<Evaluation["status"], string> = {
-    eligible: "Eligible",
-    near_miss: "Near miss",
-    rejected: "Not eligible",
-  };
+function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${styles[status]}`}>
-      {labels[status]}
-    </span>
+    <main className="min-h-screen px-4 py-8 sm:px-6 sm:py-12">
+      <div className="mx-auto w-full max-w-3xl">{children}</div>
+    </main>
   );
 }
 
-function MatchCard({ match }: { match: Match }) {
-  const router = useRouter();
-  const [starting, setStarting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { opportunity, evaluation, criteria } = match;
-
-  // Defensive: a row could arrive without the joined opportunity.
-  if (!opportunity?.id) return null;
-
-  const deadline = deadlineLabel(opportunity.deadline);
-
-  async function startApplication() {
-    setStarting(true);
-    setError(null);
-    try {
-      const result = await apiSend<{ application?: { id?: string } }>("/api/application", "POST", {
-        opportunity_id: opportunity.id,
-      });
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      const id = result.data?.application?.id;
-      if (!id) {
-        setError("The application was created but we got no id back.");
-        return;
-      }
-      router.push(`/application/${id}`);
-    } finally {
-      setStarting(false);
-    }
-  }
-
+/** "6 eligible · 4 near miss · 33 rejected" — the headline number. */
+function CountSummary({ matches }: { matches: Matches }) {
+  const counts: Array<{ key: Evaluation["status"]; n: number; label: string; tone: string }> = [
+    { key: "eligible", n: matches.eligible.length, label: "eligible", tone: "text-positive" },
+    { key: "near_miss", n: matches.near_miss.length, label: "near miss", tone: "text-attention" },
+    { key: "rejected", n: matches.rejected.length, label: "rejected", tone: "text-muted-foreground" },
+  ];
   return (
-    <Card>
-      <CardContent className="space-y-3 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1">
-            <h3 className="font-semibold leading-tight">{opportunity.name}</h3>
-            <p className="text-sm text-muted-foreground">
-              {/* amount is TEXT in the schema — printed verbatim, never formatted as a number. */}
-              {[opportunity.provider, opportunity.amount].filter(Boolean).join(" · ") || "Details on the provider's page"}
-            </p>
-            {deadline ? <p className="text-xs text-muted-foreground">Closes {deadline}</p> : null}
-          </div>
-          <StatusBadge status={evaluation.status} />
-        </div>
+    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:gap-x-5">
+      {counts.map((c, i) => (
+        <span key={c.key} className="flex items-baseline gap-1.5">
+          {i > 0 ? <span aria-hidden="true" className="pr-2 text-muted-foreground/50">·</span> : null}
+          <span className={`text-3xl font-bold tabular-nums tracking-tight sm:text-4xl ${c.tone}`}>{c.n}</span>
+          <span className="text-sm text-muted-foreground">{c.label}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
 
-        {evaluation.failed.length > 0 ? (
-          <ul className="space-y-2.5 rounded-md bg-muted/50 p-3 text-sm">
-            {evaluation.failed.map((failed, i) => {
-              const sentence = gapSentence(failed);
-              const have = profileValueLabel(failed);
-              const clause = clauseFor(failed, criteria);
-              return (
-                <li key={`${failed.field}-${i}`} className="space-y-1">
-                  <p>
-                    <span className="font-medium">{failed.displayText ?? failed.field}</span>
-                    {sentence ? (
-                      <> — you are {sentence}</>
-                    ) : (
-                      <> — {failureReason(failed)}</>
-                    )}
-                    {sentence && have ? (
-                      <span className="text-muted-foreground"> (you have {have})</span>
-                    ) : null}
-                  </p>
-                  {/* The verbatim sentence from the scholarship's own page. This is
-                      the whole product: not "you don't qualify" but the clause. */}
-                  {clause ? (
-                    <blockquote className="border-l-2 pl-3 text-xs italic text-muted-foreground">
-                      &ldquo;{clause}&rdquo;
-                    </blockquote>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-
-        {error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        ) : null}
-
-        <div className="flex flex-wrap items-center gap-3 pt-1">
-          {evaluation.status === "eligible" ? (
-            <Button size="sm" onClick={startApplication} disabled={starting}>
-              {starting ? "Opening…" : "Start application"}
-            </Button>
-          ) : null}
-          {opportunity.url ? (
-            <Button size="sm" variant="outline" asChild>
-              <a href={opportunity.url} target="_blank" rel="noopener noreferrer">
-                Open the official page
-              </a>
-            </Button>
-          ) : null}
-          <ReportButton opportunityId={opportunity.id} />
-        </div>
-      </CardContent>
-    </Card>
+function Notice({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border bg-card p-8 text-center">
+      <p className="font-medium">{title}</p>
+      <div className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{body}</div>
+      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
+    </div>
   );
 }
 
@@ -194,16 +98,22 @@ export default function MatchesPage() {
     try {
       const result = await apiGet<Matches>("/api/matches");
       if (!result.ok) {
-        // The route returns this when no profile row exists yet.
-        if (/onboarding/i.test(result.error)) {
+        // No profile row yet — send them to onboarding rather than showing an error.
+        if (isMissingProfileError(result.error)) {
           router.push("/onboarding");
           return;
         }
         setError(result.error);
         return;
       }
-      setMatches({ ...EMPTY, ...result.data });
+      const data = result.data;
+      setMatches({
+        eligible: Array.isArray(data?.eligible) ? data.eligible : [],
+        near_miss: Array.isArray(data?.near_miss) ? data.near_miss : [],
+        rejected: Array.isArray(data?.rejected) ? data.rejected : [],
+      });
     } finally {
+      // Always clears, on every path above.
       setLoading(false);
     }
   }, [router]);
@@ -215,95 +125,111 @@ export default function MatchesPage() {
   const total = matches.eligible.length + matches.near_miss.length + matches.rejected.length;
 
   return (
-    <main className="min-h-screen p-4 py-10">
-      <div className="mx-auto w-full max-w-3xl space-y-8">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight">Your matches</h1>
-            <p className="text-sm text-muted-foreground">
-              {loading
-                ? "Checking every scholarship against your profile…"
-                : `${total} scholarship${total === 1 ? "" : "s"} checked against your profile.`}
-            </p>
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/onboarding">Edit profile</Link>
-          </Button>
-        </div>
-
-        {error ? (
-          <Card>
-            <CardContent className="space-y-3 p-6 text-center">
-              {isAuthError(error) ? (
-                <>
-                  <p className="font-medium">You&rsquo;re signed out.</p>
-                  <p className="text-sm text-muted-foreground">Sign in again to see your matches.</p>
-                  <Button size="sm" asChild>
-                    <Link href="/">Sign in</Link>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-destructive" role="alert">
-                    {error}
-                  </p>
-                  <Button variant="outline" size="sm" onClick={() => void load()}>
-                    Try again
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {loading ? (
-          <Card>
-            <CardContent className="p-6 text-center text-sm text-muted-foreground">Loading…</CardContent>
-          </Card>
-        ) : null}
-
-        {!loading && !error && total === 0 ? (
-          <Card>
-            <CardContent className="space-y-2 p-6 text-center">
-              <p className="font-medium">No scholarships loaded yet.</p>
+    <Shell>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4 sm:mb-10">
+        <div className="space-y-3">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your matches</h1>
+          {loading ? (
+            <div className="h-9 w-64 animate-pulse rounded bg-muted" aria-hidden="true" />
+          ) : error ? null : (
+            <>
+              <CountSummary matches={matches} />
               <p className="text-sm text-muted-foreground">
-                The database has no opportunities in it. Run the harvester and{" "}
-                <code className="rounded bg-muted px-1 py-0.5 text-xs">pnpm db:push</code> to load them.
+                {total} scholarship{total === 1 ? "" : "s"} checked against your profile. No guessing —{" "}
+                <Link href="/proof" className="underline underline-offset-2 hover:text-foreground">
+                  here is the arithmetic
+                </Link>
+                .
               </p>
-            </CardContent>
-          </Card>
-        ) : null}
+            </>
+          )}
+        </div>
+        <Button variant="outline" size="touch" asChild>
+          <Link href="/onboarding">Edit profile</Link>
+        </Button>
+      </header>
 
-        {!loading && !error && total > 0
-          ? SECTIONS.map((section) => {
-              const items = matches[section.key] ?? [];
-              return (
-                <section key={section.key} className="space-y-3">
-                  <div className="space-y-1">
-                    <h2 className="text-xl font-semibold">
-                      {section.title}{" "}
-                      <span className="text-base font-normal text-muted-foreground">({items.length})</span>
-                    </h2>
-                    <p className="text-sm text-muted-foreground">{section.blurb}</p>
+      {error ? (
+        isAuthError(error) ? (
+          <Notice
+            title="You're signed out."
+            body="Sign in again to see which scholarships you qualify for."
+            action={
+              <Button size="touch" asChild>
+                <Link href="/">Sign in</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <Notice
+            title="We couldn't load your matches."
+            body={<span role="alert">{error}</span>}
+            action={
+              <Button variant="outline" size="touch" onClick={() => void load()}>
+                Try again
+              </Button>
+            }
+          />
+        )
+      ) : null}
+
+      {loading && !error ? <MatchesSkeleton /> : null}
+
+      {!loading && !error && total === 0 ? (
+        <Notice
+          title="No scholarships have been loaded yet."
+          body={
+            <>
+              This is not a filter — the database is empty, so there is nothing to check your profile against.
+              Run the harvester, then{" "}
+              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">pnpm db:push</code> to load them.
+            </>
+          }
+          action={
+            <Button variant="outline" size="touch" onClick={() => void load()}>
+              Check again
+            </Button>
+          }
+        />
+      ) : null}
+
+      {!loading && !error && total > 0 ? (
+        <div className="space-y-10 sm:space-y-12">
+          {SECTIONS.map((section) => {
+            const items: Match[] = matches[section.key] ?? [];
+            return (
+              <section key={section.key} className="space-y-4">
+                <div className="space-y-1">
+                  <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
+                    {section.title}{" "}
+                    <span className="font-normal text-muted-foreground tabular-nums">({items.length})</span>
+                  </h2>
+                  <p className="text-sm text-muted-foreground">{section.blurb}</p>
+                </div>
+                {items.length === 0 ? (
+                  <p className="rounded-lg border border-dashed px-5 py-6 text-center text-sm text-muted-foreground">
+                    {section.empty}
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {items.map((match, i) => (
+                      <MatchCard key={match?.opportunity?.id ?? `${section.key}-${i}`} match={match} />
+                    ))}
                   </div>
-                  {items.length === 0 ? (
-                    <Card>
-                      <CardContent className="p-6 text-center text-sm text-muted-foreground">
-                        {section.empty}
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className="space-y-3">
-                      {items.map((match: Match) => (
-                        <MatchCard key={(match.opportunity as Opportunity)?.id ?? Math.random()} match={match} />
-                      ))}
-                    </div>
-                  )}
-                </section>
-              );
-            })
-          : null}
-      </div>
-    </main>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      ) : null}
+
+      <footer className="mt-14 border-t pt-6 text-center text-xs text-muted-foreground">
+        <Link href="/proof" className="underline underline-offset-2 hover:text-foreground">
+          How eligibility is decided
+        </Link>
+        <span className="mx-2">·</span>
+        We never submit an application for you.
+      </footer>
+    </Shell>
   );
 }

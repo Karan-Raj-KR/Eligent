@@ -75,3 +75,72 @@ export function failureReason(failed: Failed): string {
   const have = failed.profileValue === null || failed.profileValue === undefined ? "nothing set" : String(failed.profileValue);
   return `Requires ${req}; your profile says ${have}.`;
 }
+
+// ---------------------------------------------------------------------------
+// Structured gap, for the near-miss hero
+// ---------------------------------------------------------------------------
+
+/** Human names for the profile fields the engine reports on. Display only. */
+const FIELD_LABELS: Record<string, string> = {
+  cgpa: "CGPA",
+  percentage: "Class 12 percentage",
+  year_of_study: "year of study",
+  annual_family_income: "annual family income",
+  branch: "branch",
+  state: "state",
+  institution_type: "institution type",
+  category: "category",
+  gender: "gender",
+  full_name: "name",
+};
+
+export function fieldLabel(field: string): string {
+  return FIELD_LABELS[field] ?? field.replace(/_/g, " ");
+}
+
+export interface GapParts {
+  /** "8.0 CGPA" — the threshold, in context. */
+  need: string;
+  /** "7.8" — what the student actually has. */
+  have: string | null;
+  /** "0.2 short" / "₹40,000 over" — the distance, on its own. */
+  delta: string;
+  direction: "short" | "over";
+  /** "You need 8.0 CGPA — you have 7.8. You're 0.2 short." */
+  sentence: string;
+}
+
+/**
+ * Splits a numeric gap into the pieces a card needs to typeset separately, so
+ * the number can be the largest thing on the card. Returns null when there is
+ * no arithmetic to show — a categorical or unknown failure is a reason, not a
+ * distance.
+ */
+export function describeGap(failed: Failed): GapParts | null {
+  const gap = failed.gap;
+  if (!gap) return null;
+  if (typeof failed.requirement !== "number") return null;
+
+  const label = fieldLabel(failed.field);
+  // "75% Class 12 percentage" reads; "7.5 points CGPA" does not — the label
+  // already carries the unit for word-unit fields. Symbol units keep theirs.
+  const symbolic = gap.unit === "INR" || gap.unit === "percentage";
+  const need = symbolic
+    ? `${withUnit(failed.requirement, gap.unit)} ${label}`
+    : `${tidy(failed.requirement)} ${label}`;
+  // Same rule for the student's own value: "7.2", not "7.2 points", so it reads
+  // against "7.5 CGPA". The delta keeps its unit — it stands alone.
+  const have =
+    typeof failed.profileValue === "number"
+      ? symbolic
+        ? withUnit(failed.profileValue, gap.unit)
+        : tidy(failed.profileValue)
+      : profileValueLabel(failed);
+  const delta = `${withUnit(gap.amount, gap.unit)} ${gap.direction}`;
+
+  const opening = gap.direction === "over" ? `The limit is ${need}` : `You need ${need}`;
+  const middle = have ? ` — you have ${have}.` : ".";
+  const sentence = `${opening}${middle} You're ${delta}.`;
+
+  return { need, have, delta, direction: gap.direction, sentence };
+}

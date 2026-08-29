@@ -43,6 +43,26 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Verdict tones — see globals.css. Not additional accents: they tint
+        // verdict surfaces only. Actions stay on --primary.
+        positive: {
+          DEFAULT: "hsl(var(--positive))",
+          foreground: "hsl(var(--positive-foreground))",
+          soft: "hsl(var(--positive-soft))",
+          border: "hsl(var(--positive-border))",
+        },
+        attention: {
+          DEFAULT: "hsl(var(--attention))",
+          foreground: "hsl(var(--attention-foreground))",
+          soft: "hsl(var(--attention-soft))",
+          border: "hsl(var(--attention-border))",
+        },
+        neutral: {
+          DEFAULT: "hsl(var(--neutral))",
+          foreground: "hsl(var(--neutral-foreground))",
+          soft: "hsl(var(--neutral-soft))",
+          border: "hsl(var(--neutral-border))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

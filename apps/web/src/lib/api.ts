@@ -49,3 +49,8 @@ export function apiSend<T>(url: string, method: "POST" | "PATCH", body: unknown)
 export function isAuthError(error: string): boolean {
   return /unauthenticated/i.test(error);
 }
+
+/** /api/matches answers "complete onboarding first" when there is no profile row. */
+export function isMissingProfileError(error: string): boolean {
+  return /onboarding|profile/i.test(error);
+}
