@@ -2,85 +2,72 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Opportunity</title>
+  <title>Cutoff</title>
   <style>
+    :root { --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --accent:#2563eb; --accent-soft:#eff6ff; }
     * { box-sizing: border-box; }
-    body { width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 16px; }
-    h1 { font-size: 18px; margin: 0 0 16px; }
-    .field { margin-bottom: 12px; }
-    label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 4px; color: #374151; }
-    input, select { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
-    input:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-    button { width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; }
-    button:hover { background: #2563eb; }
-    button:disabled { background: #93c5fd; cursor: not-allowed; }
-    .status { margin-top: 12px; font-size: 12px; color: #6b7280; text-align: center; }
-    .status.success { color: #059669; }
-    .row { display: flex; gap: 8px; }
-    .row > * { flex: 1; }
+    body { width: 340px; margin: 0; padding: 16px; font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--ink); }
+    h1 { font-size: 16px; margin: 0 0 2px; }
+    .sub { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    button { width: 100%; padding: 10px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    button.secondary { background: transparent; color: var(--muted); font-weight: 500; font-size: 12px; padding: 6px; }
+    .card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+    .card.blocked { border-color: var(--accent); background: var(--accent-soft); }
+    .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 4px; }
+    .name { font-weight: 600; }
+    blockquote { margin: 8px 0 0; padding-left: 10px; border-left: 3px solid var(--accent); font-style: italic; color: #334155; font-size: 13px; }
+    .gap { margin-top: 8px; font-size: 13px; font-weight: 600; }
+    .note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 10px; }
+    .hidden { display: none; }
+    #status { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: center; }
+    #status.error { color: #b91c1c; }
+    #status.done { color: #15803d; }
   </style>
 </head>
 <body>
-  <h1>Opportunity Profile</h1>
-  <form id="profileForm">
-    <div class="field">
-      <label>Email</label>
-      <input type="email" name="email" required>
+  <h1>Cutoff</h1>
+  <p class="sub">Fills only what you qualify for. Never submits.</p>
+
+  <div id="signed-out" class="hidden">
+    <div class="card">
+      <div class="label">Not connected</div>
+      <div>Sign in to Cutoff, then open the application you want to fill.</div>
     </div>
-    <div class="field">
-      <label>First Name</label>
-      <input type="text" name="firstName" required>
+    <button id="open-app">Open Cutoff</button>
+  </div>
+
+  <div id="no-application" class="hidden">
+    <div class="card">
+      <div class="label">Signed in</div>
+      <div>Open an application in Cutoff first, so we know which scholarship this form is for.</div>
     </div>
-    <div class="field">
-      <label>Last Name</label>
-      <input type="text" name="lastName" required>
+    <button id="open-app-2">Open Cutoff</button>
+  </div>
+
+  <div id="ready" class="hidden">
+    <div class="card">
+      <div class="label">Application</div>
+      <div class="name" id="application-name">Your application</div>
     </div>
-    <div class="row">
-      <div class="field">
-        <label>GPA</label>
-        <input type="number" name="gpa" step="0.01" min="0" max="4">
-      </div>
-      <div class="field">
-        <label>SAT</label>
-        <input type="number" name="sat" min="400" max="1600">
-      </div>
+    <button id="fill">Check eligibility &amp; fill</button>
+    <p class="note">We stop before the submit button. Always.</p>
+  </div>
+
+  <div id="blocked" class="hidden">
+    <div class="card blocked">
+      <div class="label" id="blocked-reason">Not eligible</div>
+      <div class="name" id="blocked-clause"></div>
+      <blockquote id="blocked-source" class="hidden"></blockquote>
+      <div class="gap hidden" id="blocked-gap"></div>
     </div>
-    <div class="row">
-      <div class="field">
-        <label>ACT</label>
-        <input type="number" name="act" min="1" max="36">
-      </div>
-      <div class="field">
-        <label>Income</label>
-        <input type="number" name="income" min="0">
-      </div>
-    </div>
-    <div class="field">
-      <label>Major</label>
-      <input type="text" name="major">
-    </div>
-    <div class="field">
-      <label>State</label>
-      <select name="state">
-        <option value="">Select</option>
-        <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option>
-        <option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option>
-        <option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option><option value="ID">ID</option>
-        <option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option><option value="KS">KS</option>
-        <option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option><option value="MD">MD</option>
-        <option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option><option value="MS">MS</option>
-        <option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option><option value="NV">NV</option>
-        <option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option><option value="NY">NY</option>
-        <option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option><option value="OK">OK</option>
-        <option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option><option value="SC">SC</option>
-        <option value="SD">SD</option><option value="TN">TN</option><option value="TX">TX</option><option value="UT">UT</option>
-        <option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option><option value="WV">WV</option>
-        <option value="WI">WI</option><option value="WY">WY</option>
-      </select>
-    </div>
-    <button type="submit">Save & Enable Autofill</button>
-  </form>
-  <div id="status" class="status"></div>
-  <script type="module" src="../dist/popup.js"></script>
+    <p class="note">Nothing was filled in. Applying anyway would be rejected on this clause.</p>
+    <button class="secondary" id="back">Back</button>
+  </div>
+
+  <div id="status"></div>
+  <button class="secondary hidden" id="sign-out">Disconnect</button>
+
+  <script type="module" src="popup.js"></script>
 </body>
 </html>

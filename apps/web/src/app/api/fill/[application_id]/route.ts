@@ -32,7 +32,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ appl
     // that can't be argued with a gap number.
     const clause: Failed | undefined =
       evaluation.failed.find((f) => f.gap === undefined) ?? evaluation.failed[0];
-    return NextResponse.json({ blocked: true, reason: evaluation.status, clause });
+    // The verbatim sentence from the scholarship's own page. The engine's Failed
+    // carries display_text but not the quote, so look it back up here: showing a
+    // student the actual clause is the whole point of refusing to fill.
+    const source = clause
+      ? criteria.find((c) => c.field === clause.field && (!clause.displayText || c.display_text === clause.displayText))
+          ?.source_text ?? null
+      : null;
+    return NextResponse.json({ blocked: true, reason: evaluation.status, clause, source_text: source });
   }
 
   const { data: requirements } = await supabase
