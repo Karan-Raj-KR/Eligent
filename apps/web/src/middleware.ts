@@ -25,5 +25,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*"],
+  // Pages need the refresh as much as the API routes do: the landing page and
+  // every Server Component read the session from cookies, and an expiring token
+  // that is only refreshed on /api/* leaves them reading a stale one.
+  // Everything except Next's static output and the favicon.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
