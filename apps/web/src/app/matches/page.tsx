@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { Evaluation } from "@opportunity/engine";
 import { Button } from "@/components/ui/button";
@@ -87,25 +86,28 @@ function Notice({
 }
 
 export default function MatchesPage() {
-  const router = useRouter();
   const [matches, setMatches] = useState<Matches>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [needsProfile, setNeedsProfile] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setNeedsProfile(false);
     try {
       const result = await apiGet<Matches>("/api/matches");
       if (!result.ok) {
-        // No profile row yet — send them to onboarding rather than showing an error.
-        if (isMissingProfileError(result.error)) {
-          router.push("/onboarding");
+        // No profile row yet. An explicit prompt, not a silent redirect that
+        // leaves someone wondering why the page changed under them.
+        if (!isAuthError(result.error) && isMissingProfileError(result.error)) {
+          setNeedsProfile(true);
           return;
         }
         setError(result.error);
         return;
       }
+      setNeedsProfile(false);
       const data = result.data;
       setMatches({
         eligible: Array.isArray(data?.eligible) ? data.eligible : [],
@@ -116,7 +118,7 @@ export default function MatchesPage() {
       // Always clears, on every path above.
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     void load();
@@ -131,7 +133,7 @@ export default function MatchesPage() {
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your matches</h1>
           {loading ? (
             <div className="h-9 w-64 animate-pulse rounded bg-muted" aria-hidden="true" />
-          ) : error ? null : (
+          ) : error || needsProfile ? null : (
             <>
               <CountSummary matches={matches} />
               <p className="text-sm text-muted-foreground">
@@ -148,6 +150,18 @@ export default function MatchesPage() {
           <Link href="/onboarding">Edit profile</Link>
         </Button>
       </header>
+
+      {needsProfile && !loading ? (
+        <Notice
+          title="Finish your profile first."
+          body="We need your marks, year and family income before we can check a single scholarship. It takes about a minute."
+          action={
+            <Button size="touch" asChild>
+              <Link href="/onboarding">Complete your profile</Link>
+            </Button>
+          }
+        />
+      ) : null}
 
       {error ? (
         isAuthError(error) ? (
@@ -175,7 +189,7 @@ export default function MatchesPage() {
 
       {loading && !error ? <MatchesSkeleton /> : null}
 
-      {!loading && !error && total === 0 ? (
+      {!loading && !error && !needsProfile && total === 0 ? (
         <Notice
           title="No scholarships have been loaded yet."
           body={
@@ -193,7 +207,7 @@ export default function MatchesPage() {
         />
       ) : null}
 
-      {!loading && !error && total > 0 ? (
+      {!loading && !error && !needsProfile && total > 0 ? (
         <div className="space-y-10 sm:space-y-12">
           {SECTIONS.map((section) => {
             const items: Match[] = matches[section.key] ?? [];
