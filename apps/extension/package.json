@@ -1,0 +1,13 @@
+{
+  "name": "opportunity-extension",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/background.ts src/content.ts --bundle --outdir=dist --format=esm --target=chrome100",
+    "dev": "esbuild src/background.ts src/content.ts --bundle --outdir=dist --format=esm --target=chrome100 --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.0"
+  }
+}

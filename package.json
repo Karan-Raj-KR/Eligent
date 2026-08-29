@@ -1,0 +1,27 @@
+{
+  "name": "opportunity-app",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "turbo run db:generate",
+    "db:push": "turbo run db:push",
+    "harvest": "tsx scripts/harvest.ts"
+  },
+  "dependencies": {
+    "@opportunity/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

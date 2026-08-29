@@ -1,0 +1,2 @@
+# One listing/index page URL per line. Lines starting with # (and blank lines) are ignored.
+# Hand-curated — do not auto-populate. Run: pnpm tsx scripts/discover.ts
