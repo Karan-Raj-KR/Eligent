@@ -77,7 +77,7 @@ export function failureReason(failed: Failed): string {
 }
 
 // ---------------------------------------------------------------------------
-// Structured gap, for the near-miss hero
+// Structured gap, for the near_miss hero
 // ---------------------------------------------------------------------------
 
 /** Human names for the profile fields the engine reports on. Display only. */

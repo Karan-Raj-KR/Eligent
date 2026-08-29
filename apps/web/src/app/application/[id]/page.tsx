@@ -89,7 +89,16 @@ export default function ApplicationPage({ params }: { params: Promise<{ id: stri
         setError(result.error);
         return;
       }
-      setDetail(result.data);
+      // Normalise once, at the boundary, so nothing downstream has to guard the
+      // shape. The type says requirements is an array; the wire does not.
+      const data = result.data;
+      setDetail({
+        application: data?.application ?? null,
+        requirements: Array.isArray(data?.requirements)
+          ? data.requirements.filter((r): r is Requirement => Boolean(r?.id))
+          : [],
+        eligibility: data?.eligibility ?? null,
+      });
     } finally {
       setLoading(false);
     }
@@ -108,13 +117,16 @@ export default function ApplicationPage({ params }: { params: Promise<{ id: stri
   function replace(next: Requirement) {
     setDetail((current) =>
       current
-        ? { ...current, requirements: current.requirements.map((r) => (r.id === next.id ? next : r)) }
+        ? {
+            ...current,
+            requirements: (current.requirements ?? []).map((r) => (r.id === next.id ? next : r)),
+          }
         : current,
     );
   }
 
   return (
-    <main className="min-h-screen p-4 py-10">
+    <main className="min-h-screen px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-2xl space-y-6">
         <Button variant="ghost" size="touch" asChild className="-ml-3 self-start">
           <Link href="/matches">← Back to matches</Link>
@@ -158,7 +170,7 @@ export default function ApplicationPage({ params }: { params: Promise<{ id: stri
         {!loading && !error ? (
           <>
             <div className="space-y-1">
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 {opportunity?.name ?? "Your application"}
               </h1>
               {opportunity ? (
