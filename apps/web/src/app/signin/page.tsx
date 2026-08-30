@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Check, ArrowRight } from "lucide-react";
 import { useEligent } from "@/components/provider";
 import { ClayCard, Logo } from "@/components/clay";
+import { EligentLoading } from "@/components/eligent-loading";
 
 export default function SignInPage() {
   const { hydrated, signedIn, user, signIn, error } = useEligent();
   const [busy, setBusy] = useState(false);
+  const [authPhase, setAuthPhase] = useState<"idle" | "authenticating" | "loading-profile">("idle");
   const router = useRouter();
 
   useEffect(() => {
@@ -18,6 +19,20 @@ export default function SignInPage() {
       router.replace(user ? "/matches" : "/onboarding");
     }
   }, [hydrated, signedIn, user, router]);
+
+  /* ---- Auth loading screen ---- */
+  if (authPhase === "authenticating" || authPhase === "loading-profile") {
+    return (
+      <EligentLoading
+        variant="auth"
+        message={
+          authPhase === "authenticating"
+            ? "Setting up your ELIGENT account."
+            : "Getting your profile ready…"
+        }
+      />
+    );
+  }
 
   return (
     <div className="mx-auto grid w-full max-w-5xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-24">
@@ -42,9 +57,15 @@ export default function SignInPage() {
             disabled={busy}
             onClick={async () => {
               setBusy(true);
+              setAuthPhase("authenticating");
               try {
                 await signIn();
-                router.push("/onboarding");
+                setAuthPhase("loading-profile");
+                // signIn already calls load(), which sets profile & matches.
+                // Give the provider a tick to update signedIn/user, then the
+                // useEffect above handles the redirect.
+              } catch {
+                setAuthPhase("idle");
               } finally {
                 setBusy(false);
               }

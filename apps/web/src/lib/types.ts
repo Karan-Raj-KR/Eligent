@@ -92,6 +92,75 @@ export interface UserProfile {
   category: Category;
   percentage?: number | null;
   gender?: string | null;
+  skills?: string[];
+  interests?: string[];
+  preferredLocations?: string[];
+  preferredOpportunityTypes?: string[];
+}
+
+export type PlatformOpportunityCategory =
+  | "scholarship"
+  | "fellowship"
+  | "grant"
+  | "hackathon"
+  | "internship"
+  | "job"
+  | "programme"
+  | "event"
+  | "competition"
+  | "workshop";
+
+export type OpportunityStatus = "draft" | "pending_review" | "published" | "rejected" | "expired";
+
+export type ApplicationMode = "eligent" | "external";
+
+export interface PlatformOpportunity {
+  id: string;
+  name: string;
+  provider: string;
+  organization?: string;
+  /** External application URL. Only meaningful when applicationMode is "external". */
+  url: string | null;
+  deadline: string | null;
+  amount: string | null;
+  category: PlatformOpportunityCategory;
+  locationType: "india" | "abroad" | "online";
+  funded?: boolean;
+  description?: string;
+  tags?: string[];
+  skills?: string[];
+  status: OpportunityStatus;
+  creatorUserId?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+  /** "eligent" = apply through ELIGENT, "external" = redirect to provider URL */
+  applicationMode?: ApplicationMode;
+}
+
+export type NotificationType =
+  | "matching_opportunity"
+  | "deadline_approaching"
+  | "status_changed"
+  | "community_report"
+  | "general";
+
+export interface NotificationItem {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  link?: string;
+  isRead: boolean;
+  opportunityId?: string;
+  createdAt: string;
+}
+
+export interface SavedOpportunity {
+  id: string;
+  userId: string;
+  opportunityId: string;
+  createdAt: string;
 }
 
 export interface MatchResult {

@@ -30,12 +30,14 @@ import {
   type ApiRequirement,
 } from "@/lib/adapt";
 import { STORAGE_KEYS, readStorage, writeStorage } from "@/lib/store";
+import { DEMO_GROUPS, DEMO_NOTIFICATIONS, DEMO_USER } from "@/lib/demo-data";
 import type {
   ApplicationState,
   ItemAvailability,
   MatchCounts,
   MatchGroups,
   MatchResult,
+  NotificationItem,
   ReportTopic,
   ScholarshipReport,
   UserProfile,
@@ -61,6 +63,7 @@ async function json<T>(res: Response): Promise<T> {
 
 interface EligentContextValue {
   hydrated: boolean;
+  initializing: boolean;
   loading: boolean;
   error: string | null;
   user: UserProfile | null;
@@ -69,6 +72,9 @@ interface EligentContextValue {
   groups: MatchGroups | null;
   counts: MatchCounts | null;
   reports: ScholarshipReport[];
+  notifications: NotificationItem[];
+  unreadNotificationsCount: number;
+  savedOpportunityIds: string[];
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   setProfile: (profile: UserProfile) => Promise<void>;
@@ -82,12 +88,18 @@ interface EligentContextValue {
     value: ItemAvailability,
   ) => Promise<void>;
   submitReport: (report: { scholarshipId: string; topic: ReportTopic; details: string }) => Promise<void>;
+  markNotificationRead: (id: string) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
+  toggleSaveOpportunity: (opportunityId: string) => Promise<void>;
 }
 
 const EligentContext = createContext<EligentContextValue | null>(null);
 
+const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
 export function EligentProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -95,6 +107,8 @@ export function EligentProvider({ children }: { children: ReactNode }) {
   const [applyMode, setApplyMode] = useState(false);
   const [groups, setGroups] = useState<MatchGroups | null>(null);
   const [reports, setReports] = useState<ScholarshipReport[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [savedOpportunityIds, setSavedOpportunityIds] = useState<string[]>([]);
 
   // Built on first use, never during render. This provider sits in the root
   // layout so it renders during static prerendering — constructing the client
@@ -111,6 +125,17 @@ export function EligentProvider({ children }: { children: ReactNode }) {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+
+    if (isDemo) {
+      setSignedIn(true);
+      setUser(DEMO_USER);
+      setGroups(DEMO_GROUPS);
+      setNotifications(DEMO_NOTIFICATIONS);
+      setSavedOpportunityIds(["opp-h1"]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const sb = getSupabase();
       if (!sb) {
@@ -171,33 +196,41 @@ export function EligentProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const sb = getSupabase();
-        if (sb) {
-          const {
-            data: { session },
-          } = await sb.auth.getSession();
-          if (cancelled) return;
-          if (session) {
-            setSignedIn(true);
-            await load();
-            // Source-of-truth entitlement: a verified payment row. RLS lets the
-            // owner read only their own rows. Survives a localStorage clear and
-            // works across devices.
-            const { count } = await sb
-              .from("purchase")
-              .select("id", { count: "exact", head: true });
-            if (!cancelled && count && count > 0) {
-              setApplyMode(true);
-              writeStorage(STORAGE_KEYS.applyMode, true);
+        if (isDemo) {
+          setSignedIn(true);
+          setUser(DEMO_USER);
+          setGroups(DEMO_GROUPS);
+        } else {
+          const sb = getSupabase();
+          if (sb) {
+            const {
+              data: { session },
+            } = await sb.auth.getSession();
+            if (cancelled) return;
+            if (session) {
+              setSignedIn(true);
+              await load();
+              // Source-of-truth entitlement: a verified payment row. RLS lets the
+              // owner read only their own rows. Survives a localStorage clear and
+              // works across devices.
+              const { count } = await sb
+                .from("purchase")
+                .select("id", { count: "exact", head: true });
+              if (!cancelled && count && count > 0) {
+                setApplyMode(true);
+                writeStorage(STORAGE_KEYS.applyMode, true);
+              }
             }
           }
         }
-        // If sb is null, env vars are missing — stay not-signed-in.
       } catch (err) {
         console.error("[EligentProvider] init error:", err);
       }
       setApplyMode((prev) => prev || readStorage(STORAGE_KEYS.applyMode, false));
-      if (!cancelled) setHydrated(true);
+      if (!cancelled) {
+        setHydrated(true);
+        setInitializing(false);
+      }
     })();
     return () => {
       cancelled = true;
@@ -321,11 +354,64 @@ export function EligentProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const markNotificationRead = useCallback(async (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+    );
+    if (!isDemo) {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      }).catch(() => null);
+    }
+  }, []);
+
+  const markAllNotificationsRead = useCallback(async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    if (!isDemo) {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      }).catch(() => null);
+    }
+  }, []);
+
+  const toggleSaveOpportunity = useCallback(async (opportunityId: string) => {
+    setSavedOpportunityIds((prev) => {
+      const exists = prev.includes(opportunityId);
+      if (exists) return prev.filter((id) => id !== opportunityId);
+      return [...prev, opportunityId];
+    });
+
+    if (!isDemo) {
+      const isSaved = savedOpportunityIds.includes(opportunityId);
+      if (isSaved) {
+        await fetch(`/api/saved?opportunity_id=${encodeURIComponent(opportunityId)}`, {
+          method: "DELETE",
+        }).catch(() => null);
+      } else {
+        await fetch("/api/saved", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ opportunity_id: opportunityId }),
+        }).catch(() => null);
+      }
+    }
+  }, [savedOpportunityIds]);
+
+  const unreadNotificationsCount = useMemo(
+    () => notifications.filter((n) => !n.isRead).length,
+    [notifications],
+  );
+
   const counts = useMemo(() => (groups ? toCounts(groups) : null), [groups]);
 
   const value = useMemo<EligentContextValue>(
     () => ({
       hydrated,
+      initializing,
       loading,
       error,
       user,
@@ -334,6 +420,9 @@ export function EligentProvider({ children }: { children: ReactNode }) {
       groups,
       counts,
       reports,
+      notifications,
+      unreadNotificationsCount,
+      savedOpportunityIds,
       signIn,
       signOut,
       setProfile,
@@ -343,11 +432,15 @@ export function EligentProvider({ children }: { children: ReactNode }) {
       startApplication,
       setRequirement,
       submitReport,
+      markNotificationRead,
+      markAllNotificationsRead,
+      toggleSaveOpportunity,
     }),
     [
-      hydrated, loading, error, user, signedIn, applyMode, groups, counts, reports,
-      signIn, signOut, setProfile, unlockApplyMode, getMatch, load,
-      startApplication, setRequirement, submitReport,
+      hydrated, initializing, loading, error, user, signedIn, applyMode, groups, counts, reports,
+      notifications, unreadNotificationsCount, savedOpportunityIds, signIn, signOut,
+      setProfile, unlockApplyMode, getMatch, load, startApplication, setRequirement,
+      submitReport, markNotificationRead, markAllNotificationsRead, toggleSaveOpportunity,
     ],
   );
 

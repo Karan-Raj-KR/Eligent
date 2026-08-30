@@ -16,6 +16,7 @@ import { EligibilityCard } from "@/components/matches/eligibility-card";
 import { NearMissCard } from "@/components/matches/near-miss-card";
 import { RejectedCard } from "@/components/matches/rejected-card";
 import { FindMore } from "@/components/matches/find-more";
+import { HorizontalScholarshipRow } from "@/components/matches/horizontal-row";
 
 type Phase = "loading" | "ready" | "error";
 
@@ -62,7 +63,7 @@ const STEPS = [
 export default function MatchesPage() {
   const { hydrated, signedIn, user, groups, counts, loading, error, refresh } = useEligent();
   const router = useRouter();
-  const [phase, setPhase] = useState<Phase>("loading");
+  const phase: Phase = error ? "error" : loading || !groups ? "loading" : "ready";
   const [category, setCategory] = useState("All");
   const [locationType, setLocationType] = useState("All");
 
@@ -84,10 +85,7 @@ export default function MatchesPage() {
       router.replace("/onboarding");
       return;
     }
-    if (error) setPhase("error");
-    else if (loading || !groups) setPhase("loading");
-    else setPhase("ready");
-  }, [hydrated, signedIn, user, router, loading, error, groups]);
+  }, [hydrated, signedIn, user, router]);
 
   const notHydrated = !hydrated || !user;
   // Only blank the page to a skeleton on the FIRST load. A later refresh (the
@@ -112,7 +110,6 @@ export default function MatchesPage() {
       <div className="mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
         <ErrorState
           onRetry={() => {
-            setPhase("loading");
             void refresh();
           }}
         />
@@ -162,53 +159,59 @@ export default function MatchesPage() {
           : `Showing ${vCounts.total} opportunit${vCounts.total === 1 ? "y" : "ies"} in this filter. Every one was still evaluated against your profile.`}
       </p>
 
-      {/* ELIGIBLE */}
-      <section id="eligible" aria-labelledby="eligible-heading" className="mt-6 scroll-mt-28">
-        <SectionHeader
-          id="eligible-heading"
+      {/* ELIGIBLE — horizontal row */}
+      {vCounts.eligible > 0 && (
+        <HorizontalScholarshipRow
+          id="eligible"
+          headingId="eligible-heading"
           kicker="Official check passed"
           title="Eligible"
           count={vCounts.eligible}
           caption="You pass every official criterion. Use the Eligent extension to fill the real form."
-        />
-        <div className="space-y-4">
+        >
           {view.eligible.map((match) => (
-            <EligibilityCard key={match.scholarship.id} match={match} />
+            <div key={match.scholarship.id} className="scroll-row-card">
+              <EligibilityCard match={match} />
+            </div>
           ))}
-        </div>
-      </section>
+        </HorizontalScholarshipRow>
+      )}
 
-      {/* NEAR MISS */}
-      <section id="near-miss" aria-labelledby="near-miss-heading" className="mt-16 scroll-mt-28">
-        <SectionHeader
-          id="near-miss-heading"
+      {/* NEAR MISS — horizontal row */}
+      {vCounts.nearMiss > 0 && (
+        <HorizontalScholarshipRow
+          id="near-miss"
+          headingId="near-miss-heading"
           kicker="Close — but rejected at the cutoff"
           title="Near miss"
           count={vCounts.nearMiss}
           caption="Don't start these applications. The portal will still say no."
-        />
-        <div className="space-y-4">
+        >
           {view.nearMiss.map((match) => (
-            <NearMissCard key={match.scholarship.id} match={match} />
+            <div key={match.scholarship.id} className="scroll-row-card">
+              <NearMissCard match={match} />
+            </div>
           ))}
-        </div>
-      </section>
+        </HorizontalScholarshipRow>
+      )}
 
-      {/* NOT ELIGIBLE */}
-      <section id="not-eligible" aria-labelledby="not-eligible-heading" className="mt-16 scroll-mt-28">
-        <SectionHeader
-          id="not-eligible-heading"
+      {/* NOT ELIGIBLE — horizontal row */}
+      {vCounts.notEligible > 0 && (
+        <HorizontalScholarshipRow
+          id="not-eligible"
+          headingId="not-eligible-heading"
           kicker="We checked. Here's why not."
           title="Not eligible"
           count={vCounts.notEligible}
           caption="Every one of these was actually evaluated. Expand any card to see the exact reason."
-        />
-        <div className="space-y-2">
+        >
           {view.notEligible.map((match) => (
-            <RejectedCard key={match.scholarship.id} match={match} />
+            <div key={match.scholarship.id} className="scroll-row-card">
+              <RejectedCard match={match} />
+            </div>
           ))}
-        </div>
-      </section>
+        </HorizontalScholarshipRow>
+      )}
 
       {/* HOW IT WORKS */}
       <section id="how-it-works" aria-labelledby="how-it-works-heading" className="mt-24 scroll-mt-28">
@@ -220,8 +223,8 @@ export default function MatchesPage() {
             Know when not to.
           </h2>
           <p className="mt-3 max-w-2xl text-[0.95rem] leading-relaxed text-muted">
-            ELIGENT is honest in one direction: it won't start an application it
-            knows you can't finish. Everything above was decided by official
+            ELIGENT is honest in one direction: it won&apos;t start an application it
+            knows you can&apos;t finish. Everything above was decided by official
             criteria — nothing guessed, nothing estimated.
           </p>
           <ol className="mt-10 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
@@ -273,35 +276,6 @@ function ChipRow({
           {option}
         </button>
       ))}
-    </div>
-  );
-}
-
-function SectionHeader({
-  id,
-  kicker,
-  title,
-  count,
-  caption,
-}: {
-  id: string;
-  kicker: string;
-  title: string;
-  count: number;
-  caption: string;
-}) {
-  return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
-      <div>
-        <p className="kicker text-muted">{kicker}</p>
-        <h2
-          id={id}
-          className="mt-1 font-display text-[1.7rem] font-bold tracking-tight text-ink sm:text-3xl"
-        >
-          {title} <span className="font-medium text-muted">· {count}</span>
-        </h2>
-      </div>
-      <p className="max-w-sm text-[0.86rem] leading-relaxed text-muted">{caption}</p>
     </div>
   );
 }

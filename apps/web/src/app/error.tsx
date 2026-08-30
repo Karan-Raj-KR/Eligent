@@ -5,6 +5,7 @@
 // Shows the actual error message in development; a friendly message in production.
 
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function ErrorPage({
   error,
@@ -55,12 +56,12 @@ export default function ErrorPage({
         >
           Try again
         </button>
-        <a
+        <Link
           href="/"
           className="clay px-5 py-2.5 text-[0.9rem] font-semibold"
         >
           Go home
-        </a>
+        </Link>
       </div>
     </div>
   );

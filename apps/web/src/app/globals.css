@@ -391,4 +391,126 @@ body {
       linear-gradient(90deg, rgba(23, 21, 37, 0.04) 1px, transparent 1px);
     background-size: 26px 26px;
   }
+
+  /* ---------- Horizontal scroll row ---------- */
+
+  .scroll-row {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px; /* prevent shadow clipping */
+  }
+
+  .scroll-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scroll-row {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scroll-row-card {
+    flex: 0 0 auto;
+    width: 300px;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Make cards fill their wrapper height for consistent rows */
+  .scroll-row-card > * {
+    height: 100%;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media (min-width: 768px) {
+    .scroll-row-card {
+      width: 320px;
+    }
+    .scroll-row {
+      gap: 20px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .scroll-row-card {
+      width: 370px;
+    }
+    .scroll-row {
+      gap: 20px;
+    }
+  }
+
+  .scroll-row-fade {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 4px; /* match scroll-row padding-bottom */
+    width: 60px;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent, var(--color-bg));
+    z-index: 2;
+    border-radius: 0 22px 22px 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .scroll-row-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 1px solid var(--color-line);
+    background: linear-gradient(180deg, #ffffff 0%, #fdf9f2 100%);
+    box-shadow: var(--shadow-clay-sm);
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.16s ease, opacity 0.2s ease;
+  }
+
+  .scroll-row-nav:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-clay);
+  }
+
+  .scroll-row-nav:active {
+    transform: translateY(1px);
+    box-shadow: var(--shadow-clay-sm);
+  }
+
+  .scroll-row-nav[disabled] {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* ELIGENT loading bar — indeterminate progress animation              */
+/* ------------------------------------------------------------------ */
+
+@keyframes eligent-loading-sweep {
+  0% {
+    transform: translateX(-100%);
+    width: 40%;
+  }
+  50% {
+    width: 60%;
+  }
+  100% {
+    transform: translateX(300%);
+    width: 40%;
+  }
+}
+
+.eligent-loading-bar {
+  animation: eligent-loading-sweep 1.6s ease-in-out infinite;
 }

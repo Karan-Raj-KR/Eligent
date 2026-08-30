@@ -4,6 +4,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { EligentProvider } from "@/components/provider";
+import { AppShell } from "@/components/app-shell";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 
 const inter = Inter({
@@ -43,7 +44,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="flex min-h-full flex-col">
         <EligentProvider>
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1">
+            <AppShell>{children}</AppShell>
+          </main>
           <SiteFooter />
         </EligentProvider>
         <Analytics />

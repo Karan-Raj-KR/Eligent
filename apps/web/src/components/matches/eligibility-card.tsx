@@ -26,62 +26,61 @@ export function EligibilityCard({ match }: { match: MatchResult }) {
   const passes = match.results.filter((r) => r.status === "pass");
 
   return (
-    <ClayCard className="p-6 sm:p-8">
-      <div className="grid gap-7 lg:grid-cols-[1fr_230px] lg:gap-10">
-        <div className="space-y-5">
-          <div>
-            <h3 className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">
-              <Link
-                href={`/opportunity/${scholarship.id}`}
-                className="rounded-md transition-colors hover:text-cobalt"
-              >
-                {scholarship.title}
-              </Link>
-            </h3>
-            <p className="mt-1 text-[0.9rem] font-medium text-soft">
-              {scholarship.provider}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.9rem] font-semibold">
-            {scholarship.amount && (
-              <span className="flex items-center gap-1.5 text-cobalt-deep">
-                <IndianRupee size={15} aria-hidden />
-                {scholarship.amount}
-              </span>
-            )}
-            <span className="flex items-center gap-1.5 font-medium text-muted">
-              <CalendarClock size={15} aria-hidden />
-              {scholarship.deadline ? `Deadline ${scholarship.deadline}` : "Deadline not stated"}
-            </span>
-            {scholarship.cadence && (
-              <span className="font-medium text-muted">{scholarship.cadence}</span>
-            )}
-          </div>
-
-          <ul className="space-y-2" aria-label="Why you qualify">
-            {passes.map((result) => (
-              <PassRow key={result.criterion.id} result={result} />
-            ))}
-          </ul>
+    <ClayCard className="h-full p-6 sm:p-7 flex flex-col justify-between">
+      <div className="flex-1 flex flex-col gap-4">
+        <div>
+          <h3 className="font-display text-lg font-bold tracking-tight text-ink sm:text-xl">
+            <Link
+              href={`/opportunity/${scholarship.id}`}
+              className="rounded-md transition-colors hover:text-cobalt"
+            >
+              {scholarship.title}
+            </Link>
+          </h3>
+          <p className="mt-1 text-[0.85rem] font-medium text-soft">
+            {scholarship.provider}
+          </p>
         </div>
 
-        <div className="flex flex-col justify-between gap-5 lg:items-stretch">
-          <ClayBadge tone="cobalt" className="self-start !px-3 !py-1.5 !text-[0.82rem]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.85rem] font-semibold">
+          {scholarship.amount && (
+            <span className="flex items-center gap-1.5 text-cobalt-deep">
+              <IndianRupee size={14} aria-hidden />
+              {scholarship.amount}
+            </span>
+          )}
+          <span className="flex items-center gap-1.5 font-medium text-muted">
+            <CalendarClock size={14} aria-hidden />
+            {scholarship.deadline ? `Deadline ${scholarship.deadline}` : "Deadline not stated"}
+          </span>
+          {scholarship.cadence && (
+            <span className="font-medium text-muted">{scholarship.cadence}</span>
+          )}
+        </div>
+
+        <div>
+          <ClayBadge tone="cobalt" className="!px-3 !py-1.5 !text-[0.82rem]">
             <span aria-hidden className="size-1.5 rounded-full bg-cobalt" />
             ELIGIBLE
           </ClayBadge>
-          <div className="flex flex-col gap-2.5">
-            <Link href={`/apply/${scholarship.id}`}>
-              <ClayButton variant="primary" block icon={<ArrowRight size={16} />}>
-                Apply with Eligent
-              </ClayButton>
-            </Link>
-            <p className="text-center text-[0.78rem] text-soft">
-              Official criteria — you qualify
-            </p>
-          </div>
         </div>
+
+        <ul className="space-y-2" aria-label="Why you qualify">
+          {passes.map((result) => (
+            <PassRow key={result.criterion.id} result={result} />
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-6 flex flex-col gap-2.5 pt-2">
+        <Link href={`/apply/${scholarship.id}`}>
+          <ClayButton variant="primary" block icon={<ArrowRight size={16} />}>
+            Apply with Eligent
+          </ClayButton>
+        </Link>
+        <p className="text-center text-[0.78rem] text-soft">
+          Official criteria — you qualify
+        </p>
       </div>
     </ClayCard>
   );
