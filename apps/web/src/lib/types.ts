@@ -63,6 +63,12 @@ export interface Scholarship {
   amount: string | null;
   deadline: string | null;
   url: string;
+  /** opportunity.category — 'scholarship' | 'hackathon' | 'internship' | … */
+  category?: string;
+  /** opportunity.location_type */
+  locationType?: "india" | "abroad" | "online";
+  /** opportunity.funded — travel/stay/fees covered */
+  funded?: boolean;
   /** Not returned by our API — see EXT/MORNING report. Optional, never faked. */
   summary?: string;
   officialRequirements: Requirement[];

@@ -10,6 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { closeHeadlessBrowser, fetchPageAuto, readLineList, ROOT } from "./lib/fetch-cache";
 import { decodeEntities, stripTags } from "./lib/html";
+import { SOURCES, sourceForListing, type Source } from "./sources";
 
 const SOURCES_FILE = path.join(ROOT, "scripts", "sources.txt");
 const URLS_FILE = path.join(ROOT, "scripts", "urls.txt");
@@ -88,7 +89,12 @@ function extractAnchors(html: string, sourceUrl: string): Array<{ href: string; 
   return anchors;
 }
 
-function classify(rawHref: string, text: string, sourceUrl: URL): { url: string } | { skip: string } {
+function classify(
+  rawHref: string,
+  text: string,
+  sourceUrl: URL,
+  source?: Source,
+): { url: string } | { skip: string } {
   let resolved: URL;
   try {
     resolved = new URL(rawHref, sourceUrl);
@@ -99,11 +105,27 @@ function classify(rawHref: string, text: string, sourceUrl: URL): { url: string 
   if (resolved.protocol !== "http:" && resolved.protocol !== "https:") {
     return { skip: `non-http scheme (${resolved.protocol})` };
   }
+
+  const withoutFragment = `${resolved.origin}${resolved.pathname}${resolved.search}`;
+
+  // A configured source knows exactly what its detail pages look like. Trust that
+  // pattern instead of the generic same-domain + denylist heuristics — some
+  // sources (devpost) put every detail page on its own subdomain, often with a
+  // tracking query string we drop.
+  if (source) {
+    if (!source.crossHost && resolved.hostname !== sourceUrl.hostname) {
+      return { skip: "different domain" };
+    }
+    const clean = `${resolved.origin}${resolved.pathname}`.replace(/\/$/, "");
+    return source.detail.test(clean)
+      ? { url: clean }
+      : { skip: `not a detail page for source "${source.id}"` };
+  }
+
   if (resolved.hostname !== sourceUrl.hostname) {
     return { skip: "different domain" };
   }
 
-  const withoutFragment = `${resolved.origin}${resolved.pathname}${resolved.search}`;
   const sourceWithoutFragment = `${sourceUrl.origin}${sourceUrl.pathname}${sourceUrl.search}`;
   if (withoutFragment === sourceWithoutFragment) {
     return { skip: "same page as source (fragment-only link)" };
@@ -117,15 +139,6 @@ function classify(rawHref: string, text: string, sourceUrl: URL): { url: string 
     return { skip: "pagination link" };
   }
 
-  // Buddy4Study category pages (the ones in sources.txt) mix scholarship
-  // detail links in with brand pages, category chrome and site nav. Detail
-  // pages have one recognizable shape: /scholarship/<slug> (singular) — scope
-  // to it instead of trusting the generic denylist alone to catch everything
-  // else on the page.
-  if (sourceUrl.hostname.includes("buddy4study.com") && !/^\/scholarship\/[^/]+\/?$/i.test(resolved.pathname)) {
-    return { skip: "not a buddy4study scholarship detail link (/scholarship/<slug>)" };
-  }
-
   const haystack = `${lowerPath} ${text.toLowerCase()}`;
   const hit = DENYLIST_KEYWORDS.find((kw) => haystack.includes(kw));
   if (hit) return { skip: `denylisted keyword "${hit}"` };
@@ -136,6 +149,8 @@ function classify(rawHref: string, text: string, sourceUrl: URL): { url: string 
 }
 
 async function discoverOne(source: string): Promise<DiscoverResult> {
+  const config = sourceForListing(source);
+  // fetchPageAuto already escalates a JS-shell listing to a headless render.
   const fetched = await fetchPageAuto(source);
   if ("error" in fetched) {
     console.log(`[${source}] fetch failed: ${fetched.error}`);
@@ -156,7 +171,7 @@ async function discoverOne(source: string): Promise<DiscoverResult> {
   const skipped: Skip[] = [];
 
   for (const { href, text } of anchors) {
-    const result = classify(href, text, sourceUrl);
+    const result = classify(href, text, sourceUrl, config);
     if ("skip" in result) {
       skipped.push({ url: href, reason: result.skip });
       continue;
@@ -189,13 +204,13 @@ function appendNewUrls(newUrls: string[]) {
 }
 
 async function main() {
-  if (!existsSync(SOURCES_FILE)) {
-    console.error(`Missing ${path.relative(ROOT, SOURCES_FILE)} — add one listing/index page URL per line.`);
-    process.exit(1);
-  }
-  const sources = readLineList(SOURCES_FILE);
+  // sources.txt holds freeform listing pages (legacy indiascholarships.in);
+  // sources.ts holds the configured adapters. Crawl both, deduped.
+  const fileSources = existsSync(SOURCES_FILE) ? readLineList(SOURCES_FILE) : [];
+  const configSources = SOURCES.flatMap((s) => s.listings);
+  const sources = [...new Set([...fileSources, ...configSources])];
   if (sources.length === 0) {
-    console.log(`${path.relative(ROOT, SOURCES_FILE)} has no URLs yet. Nothing to discover.`);
+    console.log("No listing pages in sources.txt or sources.ts. Nothing to discover.");
     return;
   }
 
