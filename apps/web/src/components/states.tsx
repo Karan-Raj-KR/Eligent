@@ -83,12 +83,12 @@ export function EmptyState({
       <div className="flex flex-col items-center gap-4 py-10 text-center">
         <span
           aria-hidden
-          className="grid size-14 place-items-center rounded-2xl bg-sand text-2xl font-bold text-muted2"
+          className="grid size-14 place-items-center rounded-2xl bg-sand text-2xl font-bold text-muted"
         >
           Ø
         </span>
         <h2 className="font-display text-2xl font-bold text-ink">{title}</h2>
-        <p className="max-w-sm text-[0.95rem] leading-relaxed text-muted2">{body}</p>
+        <p className="max-w-sm text-[0.95rem] leading-relaxed text-muted">{body}</p>
         <div className="pt-2">
           <Link href={actionHref}>
             <ClayButton variant="primary">{actionLabel}</ClayButton>
@@ -124,7 +124,7 @@ export function ErrorState({
           !
         </span>
         <h2 className="font-display text-2xl font-bold text-ink">{title}</h2>
-        <p className="max-w-sm text-[0.95rem] text-muted2">{body}</p>
+        <p className="max-w-sm text-[0.95rem] text-muted">{body}</p>
         <div className="pt-2">
           <ClayButton variant="soft" icon={<RefreshCw size={16} />} onClick={onRetry}>
             Try again

@@ -1,7 +1,3 @@
-// From the Eligent merge. CAUTION: opportunity.amount in our schema is TEXT
-// ("Up to 2,00,000"), never a number — see lib/gap.ts. Never call these on it;
-// they exist for numeric values like a profile's own income figure.
-
 /** "50000" -> "₹50,000" */
 export function inr(amount: number): string {
   return "₹" + amount.toLocaleString("en-IN");

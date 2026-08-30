@@ -159,7 +159,7 @@ export function ClayField({
       >
         {label}
         {optional && (
-          <span className="ml-1.5 font-medium text-soft2">(optional)</span>
+          <span className="ml-1.5 font-medium text-soft">(optional)</span>
         )}
       </label>
       {children}
@@ -168,7 +168,7 @@ export function ClayField({
           {error}
         </p>
       ) : hint ? (
-        <p className="text-[0.82rem] text-muted2">{hint}</p>
+        <p className="text-[0.82rem] text-muted">{hint}</p>
       ) : null}
     </div>
   );

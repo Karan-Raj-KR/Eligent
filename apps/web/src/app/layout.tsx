@@ -1,41 +1,45 @@
-import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { EligentProvider } from "@/components/provider";
+import { SiteFooter, SiteHeader } from "@/components/site-header";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "Eligent — scholarship eligibility",
-  description:
-    "See which scholarships you are actually eligible for, with the exact gap or the exact clause.",
-  // Static file rather than a generated route: installable on Android from the
-  // same codebase and the same login, with no extra API surface.
-  manifest: "/manifest.webmanifest",
-  applicationName: "Eligent",
-  appleWebApp: { capable: true, title: "Eligent", statusBarStyle: "default" },
-  icons: {
-    apple: "/icons/icon-180.png",
+  title: {
+    default: "ELIGENT — Know which scholarships you qualify for",
+    template: "%s · ELIGENT",
   },
+  description:
+    "Free tells you whether you qualify. ₹99 gets you ready to submit.",
+  metadataBase: new URL("https://eligent.in"),
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  // Matches --primary, so the Android status bar picks up the accent.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#2563eb" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>{children}</body>
+    <html
+      lang="en"
+      className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
+    >
+      <body className="flex min-h-full flex-col">
+        <EligentProvider>
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+        </EligentProvider>
+      </body>
     </html>
   );
 }

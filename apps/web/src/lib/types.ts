@@ -1,43 +1,119 @@
-import type { Criterion, Evaluation } from "@opportunity/engine";
+export type CriterionKind =
+  | "cgpa"
+  | "income"
+  | "year"
+  | "state"
+  | "branch"
+  | "category"
+  | "institution";
 
-export interface Opportunity {
+export interface EligibilityCriterion {
   id: string;
-  name: string;
-  provider: string | null;
-  url: string | null;
-  /** A date string, or null. Never assume it parses. */
-  deadline: string | null;
-  /** TEXT in the schema ("Up to 2,00,000"). Never a number, never .toLocaleString(). */
-  amount: string | null;
-  official_documents?: string[] | null;
+  kind: CriterionKind;
+  operator: "gte" | "lte" | "in";
+  /** Threshold value (number) or allowed list (string[]) */
+  value: number | string[];
+  /** Human readable label, e.g. "Minimum CGPA" */
+  label: string;
+  /** Short label used inside comparison rows, e.g. "CGPA" */
+  short: string;
+  /** Static clarification text */
+  note?: string;
 }
 
-export interface Match {
-  opportunity: Opportunity;
-  evaluation: Evaluation;
-  criteria: Criterion[];
+export type CriterionStatus = "pass" | "near" | "fail";
+
+export interface CriterionResult {
+  criterion: EligibilityCriterion;
+  status: CriterionStatus;
+  /** e.g. "CGPA 8.4 ≥ 8.0" */
+  comparison: string;
+  /** e.g. "0.2 CGPA short" */
+  reason: string;
+  /** Human sentence for the fail/near detail block */
+  detail: string;
 }
 
-export type Matches = Record<Evaluation["status"], Match[]>;
+export type MatchStatus = "ELIGIBLE" | "NEAR_MISS" | "NOT_ELIGIBLE";
+
+export type RequirementSource = "official" | "community";
 
 export interface Requirement {
   id: string;
-  document_type: string;
-  source: "official" | "community";
-  user_has: boolean | null;
+  label: string;
+  source: RequirementSource;
+  /** Handy note, e.g. "Photocopy, self-attested" */
+  note?: string;
+  communityReportCount?: number;
 }
 
-export interface ApplicationDetail {
-  application: { id: string; status: string; opportunity: Opportunity | null } | null;
-  requirements: Requirement[];
-  eligibility: Evaluation | null;
+export interface Scholarship {
+  id: string;
+  title: string;
+  provider: string;
+  amount: number;
+  amountNote?: string;
+  deadline: string;
+  summary: string;
+  officialRequirements: Requirement[];
+  communityRequirements: Requirement[];
+  criteria: EligibilityCriterion[];
+  /** Semester / cadence, e.g. "Every year" */
+  cadence?: string;
+  openFor?: string;
 }
 
-export const REPORT_TYPES = [
-  { value: "wrong_deadline", label: "The deadline is wrong" },
-  { value: "extra_document", label: "They asked for a document not listed" },
-  { value: "file_limit", label: "File upload limit problem" },
-  { value: "criteria_mismatch", label: "The eligibility criteria are wrong" },
-  { value: "closed", label: "Applications are closed" },
-  { value: "other", label: "Something else" },
-] as const;
+export type InstitutionType = "Government" | "Private" | "Aided";
+export type Category =
+  | "General"
+  | "OBC"
+  | "SC"
+  | "ST"
+  | "EWS"
+  | "Other";
+
+export interface UserProfile {
+  name: string;
+  cgpa: number;
+  year: number;
+  branch: string;
+  state: string;
+  income: number;
+  institutionType: InstitutionType;
+  category: Category;
+}
+
+export interface MatchResult {
+  scholarship: Scholarship;
+  status: MatchStatus;
+  results: CriterionResult[];
+  /** Failing criteria shown for NOT_ELIGIBLE */
+  failures: CriterionResult[];
+  /** Near criteria making a NEAR_MISS hiscore */
+  nearMisses: CriterionResult[];
+}
+
+export type ItemAvailability = "have" | "dont" | "unanswered";
+
+export interface ApplicationState {
+  scholarshipId: string;
+  /** requirement id -> availability */
+  items: Record<string, ItemAvailability>;
+  lastUpdated: number;
+}
+
+export type ReportTopic =
+  | "The deadline was wrong"
+  | "It asked for a document that wasn't listed"
+  | "There was a file size or format limit"
+  | "The criteria didn't match what was listed"
+  | "Applications are closed"
+  | "Something else";
+
+export interface ScholarshipReport {
+  id: string;
+  scholarshipId: string;
+  topic: ReportTopic;
+  details: string;
+  createdAt: number;
+}
