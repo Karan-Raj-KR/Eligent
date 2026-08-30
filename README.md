@@ -4,7 +4,7 @@
 
 Built in 24 hours at The Hive Sprint, Startup Park Bengaluru, 29–30 August 2026.
 
-🔗 **Live:** https://eligent.vercel.app  ·  🎥 **Demo (3 min):** [video link]
+🔗 **Live:** https://eligent.karanrajkr.com  ·  🎥 **Demo (3 min):** [video link]
 
 ---
 
