@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/supabase/server";
+// Same deep-relative import style as /api/discover reaching into scripts/.
+// vocab.ts is pure — no Supabase client, nothing that must not run in the app.
+import { canonicalValue } from "../../../../../../packages/db/vocab";
 
 // Columns a client may set. id/created_at are server-controlled.
 const EDITABLE_FIELDS = [
@@ -27,9 +30,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "full_name is required" }, { status: 400 });
   }
 
+  // Canonicalise categorical values on the way in. packages/engine compares
+  // them with === and is field-agnostic by design, so "female" from one client
+  // and "Female" from another must not become two different students.
   const row: Record<string, unknown> = { id: user.id };
   for (const field of EDITABLE_FIELDS) {
-    if (field in body) row[field] = body[field];
+    if (field in body) row[field] = canonicalValue(field, body[field]);
   }
 
   const { data, error } = await supabase.from("profile").upsert(row).select().single();

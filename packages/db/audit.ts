@@ -12,7 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 import { writeFileSync } from "node:fs";
 import { fetchPageAuto } from "../../scripts/lib/fetch-cache.js";
 import { htmlToText } from "../../scripts/lib/html.js";
-import { canonicalCriterionValue } from "./vocab.js";
+import { canonicalCriterion } from "./vocab.js";
 
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
   auth: { persistSession: false },
@@ -115,9 +115,12 @@ for (const o of rows) {
   // Vocabulary: does the stored value differ from its own canonical form?
   for (const c of o.criterion) {
     if (!CATEGORICAL.includes(c.field)) continue;
-    const canonical = canonicalCriterionValue(c.field, c.value);
-    if (JSON.stringify(canonical) !== JSON.stringify(c.value)) {
-      add(o.id, { kind: "VOCAB", detail: `${c.field} ${JSON.stringify(c.value)} → canonical ${JSON.stringify(canonical)}` });
+    const canonical = canonicalCriterion(c);
+    if (JSON.stringify(canonical.value) !== JSON.stringify(c.value) || canonical.operator !== c.operator) {
+      add(o.id, {
+        kind: "VOCAB",
+        detail: `${c.field} ${c.operator} ${JSON.stringify(c.value)} → ${canonical.operator} ${JSON.stringify(canonical.value)}`,
+      });
     }
   }
 

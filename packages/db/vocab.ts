@@ -66,8 +66,59 @@ export function canonicalValue(field: string, value: unknown): unknown {
   return SYNONYMS[trimmed.toLowerCase()] ?? titleCase(trimmed);
 }
 
-/** Canonicalises a criterion's value, including the array forms of in/not_in. */
-export function canonicalCriterionValue(field: string, value: unknown): unknown {
-  if (Array.isArray(value)) return value.map((v) => canonicalValue(field, v));
-  return canonicalValue(field, value);
+/**
+ * Stream -> the concrete branches the onboarding form actually offers.
+ *
+ * The listing pages publish a course taxonomy ("Course / Stream Engineering,
+ * Medical, Law") while a student picks from a branch list ("Computer Science",
+ * "Mechanical"). Left alone, `branch in ["Engineering", ...]` matches NOBODY —
+ * a computer science student is silently rejected from an engineering
+ * scholarship. Expanding the stream keeps the restriction exactly as strict
+ * (a Medical-only scholarship still excludes engineers) while making it
+ * possible to match at all. The criterion's source_text is untouched: the page
+ * still speaks for itself, this only translates its vocabulary into the one
+ * the profile is written in.
+ */
+const STREAM_BRANCHES: Record<string, string[]> = {
+  engineering: ["Computer Science", "Electronics", "Mechanical", "Civil", "Chemical", "CSE"],
+  technical: ["Computer Science", "Electronics", "Mechanical", "Civil", "Chemical", "CSE"],
+  "b.tech": ["Computer Science", "Electronics", "Mechanical", "Civil", "Chemical", "CSE"],
+  "computer science": ["Computer Science", "CSE"],
+  electronics: ["Electronics"],
+  mechanical: ["Mechanical"],
+  civil: ["Civil"],
+  chemical: ["Chemical"],
+};
+
+/** The concrete branches implied by a stream name, if any. */
+export function branchesForStream(value: string): string[] {
+  return STREAM_BRANCHES[value.trim().toLowerCase()] ?? [];
+}
+
+/**
+ * Canonicalises a whole criterion, because widening a branch can change the
+ * OPERATOR as well as the value: `eq "Engineering"` has to become
+ * `in ["Engineering", "Computer Science", ...]`. Returning only a value here
+ * would silently hand `eq` an array, which evaluate() reads as a categorical
+ * hard failure — rejecting everyone instead of matching more people.
+ */
+export function canonicalCriterion<T extends { field: string; operator: string; value: unknown }>(
+  criterion: T,
+): { operator: string; value: unknown } {
+  const { field, operator, value } = criterion;
+  const canonical = Array.isArray(value) ? value.map((v) => canonicalValue(field, v)) : canonicalValue(field, value);
+
+  if (field !== "branch" || (operator !== "eq" && operator !== "in")) {
+    return { operator, value: canonical };
+  }
+
+  // Branch is the one field where the page and the profile speak different
+  // languages. Widen the list to cover both; never narrow it. `not_in` is
+  // deliberately excluded — widening an exclusion list would lock people OUT.
+  const listed = (Array.isArray(canonical) ? canonical : [canonical]).filter((v): v is string => typeof v === "string");
+  const expanded = new Set(listed);
+  for (const entry of listed) for (const branch of branchesForStream(entry)) expanded.add(branch);
+  if (expanded.size === listed.length) return { operator, value: canonical };
+
+  return { operator: "in", value: [...expanded] };
 }

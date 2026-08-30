@@ -252,6 +252,65 @@ export function coerceNumericValue(value: unknown): unknown {
   return one(value);
 }
 
+/**
+ * Deterministic gender-restriction rule — no model involved.
+ *
+ * The Kotak Kanya bug: the page says "Note: Exclusively for girl students
+ * pursuing professional graduation", the extraction model never emitted a
+ * gender criterion, and a male profile was told he qualified. `gender` was
+ * already in the allowed-field list and the prompt already asked for it; the
+ * model just missed it, and a missed restriction is the one failure mode that
+ * hands a student a confidently wrong verdict.
+ *
+ * So this does not ask nicely. It reads the page itself and, when a programme
+ * is unambiguously restricted to girls/women, emits the criterion — with a
+ * verbatim quote, validated like any other.
+ *
+ * Two sources, in order of strength:
+ *   1. an exclusivity sentence on the page
+ *   2. the programme's own name ("... for Girl Students", "Kanya ...")
+ *
+ * Deliberately NOT a restriction: a quota ("50% reserved for girls"), a
+ * preference ("preference is given to female students"), an age relaxation.
+ * Boys can still apply and win in all three cases.
+ */
+const GENDER_EXCLUSIVE_SENTENCE =
+  /\b(?:exclusively|solely|restricted to|reserved (?:only )?for|meant (?:only )?for|open (?:only )?to|only for)\b[^.]{0,40}?\b(?:girls?|women|female)\b|\b(?:girls?|women|female)\s+(?:students?|candidates?|applicants?)\s+only\b/i;
+/** Softeners that turn a match into a non-restriction. */
+const GENDER_NOT_A_RESTRICTION = /\b(preference|priority|relaxation|encourage[sd]?)\b|\d+\s*%\s*(?:of\s+\w+\s+)?reserv|reservation for/i;
+/** Words that mark a programme as being for girls/women in its own title. */
+const GENDER_IN_NAME = /\b(girls?|women|kanya|mahila|balika)\b/i;
+
+export function genderRestriction(
+  name: string | null,
+  pageText: string,
+  normalizedPageText: string,
+): ValidatedCriterion | null {
+  const sentence = pageText
+    .split(/(?<=\.)\s+/)
+    .map((s) => s.trim())
+    .find((s) => GENDER_EXCLUSIVE_SENTENCE.test(s) && !GENDER_NOT_A_RESTRICTION.test(s));
+
+  // The name is a weaker source than an eligibility sentence, but it is still
+  // text the page publishes, and "For Young Women in Science" does tell a male
+  // student exactly why the answer is no.
+  const fromName = name && GENDER_IN_NAME.test(name) && !GENDER_NOT_A_RESTRICTION.test(name) ? name : null;
+
+  const sourceText = sentence ?? fromName;
+  if (!sourceText) return null;
+
+  // Same gate as every other criterion: quote it verbatim or do not ship it.
+  if (!normalizedPageText.includes(normalizeWhitespace(sourceText))) return null;
+
+  return {
+    field: "gender",
+    operator: "eq",
+    value: "Female",
+    display_text: "Open to women only",
+    source_text: sourceText.slice(0, 400),
+  };
+}
+
 export function validateCriterion(raw: RawCriterion, normalizedPageText: string): ValidatedCriterion | Rejection {
   const { field, operator, value, display_text, source_text } = raw;
 
@@ -414,6 +473,16 @@ async function harvestRecord(record: PageRecord): Promise<HarvestEntry> {
       accepted.push(result);
     }
   }
+  // Backstop for the one restriction the model demonstrably drops. Only fires
+  // when the model did not already produce a gender criterion of its own.
+  if (!accepted.some((c) => c.field === "gender")) {
+    const gender = genderRestriction(name, record.text, normalizedPageText);
+    if (gender) {
+      accepted.push(gender);
+      console.log(`    + gender criterion recovered from the page: "${gender.source_text.slice(0, 90)}"`);
+    }
+  }
+
   console.log(`    accepted ${accepted.length}, rejected ${rejectedCriteria.length}`);
 
   if (!name) console.log(`    no scholarship name — nothing will be seeded`);
