@@ -11,9 +11,14 @@ export async function GET() {
   const profile = await loadProfile(supabase, user.id);
   if (!profile) return NextResponse.json({ error: "complete onboarding first" }, { status: 400 });
 
-  const { data: opportunities, error } = await supabase
-    .from("opportunity")
-    .select("id, name, provider, url, deadline, amount, criterion(*)");
+  const FULL = "id, name, provider, url, deadline, amount, category, location_type, funded, criterion(*)";
+  const LEGACY = "id, name, provider, url, deadline, amount, criterion(*)";
+  let { data: opportunities, error } = await supabase.from("opportunity").select(FULL);
+  // The broaden migration may not have been applied yet — fall back so /matches
+  // keeps rendering. Rows then read as scholarship / india / true (the defaults).
+  if (error && /column .*(category|location_type|funded)/i.test(error.message)) {
+    ({ data: opportunities, error } = await supabase.from("opportunity").select(LEGACY));
+  }
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
   // The criteria ride along so the UI can show the verbatim source_text clause

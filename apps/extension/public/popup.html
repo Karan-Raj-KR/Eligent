@@ -1,120 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <title>Eligent</title>
-  <style>
-    :root { --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --accent:#2563eb; --accent-soft:#eff6ff; --warn:#b45309; --warn-soft:#fffbeb; --warn-line:#fcd34d; }
-    * { box-sizing: border-box; }
-    body { width: 360px; margin: 0; padding: 16px; font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--ink); background: #fff; }
-    h1 { font-size: 16px; margin: 0 0 2px; }
-    .sub { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
-    button { width: 100%; padding: 10px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
-    button:disabled { opacity: .55; cursor: not-allowed; }
-    button.secondary { background: transparent; color: var(--muted); font-weight: 500; font-size: 12px; padding: 6px; }
-    .card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
-    .card.blocked { border-color: var(--accent); background: var(--accent-soft); }
-    .card.warn { border-color: var(--warn-line); background: var(--warn-soft); }
-    .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 4px; }
-    .label.warn { color: var(--warn); }
-    .name { font-weight: 600; }
-    blockquote { margin: 8px 0 0; padding-left: 10px; border-left: 3px solid var(--accent); font-style: italic; color: #334155; font-size: 13px; }
-    .gap { margin-top: 8px; font-size: 13px; font-weight: 600; }
-    .note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 10px; }
-    .hidden { display: none; }
-    ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
-    ul li { margin: 2px 0; }
-    .missing { font-weight: 600; color: var(--warn); }
-    .skiplist li { color: var(--muted); font-size: 12px; }
-    .skiphdr { font-size: 11px; color: var(--muted); margin-top: 10px; text-transform: uppercase; letter-spacing: .04em; }
-    #status { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: center; }
-    #status.error { color: #b91c1c; }
-    #status.done { color: #15803d; }
-    .demo-bar { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; font-size: 12px; color: var(--muted); }
-    .demo-bar label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-    .demo-bar select { margin-top: 6px; width: 100%; font-size: 12px; padding: 4px; }
-  </style>
+  <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-  <h1>Eligent</h1>
-  <p class="sub">Fills only what you qualify for. Never submits.</p>
-
-  <div id="signed-out" class="hidden">
-    <div class="card">
-      <div class="label">Not connected</div>
-      <div>Sign in to Eligent, then open the application you want to fill.</div>
-    </div>
-    <button id="open-app">Open Eligent</button>
+  <div class="header">
+    <span class="wordmark"><span class="dot"></span>Eligent</span>
+    <span class="active-app" id="active-app"></span>
   </div>
 
-  <div id="no-application" class="hidden">
-    <div class="card">
-      <div class="label">Signed in</div>
-      <div>Open an application in Eligent first, so we know which scholarship this form is for.</div>
-    </div>
-    <button id="open-app-2">Open Eligent</button>
+  <div class="demo-banner hidden" id="demo-banner">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2 2 20h20L12 2Z"/><path d="M12 9v5M12 17h.01"/></svg>
+    Demo mode — bundled fixtures, no network
   </div>
 
-  <div id="ready" class="hidden">
-    <div class="card">
-      <div class="label">Application</div>
-      <div class="name" id="application-name">Your application</div>
-    </div>
-    <button id="fill">Check eligibility &amp; fill</button>
-    <p class="note">We stop before the submit button. Always.</p>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="home" aria-selected="true">Home</button>
+    <button class="tab" role="tab" data-tab="scan" aria-selected="false">Scan</button>
+    <button class="tab" role="tab" data-tab="setup" aria-selected="false">Setup</button>
   </div>
 
-  <!-- STATE: Filling (done, nothing unexpected) -->
-  <div id="filled" class="hidden">
-    <div class="card">
-      <div class="label">Filled</div>
-      <div id="filled-summary"></div>
-      <div id="filled-docs" class="note" style="text-align:left;margin-top:8px"></div>
-      <div id="filled-skipped-hdr" class="skiphdr hidden">Left for you</div>
-      <ul id="filled-skipped" class="skiplist hidden"></ul>
-    </div>
-    <button class="secondary" id="back">Done</button>
-  </div>
+  <!-- ===================================================== HOME ========= -->
+  <section class="panel" id="panel-home" role="tabpanel">
+    <div class="section-label">Setup</div>
 
-  <!-- STATE: Document detected -->
-  <div id="docs" class="hidden">
-    <div class="card warn">
-      <div class="label warn">Documents this form wants</div>
-      <div class="name" id="docs-headline"></div>
-      <div id="docs-lede" style="margin-top:6px"></div>
-      <ul id="docs-list" class="missing-list"></ul>
-    </div>
-    <div class="card">
-      <div id="docs-summary"></div>
-      <div class="skiphdr hidden" id="docs-skipped-hdr">Left for you</div>
-      <ul id="docs-skipped" class="skiplist hidden"></ul>
-    </div>
-    <button class="secondary" id="back-2">Done</button>
-  </div>
+    <button class="card" id="chk-signin">
+      <span class="check" id="chk-signin-mark"></span>
+      <span class="body">
+        <span class="title">Signed in</span>
+        <span class="meta" id="chk-signin-meta">Checking…</span>
+      </span>
+      <span class="chev" id="chk-signin-chev"></span>
+    </button>
 
-  <!-- STATE: Blocked -->
-  <div id="blocked" class="hidden">
-    <div class="card blocked">
-      <div class="label" id="blocked-reason">Not eligible</div>
-      <div class="name" id="blocked-clause"></div>
-      <blockquote id="blocked-source" class="hidden"></blockquote>
-      <div class="gap hidden" id="blocked-gap"></div>
+    <button class="card" id="chk-profile">
+      <span class="check" id="chk-profile-mark"></span>
+      <span class="body">
+        <span class="title">Profile complete</span>
+        <span class="meta" id="chk-profile-meta">—</span>
+        <span class="bar"><i id="chk-profile-bar" style="width:0%"></i></span>
+      </span>
+      <span class="chev" id="chk-profile-chev"></span>
+    </button>
+
+    <button class="card" id="chk-application">
+      <span class="check" id="chk-application-mark"></span>
+      <span class="body">
+        <span class="title">Open an application</span>
+        <span class="meta" id="chk-application-meta">Pick one from your matches</span>
+      </span>
+      <span class="chev" id="chk-application-chev"></span>
+    </button>
+
+    <div class="section-label" style="margin-top:6px">What it knows about you</div>
+    <input class="search" id="profile-search" type="text" placeholder="Filter fields…" autocomplete="off" />
+    <div class="kv" id="profile-kv"></div>
+
+    <p class="footnote">Your details stay in your browser. We never submit for you.</p>
+  </section>
+
+  <!-- ===================================================== SCAN ========= -->
+  <section class="panel hidden" id="panel-scan" role="tabpanel">
+    <button class="primary" id="scan-btn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>
+      Scan this page
+    </button>
+    <p class="footnote" id="scan-hint">
+      Open the application portal's form, then scan. Eligent checks the clause
+      first and fills nothing you can't win.
+    </p>
+
+    <div class="result hidden" id="scan-result"></div>
+  </section>
+
+  <!-- ===================================================== SETUP ======== -->
+  <section class="panel hidden" id="panel-setup" role="tabpanel">
+    <div class="field">
+      <label for="cfg-base">API base URL</label>
+      <input id="cfg-base" type="url" spellcheck="false" placeholder="http://localhost:3000" />
+      <span class="hint">Where your Eligent web app lives. Used to check eligibility and read your profile.</span>
     </div>
-    <p class="note">Nothing was filled in. Applying anyway would be rejected on this clause.</p>
-  </div>
 
-  <div id="status"></div>
-  <button class="secondary hidden" id="sign-out">Disconnect</button>
+    <div class="field">
+      <label for="cfg-key">Field-mapping model key (BYOK)</label>
+      <input id="cfg-key" type="password" spellcheck="false" placeholder="nvapi-…" />
+      <span class="hint">
+        Stored locally, sent only to the provider, nothing routes through us.
+        Used only when a form label isn't in the built-in dictionary — every
+        result is cached per site.
+      </span>
+    </div>
 
-  <div class="demo-bar">
-    <label><input type="checkbox" id="demo-toggle"> Demo mode — use bundled fixture, no network</label>
-    <div id="demo-case-wrap" class="hidden">
-      <select id="demo-case">
-        <option value="eligible">Eligible — fill + document diff</option>
-        <option value="blocked">Blocked — show the clause</option>
+    <div class="field">
+      <label for="cfg-llm-base">Model endpoint</label>
+      <input id="cfg-llm-base" type="url" spellcheck="false" placeholder="https://integrate.api.nvidia.com/v1" />
+      <span class="hint">NVIDIA NIM by default.</span>
+    </div>
+
+    <div class="field">
+      <label for="cfg-model">Model</label>
+      <input id="cfg-model" type="text" spellcheck="false" placeholder="meta/llama-3.3-70b-instruct" />
+    </div>
+
+    <button class="toggle" id="cfg-demo" aria-pressed="false">
+      <span class="body">
+        <span class="title">Demo mode</span>
+        <span class="meta">Bundled fixtures, zero network. For a venue with no wifi.</span>
+      </span>
+      <span class="switch"></span>
+    </button>
+
+    <div class="field hidden" id="cfg-demo-case-wrap">
+      <label for="cfg-demo-case">Demo scenario</label>
+      <select class="search" id="cfg-demo-case">
+        <option value="docdiff">Document diff — 2 unlisted uploads</option>
+        <option value="filled">Filled — some fields need you</option>
+        <option value="blocked">Blocked — income over the limit</option>
+        <option value="error">Error — browser page</option>
       </select>
     </div>
-  </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-top:2px">
+      <button class="ghost" id="cfg-save" style="width:auto;padding:8px 16px">Save settings</button>
+      <span class="saved-flash hidden" id="cfg-saved">Saved</span>
+    </div>
+
+    <div class="section-label" style="margin-top:8px">Danger zone</div>
+    <button class="danger" id="cfg-forget">Forget everything</button>
+    <p class="hint">Clears the session, cached label mappings, settings and demo state from this browser.</p>
+  </section>
 
   <script type="module" src="popup.js"></script>
 </body>

@@ -52,6 +52,10 @@ export interface ApiOpportunity {
   deadline: string | null;
   amount: string | null;
   official_documents?: string[] | null;
+  // Present once the broaden migration is applied; the route falls back without them.
+  category?: string | null;
+  location_type?: string | null;
+  funded?: boolean | null;
 }
 
 export interface ApiMatch {
@@ -200,6 +204,9 @@ export function toScholarship(o: ApiOpportunity, criteria: ApiCriterion[]): Scho
     amount: o.amount,
     deadline: o.deadline,
     url: o.url,
+    category: o.category ?? "scholarship",
+    locationType: (o.location_type as Scholarship["locationType"]) ?? "india",
+    funded: o.funded ?? true,
     // summary/cadence/openFor are not columns our API returns — left undefined
     // rather than invented. The UI treats them as optional.
     officialRequirements: (o.official_documents ?? []).map((label, i) => ({

@@ -181,7 +181,7 @@ export default function ApplyPage() {
         <div className="mt-3 flex items-center gap-2">
           <ClayBadge tone="cobalt">OFFICIAL</ClayBadge>
           <p className="text-[0.84rem] text-muted">
-            Listed by the scholarship
+            Listed by the provider
           </p>
         </div>
         {appError && (
@@ -194,7 +194,7 @@ export default function ApplyPage() {
         )}
         {app && officialReqs.length === 0 && (
           <p className="mt-4 text-[0.88rem] text-muted">
-            This scholarship has no official document list recorded yet.
+            This opportunity has no official document list recorded yet.
           </p>
         )}
         <ul className="mt-4 space-y-2.5">

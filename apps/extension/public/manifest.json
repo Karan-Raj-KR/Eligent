@@ -1,17 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Eligent — Scholarship Autofill",
-  "version": "0.2.0",
-  "description": "Fills a scholarship form from your saved profile, but only for scholarships you are actually eligible for. Never submits anything.",
+  "name": "Eligent",
+  "version": "0.3.0",
+  "description": "Fills an opportunity's application form from your saved profile — only when you actually qualify. It never submits, and never ticks a declaration.",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "http://localhost:3000/*",
     "https://*.vercel.app/*",
-    "https://*.buddy4study.com/*",
-    "https://*.reliancefoundation.org/*",
-    "http://localhost/*",
-    "file:///*"
+    "https://integrate.api.nvidia.com/*"
   ],
+  "optional_host_permissions": ["https://*/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"

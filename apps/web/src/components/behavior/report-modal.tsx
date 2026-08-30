@@ -83,7 +83,7 @@ function ReportDialog({
               Thanks.
             </h2>
             <p className="max-w-sm text-[0.98rem] leading-relaxed text-muted">
-              The next student applying to this scholarship will see it.
+              The next student applying to this opportunity will see it.
             </p>
             <ClayButton variant="soft" onClick={onClose}>
               Close
@@ -161,7 +161,7 @@ function ReportDialog({
               <p className="text-[0.8rem] text-soft">
                 {existingReportCount > 0
                   ? `${existingReportCount} applicant${existingReportCount === 1 ? "" : "s"} already reported this.`
-                  : "No reports for this scholarship yet."}
+                  : "No reports for this opportunity yet."}
               </p>
               <ClayButton
                 variant="primary"

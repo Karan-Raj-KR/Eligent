@@ -1,5 +1,7 @@
-# One listing/index page URL per line. Lines starting with # (and blank lines) are ignored.
-# Hand-curated — do not auto-populate. Run: pnpm tsx scripts/discover.ts
-https://www.buddy4study.com/scholarships/engineering
-https://www.buddy4study.com/scholarships/karnataka
-https://www.indiascholarships.in/scholarships
+# Freeform listing pages for discover.ts, one per line (# comments ignored).
+#
+# All active sources now live in scripts/sources.ts as config objects — each
+# with its own detail-page pattern — because the generic anchor heuristic pulls
+# in hundreds of non-detail links from index pages like
+# https://www.indiascholarships.in/scholarships . Add a line here only for a
+# one-off listing page that does not warrant a sources.ts entry.

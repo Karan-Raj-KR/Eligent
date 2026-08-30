@@ -73,7 +73,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  title = "No scholarships found yet.",
+  title = "No opportunities found yet.",
   body = "Check your details or explore opportunities with different criteria.",
   actionLabel = "Review my details",
   actionHref = "/onboarding",

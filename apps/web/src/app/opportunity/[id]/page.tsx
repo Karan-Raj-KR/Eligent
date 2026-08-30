@@ -42,7 +42,7 @@ export default function OpportunityPage() {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
         <EmptyState
-          title="This scholarship isn't in our dataset."
+          title="This opportunity isn't in our dataset."
           body="It may have been removed, or the link is stale."
           actionLabel="Back to matches"
           actionHref="/matches"
@@ -164,7 +164,7 @@ export default function OpportunityPage() {
         <p className="mt-1 text-[0.86rem] text-muted">
           {scholarship.officialRequirements.length > 0
             ? "The complete list of documents the portal will ask for."
-            : "Start the application to pull the document checklist for this scholarship."}
+            : "Start the application to pull the document checklist for this opportunity."}
         </p>
         <ul className="mt-4 space-y-2">
           {scholarship.officialRequirements.map((req) => (

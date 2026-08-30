@@ -1,0 +1,565 @@
+/* Eligent extension — the only stylesheet. Dark, 380px, one accent (--accent). */
+
+:root {
+  --bg: #0b0d10;
+  --surface: #14171c;
+  --surface-2: #1b1f26;
+  --border: #262c35;
+  --border-soft: #1f242c;
+  --text: #e7e9ec;
+  --text-dim: #9aa2ae;
+  --text-faint: #6b7280;
+  --accent: #5b8cff;
+  --accent-ink: #ffffff;
+  --accent-soft: #16203a;
+  --ok: #4ade80;
+  --block: #ff6b6b;
+  --block-soft: #24151a;
+  --block-border: #4c2530;
+  --warn: #e6b450;
+  --warn-soft: #241f14;
+  --warn-border: #4a3f22;
+  --radius: 12px;
+  --radius-sm: 9px;
+  --pad: 16px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  width: 380px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 13.5px/1.55 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+svg {
+  display: block;
+  flex: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------------- header --- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px var(--pad);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  font-size: 14px;
+}
+
+.wordmark .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.header .active-app {
+  margin-left: auto;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------------ tabs --- */
+
+.tabs {
+  display: flex;
+  padding: 8px var(--pad) 0;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.tab {
+  flex: 1;
+  padding: 9px 4px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-faint);
+  border-bottom: 2px solid transparent;
+  transition: color 0.12s;
+}
+
+.tab:hover {
+  color: var(--text-dim);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+/* ------------------------------------------------------------- tab panels --- */
+
+.panel {
+  padding: var(--pad);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ------------------------------------------------------------------ cards --- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 13px 14px;
+}
+
+button.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+button.card:hover {
+  border-color: #313945;
+  background: var(--surface-2);
+}
+
+.card .check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: grid;
+  place-items: center;
+  color: var(--text-faint);
+}
+
+.card .check.done {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.card .check.done svg {
+  stroke: var(--ok);
+}
+
+.card .body {
+  flex: 1;
+  min-width: 0;
+}
+
+.card .title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.card .meta {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 1px;
+}
+
+.card .chev {
+  color: var(--text-faint);
+}
+
+/* --------------------------------------------------------- progress bar --- */
+
+.bar {
+  height: 4px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-top: 7px;
+}
+
+.bar > i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.25s;
+}
+
+/* -------------------------------------------------------- profile panel --- */
+
+.search {
+  width: 100%;
+  padding: 9px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: inherit;
+}
+
+.search::placeholder {
+  color: var(--text-faint);
+}
+
+.search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.kv {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kv .row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+.kv .row .k {
+  font-size: 12px;
+  color: var(--text-dim);
+  width: 116px;
+  flex: none;
+}
+
+.kv .row .v {
+  font-weight: 600;
+  font-size: 13px;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.kv .row .v.empty {
+  font-weight: 500;
+  color: var(--text-faint);
+}
+
+.kv .row .src {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.footnote {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  line-height: 1.5;
+  padding-top: 2px;
+}
+
+/* -------------------------------------------------------------- scan tab --- */
+
+.primary {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 650;
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.primary:hover {
+  filter: brightness(1.07);
+}
+
+.primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ghost {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.ghost:hover {
+  color: var(--text);
+  border-color: #313945;
+}
+
+.result {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.result .strip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 14px;
+  font-weight: 650;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.result .inner {
+  padding: 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.result.filled .strip {
+  color: var(--ok);
+}
+.result.blocked {
+  border-color: var(--block-border);
+}
+.result.blocked .strip {
+  color: var(--block);
+  background: var(--block-soft);
+}
+.result.diff {
+  border-color: var(--warn-border);
+}
+.result.diff .strip {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+.result.error .strip {
+  color: var(--text-dim);
+}
+
+.lead {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.result .inner p {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.list li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 12.5px;
+  padding: 7px 10px;
+  background: var(--surface-2);
+  border-radius: 7px;
+}
+
+.list li::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  flex: none;
+  transform: translateY(-2px);
+}
+
+.list.want li::before {
+  background: var(--warn);
+}
+
+.list li b {
+  font-weight: 600;
+  color: var(--text);
+}
+
+blockquote {
+  border-left: 2px solid var(--block);
+  padding: 4px 0 4px 11px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ------------------------------------------------------------- setup tab --- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.field input[type="text"],
+.field input[type="password"],
+.field input[type="url"] {
+  width: 100%;
+  padding: 9px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: inherit;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.field .hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  line-height: 1.5;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.toggle .body {
+  flex: 1;
+}
+
+.toggle .title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.toggle .meta {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 1px;
+}
+
+.switch {
+  width: 38px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  position: relative;
+  flex: none;
+  transition: background 0.15s;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.toggle[aria-pressed="true"] .switch {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.toggle[aria-pressed="true"] .switch::after {
+  transform: translateX(16px);
+  background: var(--accent);
+}
+
+.danger {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--block-border);
+  color: var(--block);
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.danger:hover {
+  background: var(--block-soft);
+}
+
+.saved-flash {
+  font-size: 11px;
+  color: var(--ok);
+}
+
+.demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px var(--pad);
+  background: var(--warn-soft);
+  border-bottom: 1px solid var(--warn-border);
+  color: var(--warn);
+  font-size: 11.5px;
+  font-weight: 600;
+}

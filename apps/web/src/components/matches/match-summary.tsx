@@ -17,7 +17,7 @@ export function MatchSummary({ counts }: MatchSummaryProps) {
     <section aria-labelledby="match-hero-title">
       <p className="kicker text-cobalt">
         <span aria-hidden className="mr-2 inline-block size-2 rounded-full bg-cobalt align-middle" />
-        Your scholarship matches
+        Your opportunity matches
       </p>
 
       <div className="mt-6">
@@ -37,7 +37,7 @@ export function MatchSummary({ counts }: MatchSummaryProps) {
       <p className="mt-6 max-w-xl text-[1.05rem] leading-relaxed text-muted">
         You qualify for{" "}
         <strong className="font-semibold text-ink">
-          {counts.eligible} scholarships
+          {counts.eligible} opportunities
         </strong>
         . Here's why the other {others} said no.
       </p>
@@ -86,7 +86,7 @@ export function ProfilePanel({ profile, total }: { profile: UserProfile; total?:
           <p className="mt-0.5 text-[0.85rem] text-muted">
             {total === undefined
               ? "Evaluated against your profile."
-              : `${total} scholarship${total === 1 ? "" : "s"} evaluated against your profile.`}
+              : `${total} opportunit${total === 1 ? "y" : "ies"} evaluated against your profile.`}
           </p>
         </div>
         <Link
