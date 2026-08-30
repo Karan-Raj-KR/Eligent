@@ -12,8 +12,16 @@ export const maxDuration = 60;
 /** Money is on the table. These are the only categories the aid figure may touch. */
 const FUNDED_CATEGORIES = ["scholarship", "fellowship", "grant"];
 
-/** A student is "within reach" of a CGPA-only gap this size. */
+/**
+ * "Within reach": the student fails exactly one criterion, it is academic, and
+ * the gap is small enough to close.
+ *
+ * Both units are measured because the catalogue does not speak in CGPA — every
+ * funded opportunity in it states its academic bar as a percentage. Reporting
+ * only the CGPA figure would print a permanent 0 and bury a real finding.
+ */
 const CGPA_REACH = 0.3;
+const PERCENTAGE_REACH = 3;
 
 function blockerLabel(c: { displayText?: string; field: string }): string {
   return c.displayText ?? c.field;
@@ -69,6 +77,8 @@ export async function POST(request: Request) {
   let totalAid = 0;
   let studentsWithUnpricedBest = 0;
   let withinCgpaReach = 0;
+  let withinPercentageReach = 0;
+  const openBlockers = new Map<string, number>();
 
   const bump = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1);
 
@@ -82,7 +92,8 @@ export async function POST(request: Request) {
 
     /** Nearest miss across the catalogue, for the zero-match blocker tally. */
     let nearest: Evaluation | null = null;
-    let nearlyThere = false;
+    let nearlyThereCgpa = false;
+    let nearlyTherePercentage = false;
 
     for (const opp of funded) {
       const evaluation = evaluateOpportunity(profile as Profile, opp.criterion ?? []);
@@ -103,16 +114,11 @@ export async function POST(request: Request) {
         if (!nearest || evaluation.failed.length < nearest.failed.length) nearest = evaluation;
 
         // (4) Actionable for a college: the only thing between this student and
-        // this scholarship is a CGPA they could plausibly reach.
-        if (
-          !nearlyThere &&
-          evaluation.failed.length === 1 &&
-          evaluation.failed[0].field === "cgpa" &&
-          evaluation.failed[0].gap &&
-          evaluation.failed[0].gap.direction === "short" &&
-          evaluation.failed[0].gap.amount <= CGPA_REACH
-        ) {
-          nearlyThere = true;
+        // this scholarship is an academic bar they could plausibly reach.
+        const only = evaluation.failed.length === 1 ? evaluation.failed[0] : null;
+        if (only?.gap && only.gap.direction === "short") {
+          if (only.field === "cgpa" && only.gap.amount <= CGPA_REACH) nearlyThereCgpa = true;
+          if (only.field === "percentage" && only.gap.amount <= PERCENTAGE_REACH) nearlyTherePercentage = true;
         }
       }
     }
@@ -120,9 +126,16 @@ export async function POST(request: Request) {
     let eligibleForOpen = false;
     for (const opp of open) {
       const evaluation = evaluateOpportunity(profile as Profile, opp.criterion ?? []);
-      if (evaluation.status !== "eligible") continue;
-      eligibleForOpen = true;
-      bump(openEligible, opp.id);
+      if (evaluation.status === "eligible") {
+        eligibleForOpen = true;
+        bump(openEligible, opp.id);
+      } else {
+        // Why open opportunities reject people. A roster CSV carries none of
+        // student_status / age / team_size / nationality, and the engine treats
+        // a missing value as a hard failure — so a flat 0 here is a data gap,
+        // not a finding about these students. Say which fields did it.
+        for (const f of evaluation.failed) bump(openBlockers, f.field);
+      }
     }
 
     if (eligibleForFunded) {
@@ -131,7 +144,8 @@ export async function POST(request: Request) {
       else if (bestAwardIsUnpriced) studentsWithUnpricedBest++;
     }
     if (eligibleForOpen) qualifiedOpen++;
-    if (nearlyThere) withinCgpaReach++;
+    if (nearlyThereCgpa) withinCgpaReach++;
+    if (nearlyTherePercentage) withinPercentageReach++;
 
     if (!eligibleForFunded && !eligibleForOpen) {
       qualifiedNothing++;
@@ -161,12 +175,18 @@ export async function POST(request: Request) {
         return { id, name: o.name, provider: o.provider, amount: o.amount, students };
       });
 
-  // (4) The biggest pool of students who ALMOST qualify — where a small policy
-  // change unlocks the most people.
+  // (4) Where the most students land just outside.
+  //
+  // Ranked by how many students nearly qualify, NOT by (nearMiss - eligible).
+  // On real data that subtraction is negative everywhere — more students
+  // qualify than nearly qualify — so "largest gap" selects the least negative
+  // row, which was a scholarship with 5 near-misses over one with 40. The
+  // useful answer, and the one a principal acts on, is where the biggest group
+  // of students sits one criterion outside. Both counts are returned so the
+  // relationship stays visible rather than asserted.
   const mostMissed = [...fundedNearMiss.entries()]
     .map(([id, nearMiss]) => ({ id, nearMiss, eligible: fundedEligible.get(id) ?? 0 }))
-    .map((r) => ({ ...r, gap: r.nearMiss - r.eligible }))
-    .sort((a, b) => b.gap - a.gap)[0];
+    .sort((a, b) => b.nearMiss - a.nearMiss)[0];
 
   const topBlocker = [...blockers.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
 
@@ -201,16 +221,19 @@ export async function POST(request: Request) {
       totalAid,
       studentsWithUnpricedBest,
       topOpportunities: top(fundedEligible),
-      mostMissed: mostMissed && mostMissed.gap > 0
+      mostMissed: mostMissed
         ? { name: nameOf.get(mostMissed.id)!.name, nearMiss: mostMissed.nearMiss, eligible: mostMissed.eligible }
         : null,
       withinCgpaReach,
       cgpaReach: CGPA_REACH,
+      withinPercentageReach,
+      percentageReach: PERCENTAGE_REACH,
     },
 
     open: {
       qualified: qualifiedOpen,
       topOpportunities: top(openEligible),
+      blockingFields: [...openBlockers.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([field]) => field),
     },
 
     qualifiedNothing,
