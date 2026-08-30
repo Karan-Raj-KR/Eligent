@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEligent } from "@/components/provider";
+import { toCounts } from "@/lib/adapt";
+import type { MatchGroups } from "@/lib/types";
 import {
   MatchesLoading,
   ErrorState,
@@ -13,11 +15,43 @@ import { MatchSummary, ProfilePanel } from "@/components/matches/match-summary";
 import { EligibilityCard } from "@/components/matches/eligibility-card";
 import { NearMissCard } from "@/components/matches/near-miss-card";
 import { RejectedCard } from "@/components/matches/rejected-card";
+import { FindMore } from "@/components/matches/find-more";
 
 type Phase = "loading" | "ready" | "error";
 
+// Category chips filter client-side over the same three buckets. Default "All".
+const CATEGORY_CHIPS: Array<[string, string[] | null]> = [
+  ["All", null],
+  ["Scholarships", ["scholarship", "fellowship", "grant"]],
+  ["Hackathons", ["hackathon"]],
+  ["Internships", ["internship"]],
+  ["Programmes", ["programme"]],
+  ["Events", ["event", "competition"]],
+];
+
+const LOCATION_CHIPS: Array<[string, string | null]> = [
+  ["All", null],
+  ["India", "india"],
+  ["Abroad", "abroad"],
+  ["Online", "online"],
+];
+
+function filterGroups(groups: MatchGroups, cats: string[] | null, loc: string | null): MatchGroups {
+  const keep = (m: MatchGroups["eligible"][number]) => {
+    const s = m.scholarship;
+    if (cats && !cats.includes(s.category ?? "scholarship")) return false;
+    if (loc && (s.locationType ?? "india") !== loc) return false;
+    return true;
+  };
+  return {
+    eligible: groups.eligible.filter(keep),
+    nearMiss: groups.nearMiss.filter(keep),
+    notEligible: groups.notEligible.filter(keep),
+  };
+}
+
 const STEPS = [
-  ["QUALIFY", "Free check against every scholarship we hold official criteria for."],
+  ["QUALIFY", "Free check against every opportunity we hold official criteria for."],
   ["UNDERSTAND", "Exactly why you qualify — or by how much you miss."],
   ["CHECK", "Every document, official and community-reported."],
   ["PREPARE", "₹99 Apply Mode gets what you need, counted, no guesswork."],
@@ -29,6 +63,16 @@ export default function MatchesPage() {
   const { hydrated, signedIn, user, groups, counts, loading, error, refresh } = useEligent();
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading");
+  const [category, setCategory] = useState("All");
+  const [locationType, setLocationType] = useState("All");
+
+  const view = useMemo(() => {
+    if (!groups) return null;
+    const cats = CATEGORY_CHIPS.find(([k]) => k === category)?.[1] ?? null;
+    const loc = LOCATION_CHIPS.find(([k]) => k === locationType)?.[1] ?? null;
+    return filterGroups(groups, cats, loc);
+  }, [groups, category, locationType]);
+  const vCounts = useMemo(() => (view ? toCounts(view) : null), [view]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -46,7 +90,11 @@ export default function MatchesPage() {
   }, [hydrated, signedIn, user, router, loading, error, groups]);
 
   const notHydrated = !hydrated || !user;
-  const showSkeleton = notHydrated || phase === "loading";
+  // Only blank the page to a skeleton on the FIRST load. A later refresh (the
+  // "Find more" run finishing) must re-render in place — swapping to the
+  // skeleton would unmount that panel and destroy the progress log and
+  // rejection list at the exact moment the user wants to read them.
+  const showSkeleton = notHydrated || (phase === "loading" && !groups);
   const showError = phase === "error";
   const showEmpty =
     phase === "ready" && groups && counts && counts.eligible + counts.nearMiss === 0;
@@ -72,7 +120,7 @@ export default function MatchesPage() {
     );
   }
 
-  if (showEmpty || !groups || !counts) {
+  if (showEmpty || !groups || !counts || !view || !vCounts) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
         <EmptyState />
@@ -80,18 +128,38 @@ export default function MatchesPage() {
     );
   }
 
-  const others = counts.total - counts.eligible;
+  const others = vCounts.total - vCounts.eligible;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
       <div className="grid gap-10 lg:grid-cols-[1fr_360px] lg:items-start lg:gap-14">
-        <MatchSummary counts={counts} />
+        <MatchSummary counts={vCounts} />
         <ProfilePanel profile={user} total={counts.total} />
       </div>
 
-      <p className="mt-10 max-w-2xl text-[0.92rem] leading-relaxed text-muted">
-        The other {others} were evaluated too — checked, not skipped. No
-        greyed-out cards. That's how you know the {counts.eligible} are real.
+      <div className="mt-8 flex flex-col gap-3">
+        <ChipRow
+          label="Category"
+          options={CATEGORY_CHIPS.map(([k]) => k)}
+          active={category}
+          onSelect={setCategory}
+        />
+        <ChipRow
+          label="Location"
+          options={LOCATION_CHIPS.map(([k]) => k)}
+          active={locationType}
+          onSelect={setLocationType}
+        />
+      </div>
+
+      <div className="mt-8">
+        <FindMore />
+      </div>
+
+      <p className="mt-8 max-w-2xl text-[0.92rem] leading-relaxed text-muted">
+        {category === "All" && locationType === "All"
+          ? `The other ${others} were evaluated too — checked, not skipped. No greyed-out cards. That's how you know the ${vCounts.eligible} are real.`
+          : `Showing ${vCounts.total} opportunit${vCounts.total === 1 ? "y" : "ies"} in this filter. Every one was still evaluated against your profile.`}
       </p>
 
       {/* ELIGIBLE */}
@@ -100,11 +168,11 @@ export default function MatchesPage() {
           id="eligible-heading"
           kicker="Official check passed"
           title="Eligible"
-          count={counts.eligible}
+          count={vCounts.eligible}
           caption="You pass every official criterion. Use the Eligent extension to fill the real form."
         />
         <div className="space-y-4">
-          {groups.eligible.map((match) => (
+          {view.eligible.map((match) => (
             <EligibilityCard key={match.scholarship.id} match={match} />
           ))}
         </div>
@@ -116,11 +184,11 @@ export default function MatchesPage() {
           id="near-miss-heading"
           kicker="Close — but rejected at the cutoff"
           title="Near miss"
-          count={counts.nearMiss}
+          count={vCounts.nearMiss}
           caption="Don't start these applications. The portal will still say no."
         />
         <div className="space-y-4">
-          {groups.nearMiss.map((match) => (
+          {view.nearMiss.map((match) => (
             <NearMissCard key={match.scholarship.id} match={match} />
           ))}
         </div>
@@ -132,11 +200,11 @@ export default function MatchesPage() {
           id="not-eligible-heading"
           kicker="We checked. Here's why not."
           title="Not eligible"
-          count={counts.notEligible}
+          count={vCounts.notEligible}
           caption="Every one of these was actually evaluated. Expand any card to see the exact reason."
         />
         <div className="space-y-2">
-          {groups.notEligible.map((match) => (
+          {view.notEligible.map((match) => (
             <RejectedCard key={match.scholarship.id} match={match} />
           ))}
         </div>
@@ -174,6 +242,37 @@ export default function MatchesPage() {
           </ol>
         </ClayPanel>
       </section>
+    </div>
+  );
+}
+
+function ChipRow({
+  label,
+  options,
+  active,
+  onSelect,
+}: {
+  label: string;
+  options: string[];
+  active: string;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-soft">{label}</span>
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={active === option}
+          onClick={() => onSelect(option)}
+          className={`clay-badge !px-3 !py-1.5 text-[0.82rem] transition-[filter,background] hover:brightness-95 ${
+            active === option ? "clay-badge--cobalt" : ""
+          }`}
+        >
+          {option}
+        </button>
+      ))}
     </div>
   );
 }
