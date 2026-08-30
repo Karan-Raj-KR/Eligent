@@ -13,9 +13,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase";
 import {
   fromUserProfile,
@@ -94,7 +96,17 @@ export function EligentProvider({ children }: { children: ReactNode }) {
   const [groups, setGroups] = useState<MatchGroups | null>(null);
   const [reports, setReports] = useState<ScholarshipReport[]>([]);
 
-  const supabase = useMemo(() => createClient(), []);
+  // Built on first use, never during render. This provider sits in the root
+  // layout, so it renders during static prerendering too — and createClient() is
+  // a *browser* client whose env read throws by design when unset. Constructing
+  // it eagerly meant every static page (/_not-found included) tried to build a
+  // Supabase client on the server at build time and crashed the build.
+  // Every caller below runs in an effect or an event handler, i.e. the browser.
+  const supabaseRef = useRef<SupabaseClient | null>(null);
+  const getSupabase = useCallback(() => {
+    if (!supabaseRef.current) supabaseRef.current = createClient();
+    return supabaseRef.current;
+  }, []);
 
   /** Loads the profile, and the matches if the profile is complete enough. */
   const load = useCallback(async () => {
@@ -106,7 +118,7 @@ export function EligentProvider({ children }: { children: ReactNode }) {
       // is write-only. Reading it here avoids growing the API for the UI.
       const {
         data: { user: authUser },
-      } = await supabase.auth.getUser();
+      } = await getSupabase().auth.getUser();
       if (!authUser) {
         setSignedIn(false);
         setUser(null);
@@ -114,7 +126,7 @@ export function EligentProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data: profileRow } = await supabase
+      const { data: profileRow } = await getSupabase()
         .from("profile")
         .select("*")
         .eq("id", authUser.id)
@@ -144,7 +156,7 @@ export function EligentProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [getSupabase]);
 
   // Establish identity, then load. Anonymous auth only — no OAuth, no redirects.
   useEffect(() => {
@@ -152,7 +164,7 @@ export function EligentProvider({ children }: { children: ReactNode }) {
     (async () => {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await getSupabase().auth.getSession();
       if (cancelled) return;
 
       if (session) {
@@ -165,25 +177,25 @@ export function EligentProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [supabase, load]);
+  }, [getSupabase, load]);
 
   const signIn = useCallback(async () => {
     setError(null);
-    const { error: authError } = await supabase.auth.signInAnonymously();
+    const { error: authError } = await getSupabase().auth.signInAnonymously();
     if (authError) {
       setError(authError.message);
       return;
     }
     setSignedIn(true);
     await load();
-  }, [supabase, load]);
+  }, [getSupabase, load]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    await getSupabase().auth.signOut();
     setSignedIn(false);
     setUser(null);
     setGroups(null);
-  }, [supabase]);
+  }, [getSupabase]);
 
   const setProfile = useCallback(
     async (profile: UserProfile) => {
