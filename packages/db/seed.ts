@@ -11,12 +11,19 @@ export interface SeedCriterion {
   source_text: string;
 }
 
+export type OpportunityCategory =
+  | "scholarship" | "fellowship" | "grant" | "hackathon"
+  | "internship" | "programme" | "event" | "competition";
+
 export interface SeedOpportunity {
   name: string;
   provider: string | null;
   url: string;
   deadline: string | null;
   amount: string | null;
+  category: OpportunityCategory;
+  location_type: "india" | "abroad" | "online";
+  funded: boolean;
   official_documents: string[];
   criteria: SeedCriterion[];
 }
@@ -28,6 +35,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/reliance-foundation-undergraduate-scholarship",
     deadline: "2026-10-14",
     amount: "₹50k+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Class 12 Marks memo showing >= 60%","Domicile / Indian Citizenship proof","Family Income Certificate (< ₹15 Lakhs)","College Admission confirmation & regular student bonafide","Aadhaar card & passport photo"],
     criteria: [
       {
@@ -52,6 +62,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/foundation-for-excellence-ffe-scholarship",
     deadline: "2026-10-30",
     amount: "₹1.0 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: [],
     criteria: [
       {
@@ -83,6 +96,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/siemens-scholarship-program",
     deadline: "2026-10-30",
     amount: "₹1.2 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["SSC and HSC mark sheets","income proof","admission letter","age proof","bank details","photos (standard for such scholarships)"],
     criteria: [
       {
@@ -107,6 +123,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/sbi-platinum-jubilee-asha-scholarship",
     deadline: "2026-10-30",
     amount: "₹20.0 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Aadhaar Card","Passport Photo","Previous Year Marksheet","Income Certificate","Admission Proof","Bank Passbook"],
     criteria: [
       {
@@ -138,6 +157,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/cm-raitha-vidya-nidhi-farmers-children-scholarship-karnataka",
     deadline: "2026-12-30",
     amount: "₹11k+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["FRUITS ID (Farmer ID)","Aadhaar Card","Student ID Proof","Previous Year Marksheet","Bank Passbook"],
     criteria: [
       {
@@ -155,6 +177,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/labour-department-scheme-for-unorganized-workers-children-karnataka",
     deadline: "2026-12-30",
     amount: "₹11k+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Labour Card / Contribution Proof","Aadhaar Card","Student Marksheet","College Fee Receipt","Bank Passbook"],
     criteria: [
       {
@@ -193,6 +218,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/ssp-pre-matric-post-matric-scholarship-karnataka",
     deadline: "2026-11-29",
     amount: "₹1.0 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: [],
     criteria: [
       {
@@ -217,6 +245,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/gyandhan-scholarship",
     deadline: null,
     amount: "₹2.5 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Aadhaar Card","Proof of enrollment/admission for 2026 intake","Resume/CV"],
     criteria: [
       {
@@ -241,6 +272,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/aditya-birla-scholarship-programme",
     deadline: "2026-10-30",
     amount: "₹3.0 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Aditya Birla Scholarship application form","Letters of recommendation from faculty/director","Entrance exam scorecard (CAT/JEE/CLAT/etc.)","Recent passport size photograph","Short essays as specified by the foundation"],
     criteria: [
       {
@@ -258,6 +292,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/bharti-airtel-scholarship-program",
     deadline: "2026-10-30",
     amount: "₹3.0 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Aadhaar/PAN/Driving License","Admission Proof","Class 12 Marksheet","JEE/University Entrance Scorecard","Family Income Proof","Bank Account Details (Aadhaar-linked)","Institution Bank Details","Passport Photo","Statement of Purpose","Hostel/PG Rent Receipts (if applicable)","Proof of Extra-curricular activities/achievements (if applicable)"],
     criteria: [
       {
@@ -296,6 +333,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/bits-pilani-board-topper-alumni-scholarships",
     deadline: "2026-10-30",
     amount: "₹6.0 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Board Rank Certificate","Class 12 Marksheet","Parental Income Certificate","CGPA Transcript"],
     criteria: [
       {
@@ -327,6 +367,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/viteee-gvsdp-merit-scholarship",
     deadline: "2026-10-30",
     amount: "₹4.5 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["VITEEE Scorecard & Admit card","Class 12 Marksheet","Parental Income Certificate (optional, for MCN check)"],
     criteria: [
       {
@@ -351,6 +394,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/tata-aia-paras-scholarship",
     deadline: "2026-11-29",
     amount: "₹15k+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Class 12 Marksheet","Income Certificate (less than 5 Lakhs)","Admission Proof (Fee receipt/College ID)","Aadhaar Card","Bank Passbook copy","Disability or Caste Certificate (if applicable)"],
     criteria: [
       {
@@ -375,6 +421,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/narotam-sekhsaria-postgraduate-scholarship",
     deadline: "2026-10-30",
     amount: "₹20.0 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Degree Certificate","Marksheets","GRE/GMAT/IELTS scores","Admission Letter","LORs","Passport"],
     criteria: [
       {
@@ -392,6 +441,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/raman-kant-munjal-scholarship",
     deadline: "2026-08-30",
     amount: "₹5.5 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Class 10 Marksheet","Class 12 Marksheet","Proof of current academic enrollment (College ID/fee receipt)","Parent's PAN card & masked Aadhaar card","Annual parental income proof (ITR/Income Certificate/salary slips)","Applicant's bank account details (passbook/cancelled cheque)","Bank account statements of parents","Affidavit declaring document authenticity","LinkedIn Profile URL"],
     criteria: [
       {
@@ -430,6 +482,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/kotak-kanya-scholarship",
     deadline: "2026-08-30",
     amount: "₹1.5 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Class 10 & 12 marks memo showing >= 75%","Family Income Certificate (< ₹6 Lakhs)","College Fee receipts & admission letter","Student's Aadhaar card & passport photo","Aadhaar-seeded bank account details"],
     criteria: [
       {
@@ -454,6 +509,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/loreal-fyws-scholarship",
     deadline: "2026-10-30",
     amount: "₹1.0 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Identity proof","Income certificate","Academic transcripts","Admission proof"],
     criteria: [
       {
@@ -492,6 +550,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/tata-realty-scholarship-for-girls",
     deadline: "2026-10-30",
     amount: "₹1.0 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Aadhaar Card","Class 10 and 12 Marksheets","Income Certificate (less than 5 Lakhs)","B.Arch Admission Proof","Current Year Fee Receipt","Bank Passbook copy"],
     criteria: [
       {
@@ -530,6 +591,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/aicte-pragati-scholarship-for-girl-students",
     deadline: "2026-10-30",
     amount: "₹50k+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Aadhaar card of the girl student","Family Income Certificate (< ₹8 Lakhs)","Class 10 & 12 marksheets","Admission receipt and AICTE approved college bonafide certificate","Aadhaar-seeded bank account details"],
     criteria: [
       {
@@ -568,6 +632,9 @@ export const seedOpportunities: SeedOpportunity[] = [
     url: "https://www.indiascholarships.in/scholarships/digital-gujarat-scholarship-portal",
     deadline: "2026-09-29",
     amount: "₹60k+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
     official_documents: ["Aadhaar Card","Caste Certificate","Income Certificate (issued by Mamlatdar/TDO)","School/College Leaving Certificate","Hostel Certificate (if applicable)","Bank passbook page"],
     criteria: [
       {
@@ -584,6 +651,513 @@ export const seedOpportunities: SeedOpportunity[] = [
         display_text: "Income Limit Up to ₹6.0 Lakh/year",
         source_text: "Income Limit Up to ₹6.0 Lakh/year",
       }
+    ],
+  },
+  {
+    name: "JSPN Scholarship 2026-27",
+    provider: "Jaya Satya Pramoda Nidhi (JSPN)",
+    url: "https://www.buddy4study.com/scholarship/jspn-scholarship-2026",
+    deadline: "2026-08-30",
+    amount: null,
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
+    official_documents: ["Identity proof","Aadhaar card number","Marksheet and certificates","Income certificate","Caste certificate (if applicable)","Disability certificate (if applicable)"],
+    criteria: [
+      {
+        field: "nationality",
+        operator: "eq",
+        value: "Indian",
+        display_text: "Indian",
+        source_text: "Eligibility Indian citizens belonging to the Madhwa community",
+      }
+    ],
+  },
+  {
+    name: "OP Jindal Engineer & Management Scholarships 2026",
+    provider: "O. P. Jindal Group of Companies",
+    url: "https://www.buddy4study.com/scholarship/op-jindal-engineer-management-scholarships-2026",
+    deadline: "2026-09-15",
+    amount: "Up to ₹1,50,000 per annum",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
+    official_documents: ["Brochure","Photo of the applicant","Educational certificates/marksheet","Business proposal in PDF format"],
+    criteria: [
+      {
+        field: "branch",
+        operator: "in",
+        value: ["Civil Engineering","Electrical Engineering","Mechanical Engineering","Metallurgical Engineering"],
+        display_text: "Eligible streams include Civil Engineering, Electrical Engineering, Mechanical Engineering, or Metallurgical Engineering (first three toppers from each year in these streams).",
+        source_text: "To be eligible, an applicant must:- be the first three toppers from each year of the following engineering streams: Civil Engineering Electrical Engineering Mechanical Engineering Metallurgical Engineering OR be the first ten toppers from each year of management",
+      }
+    ],
+  },
+  {
+    name: "Azim Premji Scholarship 2026",
+    provider: "Azim Premji Foundation",
+    url: "https://www.buddy4study.com/scholarship/azim-premji-scholarship-2026",
+    deadline: "2026-08-31",
+    amount: "₹30,000 per month",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
+    official_documents: ["Recent passport-sized photograph of applicant","Applicant’s signature on a paper","Aadhaar card","Bank details (passbook/statement)","Class 10 and 12 marksheet","University admission proof (bonafide/fee receipt)"],
+    criteria: [
+      {
+        field: "year_of_study",
+        operator: "eq",
+        value: 1,
+        display_text: "Must be admitted to first year in 2025-26",
+        source_text: "have taken admission in the first year for the academic year 2025-26",
+      },
+      {
+        field: "institution_type",
+        operator: "in",
+        value: ["Government","Private"],
+        display_text: "Must be admitted to a government or private university",
+        source_text: "be admitted to a recognised undergraduate degree or diploma course at a government/private university in India",
+      }
+    ],
+  },
+  {
+    name: "DBT Biotech Industrial Training Programme (BITP) 2026-27",
+    provider: "Department of Biotechnology, Ministry of Science and Technology, Government of India",
+    url: "https://www.buddy4study.com/scholarship/dbt-biotech-industrial-training-programme-bitp-2026",
+    deadline: "2026-09-06",
+    amount: "Up to ₹10,000 per month",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
+    official_documents: ["Passport-size photograph in JPEG format","Signature in JPEG format","Self-attested copy of the final certificate/mark-sheet of graduation and post-graduation, indicating the cumulative percentage of marks or CGPA","Debit Card/Credit card/UPI or internet banking details"],
+    criteria: [
+      {
+        field: "branch",
+        operator: "in",
+        value: ["Biotechnology","Bioinformatics"],
+        display_text: "Branch in Biotechnology or Bioinformatics",
+        source_text: "To be eligible, an applicant must:- hold a B.E./B.Tech/M.Sc./M.Tech./M.VSc./MBA degree in Biotechnology/ Bioinformatics OR be admitted to a DBT postgraduate teaching program in Biotechnology",
+      },
+      {
+        field: "percentage",
+        operator: "gte",
+        value: 50,
+        display_text: "Minimum 50% marks or equivalent",
+        source_text: "have acquired a minimum of 50% marks or equivalent grades in the year 2023, 2024, or 2025",
+      }
+    ],
+  },
+  {
+    name: "All Things Agentic Hackathon",
+    provider: "Devpost",
+    url: "https://allthingsagentichackathon.devpost.com",
+    deadline: "2026-08-31",
+    amount: "$180,000 in prizes",
+    category: "hackathon",
+    location_type: "online",
+    funded: true,
+    official_documents: ["View full rules","FAQs","Official Rules"],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "Agentic Cinema: The Blockbuster Hackathon",
+    provider: "Devpost",
+    url: "https://agentic-cinema.devpost.com",
+    deadline: "2026-09-09",
+    amount: "$ 75,000 in prizes",
+    category: "hackathon",
+    location_type: "online",
+    funded: true,
+    official_documents: ["Official Rules"],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "The WebMCP Challenge",
+    provider: "Devpost",
+    url: "https://webmcp.devpost.com",
+    deadline: "2026-09-03",
+    amount: "$ 35,000 in prizes",
+    category: "hackathon",
+    location_type: "online",
+    funded: true,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "SemiCon Hackathon - Explore, Innovate & Build with Semiconductors | IIT Bombay - 2026",
+    provider: "Indian Institute of Technology (IIT), Bombay",
+    url: "https://unstop.com/hackathons/semicon-hackathon-explore-innovate-build-with-semiconductors-sarcathon-2026-iit-bombay-1744747",
+    deadline: null,
+    amount: "₹ 5,00,000",
+    category: "hackathon",
+    location_type: "india",
+    funded: false,
+    official_documents: [],
+    criteria: [
+      {
+        field: "team_size",
+        operator: "between",
+        value: [1,3],
+        display_text: "Team Size 1 - 3 Members",
+        source_text: "Team Size 1 - 3 Members",
+      }
+    ],
+  },
+  {
+    name: "VLSI Design Internship at Kukbit SL",
+    provider: "Kukbit SL",
+    url: "https://unstop.com/internships/vlsi-design-internship-kukbit-sl-1737771",
+    deadline: null,
+    amount: null,
+    category: "internship",
+    location_type: "india",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "OP Jindal Engineering & Management Scholarship 2026-27: Application Form, Eligibility & Selection List",
+    provider: "OP Jindal Group",
+    url: "https://www.indiascholarships.in/scholarships/op-jindal-engineering-management-scholarship",
+    deadline: "2026-10-30",
+    amount: "₹1.5 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
+    official_documents: ["Institutional nomination proof","academic transcripts/entrance ranks","business proposal","ID proof"],
+    criteria: [
+      {
+        field: "category",
+        operator: "eq",
+        value: "General",
+        display_text: "Category / Caste General",
+        source_text: "Category / Caste General",
+      }
+    ],
+  },
+  {
+    name: "Infosys Foundation STEM Stars Scholarship Program 2026-27: Application Form, Eligibility & Selection List",
+    provider: "Infosys Foundation",
+    url: "https://www.indiascholarships.in/scholarships/infosys-foundation-stem-stars-scholarship-program",
+    deadline: "2026-10-30",
+    amount: "₹1.0 Lakh+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
+    official_documents: ["Recent passport-sized photograph","Class 12 marksheet and passing certificate","JEE Main/CET/NEET scorecard","Government-issued ID (Aadhaar/Voter ID/Passport/Ration Card)","Proof of current year admission (fee receipt/admission letter/institution ID/bonafide certificate)","Family income certificate (government-issued)","BPL card or Ayushman Bharat card (if applicable)","Electricity bills for past 6 months","Bank passbook/cancelled cheque","Receipts of academic expenses (course fees","hostel","mess","stationery","books"],
+    criteria: [
+      {
+        field: "gender",
+        operator: "eq",
+        value: "female",
+        display_text: "Female candidates only.",
+        source_text: "Note: Female candidates only.",
+      },
+      {
+        field: "annual_family_income",
+        operator: "lte",
+        value: 800000,
+        display_text: "Income Limit Up to ₹8.0 Lakh/year",
+        source_text: "Income Limit Up to ₹8.0 Lakh/year",
+      },
+      {
+        field: "region",
+        operator: "eq",
+        value: "India",
+        display_text: "Geography: India",
+        source_text: "Is the scholarship only for female students? Yes, the Infosys Foundation STEM Stars Scholarship is strictly for female candidates pursuing undergraduate STEM degrees (e.g., Engineering, MBBS, Integrated MSc, B.Arch) in India.",
+      }
+    ],
+  },
+  {
+    name: "Amazon Future Engineer Scholarship (India) 2026-27: Application Form, Eligibility & Selection List",
+    provider: "Amazon India & Foundation for Excellence (FFE)",
+    url: "https://www.indiascholarships.in/scholarships/amazon-future-engineer-scholarship-india",
+    deadline: "2026-12-30",
+    amount: "₹50k+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
+    official_documents: ["Aadhaar Card","Class 10/12 Marksheet","Income Certificate (Family income < ₹3 Lakhs)","Admission Proof (B.E./B.Tech/Integrated M.Tech fee receipt)","Entrance Exam Scorecard","Bank Passbook"],
+    criteria: [
+      {
+        field: "year_of_study",
+        operator: "eq",
+        value: 1,
+        display_text: "Year of study equals 1",
+        source_text: "Education Level 1st Year Undergraduate (UG)",
+      },
+      {
+        field: "percentage",
+        operator: "gte",
+        value: 60,
+        display_text: "Minimum percentage >= 60",
+        source_text: "Minimum Marks 60 %",
+      },
+      {
+        field: "annual_family_income",
+        operator: "lte",
+        value: 300000,
+        display_text: "Annual family income <= 300000",
+        source_text: "Income Limit Up to ₹3.0 Lakh/year",
+      },
+      {
+        field: "gender",
+        operator: "eq",
+        value: "female",
+        display_text: "Gender equals female",
+        source_text: "Is this scholarship open to male students? No, the Amazon Future Engineer Scholarship in India is strictly for female students pursuing computer science or engineering courses.",
+      }
+    ],
+  },
+  {
+    name: "Aditya Birla Capital Scholarship 2026-27: Application Form, Eligibility & Selection List",
+    provider: "Aditya Birla Capital Foundation",
+    url: "https://www.indiascholarships.in/scholarships/aditya-birla-capital-scholarship",
+    deadline: "2026-11-29",
+    amount: "₹60k+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
+    official_documents: ["Marksheet of previous class","Government-issued identity proof (Aadhaar/Voter ID)","Family Income Certificate","Current year admission proof (fee receipt/ID card)","Bank Passbook copy"],
+    criteria: [
+      {
+        field: "percentage",
+        operator: "gte",
+        value: 60,
+        display_text: "Minimum Marks 60 %",
+        source_text: "Minimum Marks 60 %",
+      },
+      {
+        field: "annual_family_income",
+        operator: "lte",
+        value: 600000,
+        display_text: "Income Limit Up to ₹6.0 Lakh/year",
+        source_text: "Income Limit Up to ₹6.0 Lakh/year",
+      }
+    ],
+  },
+  {
+    name: "LIC HFL Vidyadhan Scholarship 2026-27: Application Form, Eligibility & Selection List",
+    provider: "LIC Housing Finance Limited",
+    url: "https://www.indiascholarships.in/scholarships/lic-hfl-vidyadhan-scholarship",
+    deadline: "2026-12-30",
+    amount: "₹25k+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
+    official_documents: ["Marksheet of previous qualifying exam","Aadhaar Card (Proof of Identity)","Income Certificate (annual family income < ₹3.6 Lakhs)","Current Year Admission Proof (Bonafide certificate, fee receipt, or college ID)","Bank account passbook copy or cancelled cheque"],
+    criteria: [
+      {
+        field: "annual_family_income",
+        operator: "lte",
+        value: 360000,
+        display_text: "Income Limit Up to ₹3.6 Lakh/year",
+        source_text: "Income Limit Up to ₹3.6 Lakh/year",
+      },
+      {
+        field: "percentage",
+        operator: "gte",
+        value: 60,
+        display_text: "Minimum Marks 60 %",
+        source_text: "Minimum Marks 60 %",
+      }
+    ],
+  },
+  {
+    name: "Buddy4Study India Foundation Scholarship 2026-27: Application Form, Eligibility & Selection List",
+    provider: "Buddy4Study India Foundation",
+    url: "https://www.indiascholarships.in/scholarships/buddy4study-india-foundation-scholarship",
+    deadline: "2026-08-30",
+    amount: "₹75k+",
+    category: "scholarship",
+    location_type: "india",
+    funded: true,
+    official_documents: ["Previous Class Marksheet","Aadhaar Card","Current Year Admission Proof (ID Card / Fee Receipt)","Passport-size Photo","Income Proof / Salary Slip"],
+    criteria: [
+      {
+        field: "annual_family_income",
+        operator: "lte",
+        value: 800000,
+        display_text: "Income limit up to ₹8.0 Lakh/year",
+        source_text: "Income Limit Up to ₹8.0 Lakh/year",
+      }
+    ],
+  },
+  {
+    name: "Hack The Limit",
+    provider: "HackTheLimit",
+    url: "https://hack-the-limit-1.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "$350",
+    category: "hackathon",
+    location_type: "online",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "KJSSE CSI Gemini Hackday",
+    provider: "MLH",
+    url: "https://kjsse-csi-gemini-hackday.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "₹ 10,000",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "Smart City Hackathon Lahore",
+    provider: "Code for Pakistan",
+    url: "https://smart-city-hackathon-lahore.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "$642",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "Midnight Hackathon: August 2026",
+    provider: "Major League Hacking",
+    url: "https://midnight-hackathon-august-2026.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "$0",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "Simplify building your tech stack with AI",
+    provider: "Stripe",
+    url: "https://stripedhakahackathon.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "$0",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "The Great Agent Hackathon",
+    provider: "Women In Product India",
+    url: "https://the-great-agent-hackathon.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "₹ 100,000",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "Veteran Innovation Hackathon",
+    provider: "Hacker Dojo",
+    url: "https://veteran-innovation-hackathon.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "$500",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "DreamHacks 2026",
+    provider: "DreamHacks",
+    url: "https://dreamhacks-gt.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "$25",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "Practice Submission",
+    provider: "SYNCS",
+    url: "https://practice-submission.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "$238,123",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "Hack the Habitat",
+    provider: "Hack the Habitat",
+    url: "https://hack-the-habitat-2026.devpost.com/",
+    deadline: "2026-08-31",
+    amount: "$1,000",
+    category: "hackathon",
+    location_type: "online",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "Hacksocial 2026",
+    provider: "Hacksocial",
+    url: "https://hacksocial2026.devpost.com/",
+    deadline: "2026-08-31",
+    amount: "$3,979",
+    category: "hackathon",
+    location_type: "online",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "3D Websites Hackathon",
+    provider: "Tanishq Kumar",
+    url: "https://3d-websites-hackathon.devpost.com/",
+    deadline: "2026-08-31",
+    amount: "$55",
+    category: "hackathon",
+    location_type: "online",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
     ],
   }
 ];

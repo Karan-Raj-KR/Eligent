@@ -12,6 +12,8 @@ import { evaluate, type Criterion, type Profile } from "@opportunity/engine";
 import { closeHeadlessBrowser, fetchPageAuto, readLineList, ROOT } from "./lib/fetch-cache";
 import { normalizeWhitespace } from "./lib/html";
 import { pageRecords, type PageRecord } from "./lib/page-records";
+import { classifyOpportunity } from "./sources";
+import type { SeedCriterion, SeedOpportunity } from "../packages/db/seed";
 
 const URLS_FILE = path.join(ROOT, "scripts", "urls.txt");
 const SEED_FILE = path.join(ROOT, "packages", "db", "seed.ts");
@@ -36,13 +38,23 @@ const ALLOWED_FIELDS = [
   "institution_type",
   "category",
   "gender",
+  // Added for the broaden migration — the engine is field-agnostic, so these
+  // just need matching profile columns (see supabase/migrations/*broaden*).
+  "region",
+  "nationality",
+  "team_size",
+  "student_status",
+  "age",
+  "experience_years",
 ] as const;
 type AllowedField = (typeof ALLOWED_FIELDS)[number];
 
 const ALLOWED_OPERATORS = ["gte", "lte", "eq", "in", "not_in", "between"] as const;
 type AllowedOperator = (typeof ALLOWED_OPERATORS)[number];
 
-const SYSTEM_PROMPT = `Extract scholarship eligibility criteria as JSON. You may ONLY output a
+const SYSTEM_PROMPT = `Extract opportunity eligibility criteria as JSON. The opportunity may be a
+scholarship, fellowship, grant, hackathon, internship, programme, event or
+competition. You may ONLY output a
 criterion if you can quote the exact sentence from the page that states it.
 Never infer, never fill gaps, never use outside knowledge.
 If the page does not state something, omit it.
@@ -58,8 +70,18 @@ Output:
 }
 
 Allowed fields ONLY: cgpa, percentage, year_of_study, branch, state,
-annual_family_income, institution_type, category, gender.
+annual_family_income, institution_type, category, gender, region, nationality,
+team_size, student_status, age, experience_years.
+  region        : broad geography a participant must be in ("India", "Asia", "EU")
+  nationality   : citizenship restriction ("Indian")
+  team_size     : hackathon/competition team-size limit (integer)
+  student_status: "student" / "graduate" / "professional" if restricted
+  age           : age limit in years (integer)
+  experience_years: years of work experience required (number)
 Allowed operators ONLY: gte, lte, eq, in, not_in, between.
+Many hackathons and events state NO eligibility criteria. That is fine — return
+an empty criteria array. NEVER manufacture a criterion to make an opportunity
+look filtered.
 source_text must be a verbatim sentence from the page. If you cannot quote
 it, do not output that criterion — put a note in unextractable instead.
 
@@ -70,14 +92,15 @@ CRITICAL RULES FOR RESTRICTIONS:
 - If open to all categories ("General, SC, ST, OBC" or unrestricted), do NOT emit a category criterion. Only emit if restricted to specific categories (e.g. "SC", "ST", "OBC", "Minority").
 - If open to all institution types (Government, Private, Aided), do NOT emit an institution_type criterion.
 
-TYPES. cgpa, percentage, year_of_study and annual_family_income are numeric.
-Their value MUST be a JSON number, never a string:
+TYPES. cgpa, percentage, year_of_study, annual_family_income, team_size, age and
+experience_years are numeric. Their value MUST be a JSON number, never a string:
   75            not "75" and not "75%"
   1500000       not "Rs. 15 Lakhs"   (1 lakh = 100000, 1 crore = 10000000)
   1             not "first year"     (year_of_study is an integer: 1, 2, 3...)
 Converting the page's own stated units into these numbers is expected. Inventing
 a number the page never states is not — omit the criterion instead.
-gender, category, branch, state and institution_type stay strings.`;
+gender, category, branch, state, institution_type, region, nationality and
+student_status stay strings.`;
 
 // ---------- types ----------
 
@@ -193,7 +216,15 @@ export function valueMatchesOperator(operator: AllowedOperator, value: unknown):
 }
 
 /** Fields the profile stores as numbers. A string here never compares equal. */
-const NUMERIC_FIELDS: readonly string[] = ["cgpa", "percentage", "year_of_study", "annual_family_income"];
+const NUMERIC_FIELDS: readonly string[] = [
+  "cgpa",
+  "percentage",
+  "year_of_study",
+  "annual_family_income",
+  "team_size",
+  "age",
+  "experience_years",
+];
 
 /**
  * The model reliably returns "60" where the schema needs 60 — same value off the
@@ -297,6 +328,16 @@ export async function harvestUrl(url: string): Promise<HarvestEntry[]> {
   }
   console.log(`[${url}] ${records.length} opportunit${records.length === 1 ? "y" : "ies"} on this page`);
 
+  // A page with a long list of live opportunities is a brand/aggregator page,
+  // not a detail page — harvesting all of them blends unrelated criteria and
+  // burns a model call each. Detail pages carry one, occasionally a handful of
+  // editions. ponytail: fixed cap, revisit if a real detail page exceeds it.
+  const live = records.filter((r) => !(r.deadline && isPastDeadline(r.deadline)));
+  if (live.length > 6) {
+    console.log(`[${url}] ${live.length} live opportunities — looks like an aggregator page, skipping`);
+    return failed(`error: aggregator page (${live.length} live opportunities)`);
+  }
+
   const entries: HarvestEntry[] = [];
   for (const record of records) {
     // Drop expired editions BEFORE spending a model call on them.
@@ -395,38 +436,62 @@ async function harvestRecord(record: PageRecord): Promise<HarvestEntry> {
 
 // ---------- output: seed.ts ----------
 
-function writeSeedFile(entries: HarvestEntry[]) {
-  // A failed extraction still carries the page's structured name. Seeding it
-  // would create an opportunity with zero criteria, which evaluate() correctly
-  // calls eligible-for-everyone — a fabricated match dressed up as real data.
-  const seedable = entries.filter((e) => e.name && e.fetchStatus === "ok");
+/** A validated harvest entry → the seed shape. category / location_type /
+ * funded are the source's classification, not read off the page; a URL matching
+ * no configured source defaults to scholarship / india / true (the broaden
+ * migration's column defaults). */
+function entryToSeed(e: HarvestEntry): SeedOpportunity {
+  const { category, location_type, funded } = classifyOpportunity(e.url);
+  return {
+    name: e.name as string,
+    provider: e.provider,
+    url: e.url,
+    deadline: e.deadline,
+    amount: e.amount,
+    category,
+    location_type,
+    funded,
+    official_documents: e.officialDocuments,
+    criteria: e.accepted.map((c) => ({
+      field: c.field,
+      operator: c.operator,
+      value: c.value,
+      display_text: c.display_text,
+      source_text: c.source_text,
+    })) as SeedCriterion[],
+  };
+}
 
-  const body = seedable
-    .map((e) => {
-      const criteria = e.accepted
-        .map(
-          (c) => `      {
+function serializeOpportunity(o: SeedOpportunity): string {
+  const criteria = o.criteria
+    .map(
+      (c) => `      {
         field: ${JSON.stringify(c.field)},
         operator: ${JSON.stringify(c.operator)},
         value: ${JSON.stringify(c.value)},
         display_text: ${JSON.stringify(c.display_text)},
         source_text: ${JSON.stringify(c.source_text)},
       }`,
-        )
-        .join(",\n");
-      return `  {
-    name: ${JSON.stringify(e.name)},
-    provider: ${JSON.stringify(e.provider)},
-    url: ${JSON.stringify(e.url)},
-    deadline: ${JSON.stringify(e.deadline)},
-    amount: ${JSON.stringify(e.amount)},
-    official_documents: ${JSON.stringify(e.officialDocuments)},
+    )
+    .join(",\n");
+  return `  {
+    name: ${JSON.stringify(o.name)},
+    provider: ${JSON.stringify(o.provider)},
+    url: ${JSON.stringify(o.url)},
+    deadline: ${JSON.stringify(o.deadline)},
+    amount: ${JSON.stringify(o.amount)},
+    category: ${JSON.stringify(o.category)},
+    location_type: ${JSON.stringify(o.location_type)},
+    funded: ${JSON.stringify(o.funded)},
+    official_documents: ${JSON.stringify(o.official_documents)},
     criteria: [
 ${criteria}
     ],
   }`;
-    })
-    .join(",\n");
+}
+
+export function writeSeedFile(opportunities: SeedOpportunity[]) {
+  const body = opportunities.map(serializeOpportunity).join(",\n");
 
   const content = `// Generated by scripts/harvest.ts — do not hand-edit. Regenerate with:
 //   pnpm tsx scripts/harvest.ts
@@ -441,12 +506,19 @@ export interface SeedCriterion {
   source_text: string;
 }
 
+export type OpportunityCategory =
+  | "scholarship" | "fellowship" | "grant" | "hackathon"
+  | "internship" | "programme" | "event" | "competition";
+
 export interface SeedOpportunity {
   name: string;
   provider: string | null;
   url: string;
   deadline: string | null;
   amount: string | null;
+  category: OpportunityCategory;
+  location_type: "india" | "abroad" | "online";
+  funded: boolean;
   official_documents: string[];
   criteria: SeedCriterion[];
 }
@@ -517,25 +589,33 @@ const TEST_PROFILE: Profile = {
   gender: "male",
 };
 
-const TARGET_OPPORTUNITIES = 20;
+const TARGET_OPPORTUNITIES = 35;
 
-function printCoverageReport(entries: HarvestEntry[]) {
-  const seeded = entries.filter((e) => e.name);
-
+export function printCoverageReport(seeded: SeedOpportunity[]) {
   console.log("\n=== COVERAGE REPORT ===");
-  console.log(`Opportunities seeded: ${seeded.length} (of ${entries.length} URLs)\n`);
+  console.log(`Opportunities in catalog: ${seeded.length}\n`);
 
-  console.log("Field usage (opportunities with at least one criterion on this field):");
+  console.log("Rows per category:");
+  const byCategory = new Map<string, number>();
+  for (const o of seeded) byCategory.set(o.category, (byCategory.get(o.category) ?? 0) + 1);
+  for (const [cat, n] of [...byCategory].sort()) console.log(`  ${cat}: ${n}`);
+
+  const scholarshipsOrFundedProgrammes = seeded.filter(
+    (o) => o.category === "scholarship" || (o.category === "programme" && o.funded),
+  ).length;
+  console.log(`\nScholarships or funded programmes: ${scholarshipsOrFundedProgrammes} (gate: >= 8)`);
+
+  console.log("\nField usage (opportunities with at least one criterion on this field):");
   for (const field of ALLOWED_FIELDS) {
-    const count = seeded.filter((e) => e.accepted.some((c) => c.field === field)).length;
-    console.log(`  ${field}: ${count}`);
+    const count = seeded.filter((o) => o.criteria.some((c) => c.field === field)).length;
+    if (count) console.log(`  ${field}: ${count}`);
   }
 
   // An opportunity with zero extractable criteria evaluates as vacuously eligible
   // (no failures) — that's the engine working correctly, not this script guessing.
   const buckets = { eligible: 0, near_miss: 0, rejected: 0 };
-  for (const entry of seeded) {
-    const result = evaluate(TEST_PROFILE, entry.accepted as Criterion[]);
+  for (const o of seeded) {
+    const result = evaluate(TEST_PROFILE, o.criteria as Criterion[]);
     buckets[result.status] += 1;
   }
 
@@ -559,37 +639,49 @@ async function main() {
   }
   const urls = readLineList(URLS_FILE);
 
-  if (urls.length === 0) {
-    console.log(`${path.relative(ROOT, URLS_FILE)} has no URLs yet. Nothing to harvest.`);
-    writeSeedFile([]);
-    writeReport([]);
-    printCoverageReport([]);
-    return;
-  }
-
   if (!OPENAI_API_KEY) {
     console.error("OPENAI_API_KEY is not set (checked .env.local and the environment).");
     process.exit(1);
   }
 
+  // Append-only: keep every already-validated row and only harvest URLs not yet
+  // in the catalog. Re-harvesting a good row risks the non-deterministic model
+  // dropping a criterion that passed last time — see MORNING-REPORT.
+  const { seedOpportunities: existing } = (await import("../packages/db/seed")) as {
+    seedOpportunities: SeedOpportunity[];
+  };
+  const known = new Set(existing.map((o) => o.url));
+  console.log(`Catalog holds ${existing.length} opportunities. Harvesting new URLs only.`);
+
   const entries: HarvestEntry[] = [];
   for (const url of urls) {
+    if (known.has(url)) continue;
     console.log(`\nHarvesting ${url} ...`);
     const newEntries = await harvestUrl(url);
     entries.push(...newEntries);
 
-    const validCount = entries.filter((e) => e.name && e.fetchStatus === "ok").length;
-    if (validCount >= TARGET_OPPORTUNITIES) {
+    const validNew = entries.filter((e) => e.name && e.fetchStatus === "ok").length;
+    if (existing.length + validNew >= TARGET_OPPORTUNITIES) {
       console.log(`\nReached target of ${TARGET_OPPORTUNITIES} opportunities. Stopping harvest.`);
       break;
     }
   }
   await closeHeadlessBrowser();
 
-  writeSeedFile(entries);
+  const harvested = entries.filter((e) => e.name && e.fetchStatus === "ok").map(entryToSeed);
+  // Dedupe on url: a page that lists many opportunities can surface one already known.
+  const merged: SeedOpportunity[] = [...existing];
+  const mergedUrls = new Set(known);
+  for (const o of harvested) {
+    if (mergedUrls.has(o.url)) continue;
+    mergedUrls.add(o.url);
+    merged.push(o);
+  }
+
+  writeSeedFile(merged);
   writeReport(entries);
-  console.log(`\nWrote ${path.relative(ROOT, SEED_FILE)} and ${path.relative(ROOT, REPORT_FILE)}`);
-  printCoverageReport(entries);
+  console.log(`\nWrote ${path.relative(ROOT, SEED_FILE)} and ${path.relative(ROOT, REPORT_FILE)} — ${merged.length} opportunities (${harvested.length} new).`);
+  printCoverageReport(merged);
 }
 
 // Run only when executed directly (`pnpm tsx scripts/harvest.ts`), not when
