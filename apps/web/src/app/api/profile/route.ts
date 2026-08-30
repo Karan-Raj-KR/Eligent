@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 import { getSessionUser } from "@/lib/supabase/server";
+import { getBearerUser } from "@/lib/supabase/bearer";
+import { completeness, toFieldMap } from "./fields";
 // Same deep-relative import style as /api/discover reaching into scripts/.
 // vocab.ts is pure — no Supabase client, nothing that must not run in the app.
 import { canonicalValue } from "../../../../../../packages/db/vocab";
@@ -42,4 +46,39 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
   return NextResponse.json(data);
+}
+
+/**
+ * Resolves the caller from an `Authorization: Bearer <token>` header, falling
+ * back to the session cookie. The extension has no cookie jar and must use the
+ * bearer form; the web app already has cookies. RLS scopes both to auth.uid().
+ */
+async function getCaller(request: Request): Promise<{ supabase: SupabaseClient | null; user: User | null }> {
+  const bearer = await getBearerUser(request);
+  if (bearer.user) return bearer;
+  return getSessionUser();
+}
+
+/**
+ * GET /api/profile — the single source of truth for a student's details.
+ *
+ * The extension used to ask the student to type their profile a second time.
+ * It now reads it from here, labels included, so it needs no knowledge of the
+ * profile schema. Response shape is frozen in apps/web/API-CONTRACT.md.
+ */
+export async function GET(request: Request) {
+  const { supabase, user } = await getCaller(request);
+  if (!supabase || !user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+
+  const { data, error } = await supabase.from("profile").select("*").eq("id", user.id).maybeSingle();
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  const profile = (data as Record<string, unknown> | null) ?? null;
+  return NextResponse.json({
+    user_id: user.id,
+    // null profile is a normal state — the student has not finished onboarding.
+    profile,
+    fields: toFieldMap(profile),
+    completeness: completeness(profile),
+  });
 }
