@@ -40,13 +40,15 @@ console.log(`${targets.length} opportunities selected${apply ? "" : "  (DRY RUN)
 
 const recovered: Array<{ name: string; criteria: number; fields: string }> = [];
 const doomed: Array<{ id: string; name: string; url: string; category: string; why: string }> = [];
+/** Harvest errored — left exactly as it was, never deleted on a failure. */
+const skipped: Array<{ name: string; why: string }> = [];
 
 for (const opportunity of targets) {
   let entries;
   try {
     entries = await harvestUrl(opportunity.url);
   } catch (err) {
-    doomed.push({ ...opportunity, why: `harvest threw: ${err instanceof Error ? err.message : String(err)}` });
+    skipped.push({ name: opportunity.name, why: `harvest threw: ${err instanceof Error ? err.message : String(err)}` });
     continue;
   }
 
@@ -55,13 +57,19 @@ for (const opportunity of targets) {
   // already named in the database — filtering on it would delete good rows.
   const best = [...entries].sort((a, b) => b.accepted.length - a.accepted.length)[0];
 
-  if (!best || best.accepted.length === 0) {
-    doomed.push({
-      ...opportunity,
-      why: best
-        ? `no criterion could be extracted with a verbatim source_text (fetch: ${best.fetchStatus})`
-        : `fetch/extract failed (${entries[0]?.fetchStatus ?? "no entries"})`,
-    });
+  // A FAILED harvest is not evidence of anything. Only a harvest that ran
+  // cleanly and still found nothing may condemn a row — otherwise a transient
+  // model hiccup ("Unexpected end of JSON input") deletes an opportunity that
+  // had perfectly good criteria, which is exactly what happened to the Siemens
+  // scholarship on the first run of this script.
+  const ranCleanly = best?.fetchStatus === "ok";
+  if (!ranCleanly) {
+    skipped.push({ name: opportunity.name, why: best?.fetchStatus ?? entries[0]?.fetchStatus ?? "no entries" });
+    continue;
+  }
+
+  if (best.accepted.length === 0) {
+    doomed.push({ ...opportunity, why: "harvest succeeded but no criterion could be quoted verbatim" });
     continue;
   }
 
@@ -89,6 +97,8 @@ for (const d of doomed) {
 
 console.log("\n================ RECOVERED ================");
 for (const r of recovered) console.log(`  ✓ ${r.name.slice(0, 70)} — ${r.criteria} criteria (${r.fields})`);
+console.log("\n================ SKIPPED (harvest failed — row untouched) ================");
+for (const s of skipped) console.log(`  · ${s.name.slice(0, 70)} — ${s.why}`);
 console.log("\n================ TO DELETE ================");
 for (const d of doomed) console.log(`  ✗ ${d.name.slice(0, 70)}\n      ${d.url}\n      ${d.why}`);
 
@@ -97,4 +107,4 @@ if (apply && doomed.length) {
   if (delErr) console.error(`delete failed: ${delErr.message}`);
 }
 
-console.log(`\n${apply ? "APPLIED" : "DRY RUN"}: recovered ${recovered.length}, deleted ${doomed.length}`);
+console.log(`\n${apply ? "APPLIED" : "DRY RUN"}: recovered ${recovered.length}, deleted ${doomed.length}, skipped ${skipped.length}`);

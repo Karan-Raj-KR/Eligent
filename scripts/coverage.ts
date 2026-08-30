@@ -1,8 +1,9 @@
 import { evaluate } from "@opportunity/engine";
 import { seedOpportunities } from "../packages/db/seed";
+import { canonicalValue } from "../packages/db/vocab";
 
-// Test profile
-const TEST_PROFILE = {
+// The agreed test profile, written exactly as the brief states it.
+const SPEC_PROFILE = {
   cgpa: 8.4,
   percentage: 82,
   year_of_study: 2,
@@ -13,6 +14,14 @@ const TEST_PROFILE = {
   category: "General",
   gender: "male",
 };
+
+// What this student's row ACTUALLY holds. POST /api/profile canonicalises
+// categorical values on save, so "private" is stored as "Private". Evaluating
+// the raw spelling instead would measure a profile no student can have, and
+// the engine compares categorical values with ===.
+const TEST_PROFILE = Object.fromEntries(
+  Object.entries(SPEC_PROFILE).map(([field, value]) => [field, canonicalValue(field, value)]),
+) as typeof SPEC_PROFILE;
 
 const buckets = { eligible: 0, near_miss: 0, rejected: 0 };
 const details: Record<string, Array<{ name: string; failed: string[] }>> = {
@@ -40,7 +49,19 @@ for (const opp of seedOpportunities) {
 
 console.log("\n=== COVERAGE REPORT ===");
 console.log(`Test profile: CGPA 8.4, percentage 82, year 2, CSE, Karnataka, income 3L, private institution, General, male`);
-console.log(`\nOpportunities in catalog: ${seedOpportunities.length}  (target: 35)`);
+const canonicalised = Object.keys(SPEC_PROFILE).filter(
+  (k) => (SPEC_PROFILE as Record<string, unknown>)[k] !== (TEST_PROFILE as Record<string, unknown>)[k],
+);
+if (canonicalised.length > 0) {
+  console.log(`  (stored canonically as: ${canonicalised.map((k) => `${k}="${(TEST_PROFILE as Record<string, string>)[k]}"`).join(", ")})`);
+}
+console.log(`\nOpportunities in catalog: ${seedOpportunities.length}  (target: 40)`);
+
+// The accuracy gate: a criterion-less opportunity returns `eligible` for every
+// student alive, so it is counted here and must be zero.
+const noCriteria = seedOpportunities.filter((o) => o.criteria.length === 0);
+console.log(`Opportunities with ZERO criteria: ${noCriteria.length}  (gate: 0)`);
+for (const o of noCriteria) console.log(`  ⚠️  ${o.name}`);
 
 const byCategory = new Map<string, number>();
 for (const o of seedOpportunities) byCategory.set(o.category, (byCategory.get(o.category) ?? 0) + 1);
