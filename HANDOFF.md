@@ -499,3 +499,89 @@ $ tsx --test scripts/*.test.ts
 
 The engine, its 19 tests and the 28 script tests were untouched by this pass and
 still pass unchanged.
+
+---
+
+# AGENCIES PASS — 2026-08-30 (overnight)
+
+Three phases completed to enable reliable dev-mode testing and proper extension integration:
+
+### Phase 1 — DEV AUTH BYPASS
+- **Added `NEXT_PUBLIC_DEV_MODE` env var** (default `false`) to `.env.example`
+  - Used in middleware.ts to inject `x-dev-user-id: 00000000-0000-0000-0000-000000000001`
+  - Used in `apps/web/src/lib/supabase/bearer.ts` to return dev user without valid token
+- **Created `scripts/create-dev-user.ts`**:
+  - Uses `supabase.auth.admin.createUser()` to create a Supabase user with the specific dev ID
+  - Email: `dev@eligent.test`, password: `dev-pass-123`
+- **Created `scripts/seed-dev-profile.ts`**:
+  - Upserts profile row for the dev user with values: CGPA 7.8, Year 1, Branch CSE, State Karnataka, Income 640000, Institution Type private, Category general, Gender male (perfect match for the near-miss demo profile)
+- **Added visible DEV MODE banner** to `apps/web/src/app/layout.tsx`:
+  - Red banner "⚠️ DEV MODE — auth bypassed" when flag is true
+  - Fixed position at top of screen, z-index 50, cannot be missed
+- **Verified**:
+  - Dev user successfully created in Supabase
+  - Dev profile successfully upserted
+  - Banner renders when `NEXT_PUBLIC_DEV_MODE=true`
+  - Extension popup shows DEV MODE indicator when bundling
+
+### Phase 2 — ONBOARDING (already complete)
+- **Confirmed** that onboarding form (`apps/web/src/app/onboarding/page.tsx`) already includes all 9 fields from the schema:
+  1. `full_name` (required)
+  2. `cgpa` (optional)
+  3. `percentage` (optional)
+  4. `year_of_study` (optional)
+  5. `branch` (optional)
+  6. `state` (optional)
+  7. `annual_family_income` (optional)
+  8. `institution_type` (optional)
+  9. `category` (optional)
+  10. `gender` (optional)
+- Category and gender are both optional and clearly marked "helps match scholarships that require this — skip if you'd rather not say"
+- Matches gate on these fields but never require them to see matches (matches will report "unknown" for omitted fields)
+
+### Phase 3 — EXTENSION (proper connection)
+- **Removed autofill-on-page-load behavior** (already done in previous commit)
+  - Extension runs **only** when user clicks toolbar icon
+  - Popup shows one of three states pre-check:
+    - "Checking eligibility..." (spinner, <1s)
+    - "Eligible — Fill this form" (button, single click, then autofills)
+    - "Not eligible — [clause quoted from source_text]" (no fill button exists)
+- **Fetch eligibility first**: The `checkAndFill()` function now always calls `/api/fill/[application_id]` **before** rendering any state to determine eligibility
+- **DEV_MODE connection added**:
+  - Extension popup checks if manifest name includes "DEV MODE"
+  - If true, uses `Authorization: Bearer dev-mode-token` and redirects to `http://localhost:3000/api/fill/[application_id]`
+  - Middleware injects `x-dev-user-id` header, bearer.ts returns dev user without token validation
+- **extension-auth page added** (`apps/web/src/app/extension-auth/page.tsx`):
+  - Simple page for extension to open in a new tab during real auth flow
+  - Background script can communicate with this page to extract session token (framework still being finalised)
+
+### Verification output
+```bash
+$ pnpm -r build
+
+apps/extension build: dist/popup.js 5.8kb  dist/bridge.js 1.1kb  dist/background.js 904b ⚡ Done
+apps/web build: ✓ Compiled successfully   ✓ Generating static pages (12/12)
+  ƒ /                                    68.6 kB         179 kB
+  ○ /extension-auth                        591 B         103 kB
+  ○ /matches                             7.43 kB         151 kB
+  ○ /onboarding                          4.97 kB         148 kB
+  (+ 7 API routes, middleware 92.8 kB)
+Done
+```
+
+### What to verify in production
+1. **Dev Mode Loop**: Set `NEXT_PUBLIC_DEV_MODE=true`, run `pnpm --filter web dev`, load `/onboarding`, complete profile with CGPA 7.8/Year 1/Income 640000, visit `/matches` — should see 3 buckets with real data (Reliance UG eligible, Reliance PG & Kotak near-miss with real gaps)
+2. **Extension Block State**: Extension popup should show "Not eligible — [clause quoted from source_text]" at least once with the exact gap display (e.g., "You are 3% short of 75%" or "You are ₹40,000 over the ₹6,00,000 limit")
+3. **No Auto-Fill**: Extension scroll event handlers removed; no autofill on page load, only on user click of toolbar icon
+4. **Matches Not Gated**: Onboarding accepts submission even with category/gender blank; matches display "unknown" for those fields rather than hiding the opportunity
+
+Files created/modified in this pass:
+- `apps/web/.env.local`: Added `NEXT_PUBLIC_DEV_MODE=true`
+- `.env.example`: Added `NEXT_PUBLIC_DEV_MODE` documentation
+- `apps/web/src/middleware.ts`: Added DEV_MODE header injection
+- `apps/web/src/app/layout.tsx`: Added DEV MODE red banner
+- `apps/web/src/lib/supabase/bearer.ts`: Added DEV_MODE user ID response
+- `scripts/seed-dev-profile.ts`: New file for dev profile seeding
+- `scripts/create-dev-user.ts`: New file for dev user creation
+- `apps/extension/dist/popup.js`: Updated with DEV_MODE detection (5.8kb)
+- `apps/web/src/app/extension-auth/page.tsx`: New page for extension auth flow (591 B)
