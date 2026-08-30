@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, Clock, Download, FileWarning, ShieldX } from "lucide-react";
 import {
@@ -39,6 +39,15 @@ const MOMENTS: Array<{
 ];
 
 export default function ExtensionPage() {
+  // useSearchParams needs a Suspense boundary to prerender (Next.js CSR bailout).
+  return (
+    <Suspense>
+      <ExtensionPageInner />
+    </Suspense>
+  );
+}
+
+function ExtensionPageInner() {
   const [variant, setVariant] = useState<ExtensionState>("document-needed");
   const searchParams = useSearchParams();
   const justPurchased = searchParams.get("purchased") === "1";
