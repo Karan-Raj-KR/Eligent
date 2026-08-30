@@ -111,7 +111,7 @@ export default function OnboardingPage() {
           Tell us about yourself.
         </h1>
         <p className="mt-4 max-w-sm text-[1rem] leading-relaxed text-muted">
-          We'll match you against scholarship eligibility criteria — official,
+          We'll match you against opportunity eligibility criteria — official,
           published ones only.
         </p>
         <div className="mt-8 flex items-start gap-3 rounded-2xl border border-line bg-surface px-4 py-4 shadow-[var(--shadow-clay-sm)]">
@@ -168,7 +168,7 @@ export default function OnboardingPage() {
             <ClayField
               label="Aggregate percentage"
               htmlFor="percentage"
-              hint="Most scholarships state their cutoff as a percentage"
+              hint="Most opportunities state their cutoff as a percentage"
             >
               <ClayInput
                 id="percentage"
@@ -340,7 +340,7 @@ export default function OnboardingPage() {
               label="Gender"
               htmlFor="gender"
               optional
-              hint="Some scholarships are restricted by gender"
+              hint="Some opportunities are restricted by gender"
             >
               <ClaySelect
                 id="gender"

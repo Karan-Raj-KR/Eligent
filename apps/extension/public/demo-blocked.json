@@ -1,0 +1,11 @@
+{
+  "_comment": "DEMO fixture — BLOCKED state. The engine returned not-eligible; the extension fills nothing and shows the clause. Mirrors GET /api/fill/:application_id when evaluation.status !== 'eligible'.",
+  "blocked": true,
+  "reason": "rejected",
+  "clause": {
+    "field": "annual_family_income",
+    "displayText": "Family income exceeds ₹3L"
+  },
+  "source_text": "Only students whose total annual family income from all sources does not exceed Rs. 3,00,000 (three lakh) are eligible to apply.",
+  "source_url": "https://www.buddy4study.com/scholarship/bharat-vidya-scholarship-2026"
+}

@@ -24,10 +24,10 @@ export default function SignInPage() {
       <div>
         <Logo />
         <h1 className="mt-8 font-display text-4xl font-bold leading-[1.06] tracking-tight text-ink sm:text-5xl">
-          Know which scholarships you actually qualify for.
+          Know which opportunities you actually qualify for.
         </h1>
         <p className="mt-5 max-w-md text-[1.02rem] leading-relaxed text-muted">
-          ELIGENT checks every scholarship we hold official criteria for — and tells
+          ELIGENT checks every opportunity we hold official criteria for — and tells
           you, before you apply, whether you'll be wasting your time.
         </p>
         <p className="mt-8 text-[0.85rem] font-semibold text-soft">

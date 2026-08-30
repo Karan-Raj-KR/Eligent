@@ -19,7 +19,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: {
-    default: "ELIGENT — Know which scholarships you qualify for",
+    default: "ELIGENT — Know which opportunities you qualify for",
     template: "%s · ELIGENT",
   },
   description:

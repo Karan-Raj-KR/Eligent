@@ -45,7 +45,7 @@ export default function ExtensionPage() {
           Wins time back at the moment it matters most.
         </h1>
         <p className="mt-5 max-w-xl text-[1.02rem] leading-relaxed text-muted">
-          A reusable popup that lives on the real scholarship portal.
+          A reusable popup that lives on the real application portal.
           It restores your form, warns you about documents that aren't in the
           official requirements, and refuses to help when you don't qualify.
         </p>

@@ -40,14 +40,26 @@ for (const opp of seedOpportunities) {
 
 console.log("\n=== COVERAGE REPORT ===");
 console.log(`Test profile: CGPA 8.4, percentage 82, year 2, CSE, Karnataka, income 3L, private institution, General, male`);
-console.log(`\nOpportunities seeded: ${seedOpportunities.length}`);
+console.log(`\nOpportunities in catalog: ${seedOpportunities.length}  (target: 35)`);
+
+const byCategory = new Map<string, number>();
+for (const o of seedOpportunities) byCategory.set(o.category, (byCategory.get(o.category) ?? 0) + 1);
+console.log("\nRows per category:");
+for (const [cat, n] of [...byCategory].sort()) console.log(`  ${cat}: ${n}`);
+
+const fundedScholarships = seedOpportunities.filter(
+  (o) => o.category === "scholarship" || (o.category === "programme" && o.funded),
+).length;
+console.log(`\nScholarships or funded programmes: ${fundedScholarships}  (gate: >= 8)`);
+
 console.log("\nBucket counts:");
 console.log(`  eligible:  ${buckets.eligible}`);
 console.log(`  near_miss: ${buckets.near_miss}`);
 console.log(`  rejected:  ${buckets.rejected}`);
 
+if (fundedScholarships < 8) console.log(`\n⚠️  GATE: only ${fundedScholarships} scholarships / funded programmes (< 8)`);
 for (const [bucket, count] of Object.entries(buckets)) {
-  if (count < 3) console.log(`\n⚠️  WARNING: bucket "${bucket}" has only ${count} (< 3)`);
+  if (count < 3) console.log(`\n⚠️  GATE: bucket "${bucket}" has only ${count} (< 3)`);
 }
 
 if (details.eligible.length > 0) {

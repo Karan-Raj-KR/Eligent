@@ -24,8 +24,35 @@ https://www.indiascholarships.in/scholarships/loreal-fyws-scholarship
 https://www.indiascholarships.in/scholarships/tata-realty-scholarship-for-girls
 https://www.indiascholarships.in/scholarships/aicte-pragati-scholarship-for-girl-students
 https://www.indiascholarships.in/scholarships/digital-gujarat-scholarship-portal
-https://www.indiascholarships.in/scholarships/maharashtra-postmatric-obc
-https://www.indiascholarships.in/scholarships/kerala-kscste-prathibha-scholarship
-https://www.indiascholarships.in/scholarships/top-class-education-scheme-for-sc-students
-https://www.indiascholarships.in/scholarships/minority-scholarship-pre-matric
+
+# ---- Broaden harvest (discover.ts 2026-08-30). harvest.ts is append-only and
+#      stops at 35, so the merit scholarships come first for the near-miss demo. ----
+
+# targeted merit scholarships (indiascholarships.in) — merit cutoffs, all-India
+https://www.indiascholarships.in/scholarships/op-jindal-engineering-management-scholarship
+https://www.indiascholarships.in/scholarships/infosys-foundation-stem-stars-scholarship-program
+https://www.indiascholarships.in/scholarships/honeywell-scholarship
+https://www.indiascholarships.in/scholarships/amazon-future-engineer-scholarship-india
+https://www.indiascholarships.in/scholarships/aditya-birla-capital-scholarship
+https://www.indiascholarships.in/scholarships/lic-hfl-vidyadhan-scholarship
+https://www.indiascholarships.in/scholarships/buddy4study-india-foundation-scholarship
 https://www.indiascholarships.in/scholarships/sitaram-jindal-foundation-scholarship
+
+# buddy4study scholarships / fellowships (india, funded)
+https://www.buddy4study.com/scholarship/jspn-scholarship-2026
+https://www.buddy4study.com/scholarship/op-jindal-engineer-management-scholarships-2026
+https://www.buddy4study.com/scholarship/azim-premji-scholarship-2026
+https://www.buddy4study.com/scholarship/dbt-biotech-industrial-training-programme-bitp-2026
+https://www.buddy4study.com/scholarship/bcwd-vidyasiri-food-and-accommodation-scholarship-scheme-karnataka-2026-1
+
+# devpost hackathons (online, funded)
+https://allthingsagentichackathon.devpost.com
+https://agentic-cinema.devpost.com
+https://webmcp.devpost.com
+
+# unstop hackathons / internships / competitions (india)
+https://unstop.com/hackathons/semicon-hackathon-explore-innovate-build-with-semiconductors-sarcathon-2026-iit-bombay-1744747
+https://unstop.com/internships/vlsi-design-internship-kukbit-sl-1737771
+https://unstop.com/internships/aiml-internship-kukbit-sl-1741846
+https://unstop.com/competitions/crp-asian-paints-alchemy-2026-asian-paints-1704498
+https://unstop.com/competitions/the-mandate-the-sambhavana-policy-competition-lady-shri-ram-college-for-women-lsr-du-new-delhi-1745637

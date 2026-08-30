@@ -1,0 +1,43 @@
+{
+  "_comment": "DEMO fixture — DOC DIFF state. Pairs with apps/extension/TEST-PAGE.html: the page has 6 file inputs, this lists 4 official documents, so 2 come out unlisted (Domicile / Residence Certificate, Migration Certificate). Mirrors GET /api/fill/:application_id (eligible).",
+  "blocked": false,
+  "profile": {
+    "full_name": "Aarav Sharma",
+    "cgpa": 8.6,
+    "percentage": 81.4,
+    "year_of_study": "2nd Year",
+    "branch": "Computer Science",
+    "state": "Karnataka",
+    "annual_family_income": 220000,
+    "institution_type": "Private",
+    "gender": "Male",
+    "category": "General"
+  },
+  "fields": {
+    "full_name": { "value": "Aarav Sharma" },
+    "cgpa": { "value": "8.6" },
+    "percentage": { "value": "81.4" },
+    "year_of_study": { "value": "2nd Year" },
+    "branch": { "value": "Computer Science" },
+    "state": { "value": "Karnataka" },
+    "annual_family_income": { "value": "220000" },
+    "institution_type": { "value": "Private" },
+    "gender": { "value": "Male" },
+    "category": { "value": "General" }
+  },
+  "requirements": [
+    { "document_type": "Class 10 Marksheet", "source": "official" },
+    { "document_type": "Class 12 Marksheet", "source": "official" },
+    { "document_type": "Income Certificate", "source": "official" },
+    { "document_type": "Aadhaar Card", "source": "official" }
+  ],
+  "opportunity": {
+    "name": "Bharat Vidya Scholarship 2026-27",
+    "official_documents": [
+      "Class 10 Marksheet",
+      "Class 12 Marksheet",
+      "Income Certificate",
+      "Aadhaar Card"
+    ]
+  }
+}

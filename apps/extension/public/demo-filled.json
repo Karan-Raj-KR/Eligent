@@ -1,0 +1,40 @@
+{
+  "_comment": "DEMO fixture — FILLED state. Same page as demo-docdiff, but the official list covers all 6 uploads, so there is no document surprise: the result is just the fill summary. Mobile Number and Email Address are not profile fields, so they show as 'need you'.",
+  "blocked": false,
+  "profile": {
+    "full_name": "Aarav Sharma",
+    "cgpa": 8.6,
+    "percentage": 81.4,
+    "year_of_study": "2nd Year",
+    "branch": "Computer Science",
+    "state": "Karnataka",
+    "annual_family_income": 220000,
+    "institution_type": "Private",
+    "gender": "Male",
+    "category": "General"
+  },
+  "fields": {
+    "full_name": { "value": "Aarav Sharma" },
+    "cgpa": { "value": "8.6" },
+    "percentage": { "value": "81.4" },
+    "year_of_study": { "value": "2nd Year" },
+    "branch": { "value": "Computer Science" },
+    "state": { "value": "Karnataka" },
+    "annual_family_income": { "value": "220000" },
+    "institution_type": { "value": "Private" },
+    "gender": { "value": "Male" },
+    "category": { "value": "General" }
+  },
+  "requirements": [],
+  "opportunity": {
+    "name": "Bharat Vidya Scholarship 2026-27",
+    "official_documents": [
+      "Class 10 Marksheet",
+      "Class 12 Marksheet",
+      "Income Certificate",
+      "Aadhaar Card",
+      "Domicile Certificate",
+      "Migration Certificate"
+    ]
+  }
+}

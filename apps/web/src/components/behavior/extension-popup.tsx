@@ -112,7 +112,7 @@ export function ExtensionPopup({
               <ShieldX size={22} />
             </span>
             <p className="font-display text-lg font-bold leading-snug text-ink">
-              You're not eligible for this scholarship.
+              You're not eligible for this opportunity.
             </p>
             <p className="text-[0.88rem] leading-relaxed text-muted">
               Family income exceeds ₹3L.
