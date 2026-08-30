@@ -1,0 +1,201 @@
+name,cgpa,percentage,year,branch,state,family_income,institution_type,gender
+Synthetic Student 001,8.06,79,3,Chemical,Telangana,1671000,Private,Female
+Synthetic Student 002,5.72,55,4,Chemical,Telangana,237000,Private,Female
+Synthetic Student 003,5.96,60,4,Mechanical,Kerala,1452000,Aided,Female
+Synthetic Student 004,8.87,88,1,Mechanical,Telangana,1311000,Government,Female
+Synthetic Student 005,7.72,76,3,Computer Science,West Bengal,220000,Private,Male
+Synthetic Student 006,8.59,85,1,Other,Delhi,1335000,Aided,Female
+Synthetic Student 007,9.22,89,2,Computer Science,Tamil Nadu,81000,Aided,Female
+Synthetic Student 008,6.93,68,3,Chemical,Telangana,1101000,Private,Female
+Synthetic Student 009,6.69,64,4,Electronics,Gujarat,1619000,Government,Male
+Synthetic Student 010,5.82,55,2,Civil,Other,121000,Private,Male
+Synthetic Student 011,7.06,70,1,Chemical,Delhi,408000,Aided,Female
+Synthetic Student 012,8.5,83,3,Mechanical,Delhi,1189000,Government,Female
+Synthetic Student 013,6.95,68,4,Chemical,West Bengal,239000,Government,Other
+Synthetic Student 014,8.07,79,1,Chemical,Telangana,110000,Private,Other
+Synthetic Student 015,8.33,83,1,Mechanical,Karnataka,296000,Aided,Male
+Synthetic Student 016,8.62,84,1,Civil,Delhi,89000,Aided,Female
+Synthetic Student 017,9.67,96,3,Civil,Delhi,786000,Private,Female
+Synthetic Student 018,6.47,62,4,Civil,Kerala,289000,Aided,Female
+Synthetic Student 019,8.61,85,1,Civil,Uttar Pradesh,206000,Private,Female
+Synthetic Student 020,8.86,88,1,Electronics,Tamil Nadu,135000,Private,Female
+Synthetic Student 021,8.89,86,1,Mechanical,Karnataka,86000,Aided,Female
+Synthetic Student 022,9.35,89,1,Chemical,Maharashtra,1016000,Private,Male
+Synthetic Student 023,7.38,73,3,Mechanical,Maharashtra,1068000,Private,Other
+Synthetic Student 024,9.53,92,1,Other,West Bengal,86000,Private,Other
+Synthetic Student 025,9.12,90,1,Mechanical,Delhi,1507000,Government,Male
+Synthetic Student 026,8.48,83,3,Civil,Karnataka,1431000,Aided,Male
+Synthetic Student 027,6.85,66,1,Electronics,Uttar Pradesh,134000,Government,Female
+Synthetic Student 028,8.52,81,1,Computer Science,Gujarat,138000,Aided,Male
+Synthetic Student 029,7.17,71,3,Chemical,Telangana,356000,Private,Female
+Synthetic Student 030,5.7,54,3,Electronics,Uttar Pradesh,318000,Aided,Male
+Synthetic Student 031,5.91,57,3,Computer Science,Telangana,415000,Aided,Male
+Synthetic Student 032,9.37,90,1,Other,West Bengal,1008000,Aided,Female
+Synthetic Student 033,8.05,79,1,Computer Science,West Bengal,1830000,Government,Male
+Synthetic Student 034,6.36,63,2,Civil,Delhi,138000,Government,Male
+Synthetic Student 035,7.51,72,3,Chemical,Karnataka,875000,Aided,Other
+Synthetic Student 036,8.73,86,1,Other,Telangana,374000,Aided,Female
+Synthetic Student 037,8.41,82,4,Civil,Karnataka,1775000,Private,Other
+Synthetic Student 038,5.67,54,1,Other,Kerala,841000,Private,Male
+Synthetic Student 039,8.47,83,1,Civil,West Bengal,157000,Private,Other
+Synthetic Student 040,8.69,86,1,Other,Tamil Nadu,1825000,Aided,Female
+Synthetic Student 041,9.26,90,1,Electronics,West Bengal,200000,Aided,Female
+Synthetic Student 042,7.02,68,2,Computer Science,Delhi,406000,Government,Other
+Synthetic Student 043,8.87,88,2,Electronics,Kerala,155000,Aided,Female
+Synthetic Student 044,6.6,67,2,Other,Telangana,203000,Private,Male
+Synthetic Student 045,9.69,93,1,Chemical,West Bengal,940000,Government,Other
+Synthetic Student 046,6,58,4,Computer Science,Other,1358000,Private,Male
+Synthetic Student 047,8.15,79,2,Computer Science,Other,325000,Aided,Female
+Synthetic Student 048,8.05,78,3,Mechanical,Telangana,152000,Aided,Other
+Synthetic Student 049,8.29,82,2,Other,Tamil Nadu,1888000,Government,Female
+Synthetic Student 050,6.92,67,4,Mechanical,Gujarat,91000,Aided,Other
+Synthetic Student 051,9.38,89,4,Chemical,Kerala,291000,Aided,Male
+Synthetic Student 052,7.51,73,3,Chemical,Maharashtra,80000,Aided,Other
+Synthetic Student 053,9.31,89,3,Other,Kerala,407000,Government,Other
+Synthetic Student 054,9.73,96,1,Mechanical,Maharashtra,947000,Aided,Other
+Synthetic Student 055,9.74,95,1,Mechanical,Tamil Nadu,295000,Private,Other
+Synthetic Student 056,9.88,95,4,Chemical,Maharashtra,85000,Aided,Other
+Synthetic Student 057,8.01,78,1,Electronics,Other,565000,Government,Male
+Synthetic Student 058,6.76,68,3,Civil,Delhi,1786000,Private,Other
+Synthetic Student 059,7.07,68,1,Mechanical,Delhi,477000,Government,Female
+Synthetic Student 060,7.06,68,1,Electronics,Gujarat,187000,Government,Female
+Synthetic Student 061,9.61,93,2,Chemical,Uttar Pradesh,1413000,Government,Other
+Synthetic Student 062,9.14,90,3,Civil,Gujarat,646000,Aided,Other
+Synthetic Student 063,9.12,88,2,Computer Science,Other,144000,Aided,Female
+Synthetic Student 064,7.89,75,1,Chemical,Gujarat,485000,Aided,Other
+Synthetic Student 065,5.67,55,4,Chemical,Maharashtra,91000,Aided,Other
+Synthetic Student 066,7.99,77,1,Other,Uttar Pradesh,1625000,Aided,Other
+Synthetic Student 067,7.83,76,3,Civil,Uttar Pradesh,757000,Aided,Other
+Synthetic Student 068,8.99,89,1,Civil,Maharashtra,1413000,Aided,Male
+Synthetic Student 069,9.86,94,4,Electronics,Telangana,319000,Government,Female
+Synthetic Student 070,9.24,89,3,Electronics,Delhi,1851000,Government,Male
+Synthetic Student 071,8.95,86,1,Computer Science,Gujarat,434000,Private,Male
+Synthetic Student 072,9.39,91,1,Computer Science,Telangana,1605000,Aided,Other
+Synthetic Student 073,7.94,77,3,Chemical,Maharashtra,704000,Private,Other
+Synthetic Student 074,7.42,72,3,Mechanical,Kerala,235000,Government,Male
+Synthetic Student 075,5.86,57,1,Chemical,Other,99000,Private,Other
+Synthetic Student 076,5.52,56,2,Mechanical,Uttar Pradesh,665000,Government,Male
+Synthetic Student 077,9.48,92,3,Civil,Uttar Pradesh,582000,Private,Female
+Synthetic Student 078,6.19,63,3,Mechanical,Gujarat,118000,Aided,Female
+Synthetic Student 079,7.12,68,3,Other,Delhi,636000,Government,Male
+Synthetic Student 080,5.58,56,1,Chemical,Kerala,1272000,Aided,Other
+Synthetic Student 081,6.74,65,4,Computer Science,Karnataka,970000,Aided,Female
+Synthetic Student 082,5.75,57,1,Civil,Maharashtra,82000,Government,Male
+Synthetic Student 083,9.87,97,4,Chemical,Delhi,493000,Government,Other
+Synthetic Student 084,7.66,73,1,Computer Science,Karnataka,1913000,Private,Male
+Synthetic Student 085,6.53,65,3,Other,Other,291000,Aided,Female
+Synthetic Student 086,8.63,83,1,Chemical,Delhi,446000,Aided,Other
+Synthetic Student 087,6.65,66,4,Mechanical,Tamil Nadu,443000,Private,Female
+Synthetic Student 088,9.51,94,4,Mechanical,Gujarat,310000,Government,Male
+Synthetic Student 089,9.75,93,1,Chemical,Delhi,326000,Private,Other
+Synthetic Student 090,6.11,61,1,Computer Science,Tamil Nadu,1562000,Private,Male
+Synthetic Student 091,8.01,79,4,Computer Science,Kerala,278000,Government,Male
+Synthetic Student 092,7.15,70,2,Computer Science,Kerala,80000,Private,Other
+Synthetic Student 093,6.96,70,3,Electronics,Tamil Nadu,579000,Aided,Female
+Synthetic Student 094,7.29,71,1,Mechanical,Other,81000,Government,Female
+Synthetic Student 095,5.92,60,3,Mechanical,Telangana,1247000,Aided,Female
+Synthetic Student 096,8.83,87,4,Computer Science,Telangana,127000,Aided,Other
+Synthetic Student 097,6.8,68,2,Other,Other,1179000,Private,Male
+Synthetic Student 098,8.02,78,3,Chemical,Kerala,869000,Government,Other
+Synthetic Student 099,6.76,65,3,Other,Uttar Pradesh,190000,Private,Female
+Synthetic Student 100,5.56,55,1,Other,Tamil Nadu,1296000,Government,Male
+Synthetic Student 101,7.38,70,4,Computer Science,Uttar Pradesh,366000,Government,Male
+Synthetic Student 102,9.58,94,4,Mechanical,Karnataka,677000,Private,Other
+Synthetic Student 103,8.95,89,4,Other,Tamil Nadu,776000,Aided,Female
+Synthetic Student 104,9.66,96,2,Computer Science,Uttar Pradesh,344000,Private,Other
+Synthetic Student 105,5.82,57,2,Other,Other,132000,Aided,Other
+Synthetic Student 106,7.94,78,4,Other,Gujarat,141000,Private,Other
+Synthetic Student 107,9.15,90,4,Computer Science,Gujarat,1939000,Private,Female
+Synthetic Student 108,7,70,3,Mechanical,Kerala,924000,Government,Other
+Synthetic Student 109,8.27,79,1,Computer Science,Kerala,1194000,Government,Female
+Synthetic Student 110,7.22,69,2,Civil,Gujarat,80000,Government,Female
+Synthetic Student 111,6.03,58,2,Mechanical,Kerala,609000,Government,Other
+Synthetic Student 112,7.64,74,1,Electronics,Tamil Nadu,113000,Government,Male
+Synthetic Student 113,6.2,63,3,Computer Science,Kerala,106000,Government,Female
+Synthetic Student 114,6.95,66,3,Electronics,Maharashtra,904000,Aided,Male
+Synthetic Student 115,6.15,60,3,Computer Science,Gujarat,84000,Aided,Female
+Synthetic Student 116,8.78,84,4,Computer Science,West Bengal,1271000,Government,Male
+Synthetic Student 117,9.09,87,4,Other,Other,82000,Government,Female
+Synthetic Student 118,6.47,62,1,Chemical,Delhi,153000,Government,Other
+Synthetic Student 119,7.09,71,4,Civil,Other,118000,Government,Male
+Synthetic Student 120,9.14,88,4,Electronics,Maharashtra,1485000,Aided,Male
+Synthetic Student 121,5.81,59,1,Computer Science,West Bengal,1209000,Government,Female
+Synthetic Student 122,7.43,71,3,Chemical,Delhi,226000,Private,Female
+Synthetic Student 123,8.1,78,2,Civil,Kerala,431000,Government,Male
+Synthetic Student 124,9.85,96,3,Civil,Tamil Nadu,228000,Government,Other
+Synthetic Student 125,6.38,62,1,Other,Kerala,651000,Private,Male
+Synthetic Student 126,9.78,96,4,Computer Science,Tamil Nadu,1056000,Government,Male
+Synthetic Student 127,5.88,57,4,Computer Science,Uttar Pradesh,115000,Private,Male
+Synthetic Student 128,8.59,84,2,Mechanical,Tamil Nadu,825000,Private,Female
+Synthetic Student 129,7.15,69,3,Computer Science,Gujarat,137000,Aided,Male
+Synthetic Student 130,9.86,96,4,Other,Telangana,453000,Aided,Female
+Synthetic Student 131,7.06,69,4,Computer Science,Telangana,90000,Private,Male
+Synthetic Student 132,7.1,71,4,Mechanical,Kerala,113000,Government,Male
+Synthetic Student 133,8.83,86,3,Chemical,Karnataka,415000,Aided,Male
+Synthetic Student 134,7.45,72,1,Civil,Gujarat,1597000,Government,Male
+Synthetic Student 135,8.25,81,1,Mechanical,Uttar Pradesh,82000,Government,Other
+Synthetic Student 136,8.96,87,2,Chemical,Delhi,1294000,Government,Female
+Synthetic Student 137,9.41,91,4,Civil,Karnataka,1326000,Private,Male
+Synthetic Student 138,6.1,59,1,Mechanical,Telangana,1265000,Government,Other
+Synthetic Student 139,6.04,58,3,Computer Science,Other,583000,Private,Other
+Synthetic Student 140,6.72,67,2,Civil,Gujarat,225000,Private,Other
+Synthetic Student 141,6.51,63,1,Mechanical,Maharashtra,937000,Private,Other
+Synthetic Student 142,8.5,81,4,Other,Tamil Nadu,1207000,Private,Other
+Synthetic Student 143,9.88,97,3,Electronics,Karnataka,1499000,Private,Male
+Synthetic Student 144,5.62,54,2,Computer Science,Telangana,727000,Government,Female
+Synthetic Student 145,9.72,93,2,Chemical,Delhi,127000,Government,Other
+Synthetic Student 146,9.1,90,1,Chemical,Karnataka,1495000,Government,Other
+Synthetic Student 147,9.39,92,2,Electronics,Telangana,113000,Government,Other
+Synthetic Student 148,8.12,81,3,Other,Karnataka,1916000,Aided,Male
+Synthetic Student 149,6.33,63,1,Computer Science,Delhi,1770000,Private,Male
+Synthetic Student 150,7.25,72,4,Computer Science,Karnataka,462000,Aided,Other
+Synthetic Student 151,9.26,89,2,Computer Science,Tamil Nadu,900000,Government,Male
+Synthetic Student 152,7.12,68,2,Other,Gujarat,245000,Private,Other
+Synthetic Student 153,8.09,78,1,Civil,Uttar Pradesh,665000,Government,Other
+Synthetic Student 154,6.67,64,3,Computer Science,Other,82000,Government,Female
+Synthetic Student 155,5.99,58,1,Civil,Telangana,114000,Aided,Other
+Synthetic Student 156,8.4,81,1,Mechanical,Other,86000,Private,Male
+Synthetic Student 157,6.93,68,3,Computer Science,Telangana,81000,Private,Female
+Synthetic Student 158,9.76,97,4,Chemical,Tamil Nadu,1414000,Government,Male
+Synthetic Student 159,6.69,66,2,Other,Delhi,851000,Aided,Other
+Synthetic Student 160,6.72,64,2,Mechanical,Tamil Nadu,1044000,Government,Female
+Synthetic Student 161,9.24,91,1,Mechanical,Tamil Nadu,279000,Private,Male
+Synthetic Student 162,8.43,81,3,Chemical,Kerala,444000,Private,Female
+Synthetic Student 163,8.8,84,2,Chemical,Tamil Nadu,182000,Government,Female
+Synthetic Student 164,6.1,58,3,Mechanical,Uttar Pradesh,1353000,Aided,Female
+Synthetic Student 165,6.29,61,4,Electronics,Telangana,1864000,Private,Female
+Synthetic Student 166,8.57,83,1,Mechanical,Telangana,130000,Private,Female
+Synthetic Student 167,7.04,68,4,Mechanical,Gujarat,1734000,Aided,Male
+Synthetic Student 168,6.5,65,3,Other,Telangana,1221000,Aided,Other
+Synthetic Student 169,8.08,79,1,Other,Kerala,141000,Private,Other
+Synthetic Student 170,7.18,68,1,Computer Science,Delhi,542000,Private,Female
+Synthetic Student 171,5.88,58,4,Civil,Uttar Pradesh,1181000,Private,Female
+Synthetic Student 172,7.65,75,3,Computer Science,Kerala,517000,Private,Male
+Synthetic Student 173,8.26,79,4,Civil,Gujarat,681000,Private,Other
+Synthetic Student 174,6.87,67,3,Electronics,Delhi,331000,Private,Other
+Synthetic Student 175,7.65,75,2,Chemical,Uttar Pradesh,256000,Government,Male
+Synthetic Student 176,8.16,78,1,Computer Science,Other,1499000,Aided,Female
+Synthetic Student 177,8.08,79,2,Other,Karnataka,1506000,Government,Other
+Synthetic Student 178,6.46,62,1,Chemical,Gujarat,398000,Aided,Female
+Synthetic Student 179,9.42,93,2,Chemical,Uttar Pradesh,101000,Private,Female
+Synthetic Student 180,7.86,77,2,Electronics,Other,1124000,Government,Male
+Synthetic Student 181,7.95,79,2,Mechanical,Gujarat,81000,Aided,Male
+Synthetic Student 182,9.23,89,1,Other,Kerala,425000,Aided,Male
+Synthetic Student 183,9.1,90,4,Civil,Tamil Nadu,328000,Aided,Female
+Synthetic Student 184,6.55,65,2,Mechanical,Tamil Nadu,106000,Private,Male
+Synthetic Student 185,6.73,67,1,Chemical,Maharashtra,1016000,Government,Male
+Synthetic Student 186,6.4,65,3,Civil,Other,312000,Government,Male
+Synthetic Student 187,9.82,95,3,Computer Science,Other,95000,Government,Other
+Synthetic Student 188,8.96,88,1,Computer Science,Telangana,1402000,Private,Female
+Synthetic Student 189,8.9,85,3,Electronics,West Bengal,80000,Private,Male
+Synthetic Student 190,9.57,92,4,Civil,Delhi,573000,Private,Female
+Synthetic Student 191,8.59,84,4,Electronics,Gujarat,99000,Private,Male
+Synthetic Student 192,7.25,70,4,Electronics,Kerala,162000,Aided,Female
+Synthetic Student 193,9.02,87,2,Other,Uttar Pradesh,308000,Private,Other
+Synthetic Student 194,7.23,71,3,Chemical,Kerala,228000,Aided,Other
+Synthetic Student 195,6.68,64,1,Other,West Bengal,249000,Government,Male
+Synthetic Student 196,6.87,68,3,Chemical,Gujarat,844000,Government,Male
+Synthetic Student 197,8.29,81,1,Computer Science,Gujarat,101000,Private,Female
+Synthetic Student 198,7.18,68,1,Civil,Karnataka,218000,Private,Other
+Synthetic Student 199,7.21,71,2,Chemical,Other,274000,Aided,Female
+Synthetic Student 200,6.2,63,2,Mechanical,Telangana,143000,Government,Other

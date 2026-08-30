@@ -18,7 +18,7 @@ export interface Settings {
 export type DemoCase = "docdiff" | "filled" | "blocked" | "error";
 
 export const DEFAULTS: Settings = {
-  apiBase: "http://localhost:3000",
+  apiBase: "https://eligent.karanrajkr.com",
   apiKey: "",
   llmBase: "https://integrate.api.nvidia.com/v1",
   llmModel: "meta/llama-3.3-70b-instruct",

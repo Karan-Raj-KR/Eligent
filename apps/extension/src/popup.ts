@@ -418,7 +418,7 @@ async function boot() {
     renderProfileKV(($("profile-search") as HTMLInputElement).value.trim().toLowerCase()),
   );
   const openBase = () =>
-    chrome.tabs.create({ url: store.settings.apiBase.replace(/\/+$/, "") || "http://localhost:3000" });
+    chrome.tabs.create({ url: store.settings.apiBase.replace(/\/+$/, "") || DEFAULTS.apiBase });
   $("chk-signin").addEventListener("click", openBase);
   $("chk-profile").addEventListener("click", () =>
     chrome.tabs.create({ url: `${store.settings.apiBase.replace(/\/+$/, "")}/onboarding` }),

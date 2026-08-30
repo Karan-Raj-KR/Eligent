@@ -70,6 +70,7 @@ interface EligentContextValue {
   counts: MatchCounts | null;
   reports: ScholarshipReport[];
   signIn: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   setProfile: (profile: UserProfile) => Promise<void>;
   unlockApplyMode: () => void;
@@ -166,7 +167,8 @@ export function EligentProvider({ children }: { children: ReactNode }) {
     }
   }, [getSupabase]);
 
-  // Establish identity, then load. Anonymous auth only — no OAuth, no redirects.
+  // Establish identity, then load. Anonymous by default; Google OAuth returns
+  // here with cookies already set by /auth/callback.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -209,6 +211,22 @@ export function EligentProvider({ children }: { children: ReactNode }) {
     setSignedIn(true);
     await load();
   }, [getSupabase, load]);
+
+  // OAuth leaves this page entirely; the session is set by /auth/callback and
+  // picked up by the init effect when the browser comes back.
+  const signInWithGoogle = useCallback(async () => {
+    setError(null);
+    const sb = getSupabase();
+    if (!sb) {
+      setError("Supabase is not configured. Please contact support.");
+      return;
+    }
+    const { error: authError } = await sb.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/onboarding` },
+    });
+    if (authError) setError(authError.message);
+  }, [getSupabase]);
 
   const signOut = useCallback(async () => {
     const sb = getSupabase();
@@ -325,6 +343,7 @@ export function EligentProvider({ children }: { children: ReactNode }) {
       counts,
       reports,
       signIn,
+      signInWithGoogle,
       signOut,
       setProfile,
       unlockApplyMode,
@@ -336,7 +355,7 @@ export function EligentProvider({ children }: { children: ReactNode }) {
     }),
     [
       hydrated, loading, error, user, signedIn, applyMode, groups, counts, reports,
-      signIn, signOut, setProfile, unlockApplyMode, getMatch, load,
+      signIn, signInWithGoogle, signOut, setProfile, unlockApplyMode, getMatch, load,
       startApplication, setRequirement, submitReport,
     ],
   );

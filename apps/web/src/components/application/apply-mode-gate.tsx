@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Check, LockKeyhole, Rocket } from "lucide-react";
+import { Check, LockKeyhole, Rocket, ShieldCheck } from "lucide-react";
 import { ClayBadge, ClayButton, ClayCard } from "@/components/clay";
-import { PseudoQR } from "@/components/qr-code";
+import { loadCheckout, type CheckoutHandlerResponse } from "@/lib/razorpay-checkout";
 
 interface ApplyModeGateProps {
   unlocked: boolean;
   onUnlock: () => void;
   scholarshipTitle: string;
+  /** Rides along into the Razorpay receipt so a payment is traceable to a page. */
+  opportunityId?: string;
 }
 
 const BENEFITS = [
@@ -21,8 +23,92 @@ const BENEFITS = [
  * ₹99 Apply Mode — the paid, "ready to submit" product.
  * Deliberately separate from free eligibility.
  */
-export function ApplyModeGate({ unlocked, onUnlock, scholarshipTitle }: ApplyModeGateProps) {
-  const [paidClicked, setPaidClicked] = useState(false);
+export function ApplyModeGate({
+  unlocked,
+  onUnlock,
+  scholarshipTitle,
+  opportunityId,
+}: ApplyModeGateProps) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function pay() {
+    setError(null);
+    setBusy(true);
+    try {
+      const Razorpay = await loadCheckout();
+
+      const orderRes = await fetch("/api/payment/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ opportunity_id: opportunityId }),
+      });
+      const order = (await orderRes.json()) as {
+        order_id?: string;
+        amount?: number;
+        currency?: string;
+        key_id?: string;
+        error?: string;
+      };
+      if (!orderRes.ok || !order.order_id) {
+        throw new Error(order.error ?? "Could not start payment.");
+      }
+
+      const checkout = new Razorpay({
+        key: order.key_id || (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? ""),
+        amount: order.amount ?? 9900,
+        currency: order.currency ?? "INR",
+        order_id: order.order_id,
+        name: "ELIGENT",
+        description: "Apply Mode — one time",
+        theme: { color: "#5146f5" },
+        // The modal owns the tab until it closes; both exits must clear `busy`.
+        modal: {
+          ondismiss: () => {
+            setBusy(false);
+            setError("Payment cancelled. Nothing was charged.");
+          },
+        },
+        handler: (response: CheckoutHandlerResponse) => {
+          void verify(response);
+        },
+      });
+
+      checkout.on("payment.failed", (response) => {
+        setBusy(false);
+        setError(response.error?.description ?? "The payment failed. You have not been charged.");
+      });
+
+      checkout.open();
+    } catch (err) {
+      setBusy(false);
+      setError(err instanceof Error ? err.message : "Could not start payment.");
+    }
+  }
+
+  /** Apply Mode unlocks ONLY when the server says the signature checks out. */
+  async function verify(response: CheckoutHandlerResponse) {
+    try {
+      const res = await fetch("/api/payment/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(response),
+      });
+      const body = (await res.json()) as { verified?: boolean; error?: string };
+      if (!res.ok || !body.verified) {
+        throw new Error(
+          body.error === "signature mismatch"
+            ? "We could not verify that payment. Nothing has been unlocked — contact us with your payment id."
+            : (body.error ?? "Could not verify payment."),
+        );
+      }
+      onUnlock();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not verify payment.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   if (unlocked) {
     return (
@@ -82,37 +168,29 @@ export function ApplyModeGate({ unlocked, onUnlock, scholarshipTitle }: ApplyMod
           </ul>
         </div>
 
-        <div className="flex flex-col items-center gap-3">
-          <PseudoQR seed="eligent-upi-99" size={150} />
-          <div className="text-center">
-            <p className="text-[0.92rem] font-bold text-ink">₹99 · one time</p>
-            <p className="text-[0.8rem] text-muted">Scan with any UPI app</p>
-          </div>
+        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-cobalt-tint px-8 py-6 text-center">
+          <p className="font-display text-4xl font-bold text-ink">₹99</p>
+          <p className="text-[0.85rem] font-semibold text-muted">one time, forever</p>
+          <p className="mt-1 flex items-center gap-1.5 text-[0.78rem] text-soft">
+            <ShieldCheck size={13} aria-hidden />
+            UPI, cards, netbanking
+          </p>
         </div>
       </div>
 
       <div className="mt-8 border-t border-line pt-6">
-        {paidClicked ? (
-          <div className="rounded-2xl border border-lime-dark/40 bg-lime-tint px-5 py-4">
-            <p className="text-[0.92rem] font-semibold text-lime-ink">
-              Payment recorded for this demo. Apply Mode is now yours.
-            </p>
-            <ClayButton variant="primary" className="mt-4" onClick={onUnlock}>
-              Unlock Apply Mode
-            </ClayButton>
-          </div>
-        ) : (
-          <>
-            <p className="text-[0.9rem] font-semibold text-ink">Paid?</p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <ClayButton variant="coral" onClick={() => setPaidClicked(true)}>
-                I've paid — unlock
-              </ClayButton>
-              <p className="text-[0.8rem] text-soft">
-                Manual unlock for this demo. No verification.
-              </p>
-            </div>
-          </>
+        <div className="flex flex-wrap items-center gap-4">
+          <ClayButton variant="coral" size="lg" onClick={() => void pay()} disabled={busy}>
+            {busy ? "Opening payment…" : "Pay ₹99 and unlock"}
+          </ClayButton>
+          <p className="text-[0.8rem] text-soft">
+            Secured by Razorpay. Apply Mode unlocks only after we verify the payment.
+          </p>
+        </div>
+        {error && (
+          <p role="alert" className="mt-4 text-[0.86rem] font-semibold text-coral-deep">
+            {error}
+          </p>
         )}
       </div>
     </ClayCard>

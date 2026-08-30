@@ -258,6 +258,7 @@ export default function ApplyPage() {
           unlocked={applyMode}
           onUnlock={() => unlockApplyMode()}
           scholarshipTitle={sc.title}
+          opportunityId={sc.id}
         />
       </div>
 

@@ -1,0 +1,3 @@
+name,cgpa,percentage,year,branch,state,family_income,institution_type,gender
+Example Student A,8.4,84,2,Computer Science,Karnataka,240000,Government,Female
+Example Student B,7.1,71,3,Mechanical,Maharashtra,650000,Private,Male
