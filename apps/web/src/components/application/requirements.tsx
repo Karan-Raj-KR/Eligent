@@ -40,7 +40,9 @@ export function RequirementItem({ item, value, onChange }: RequirementItemProps)
 
 /**
  * COMMUNITY-REPORTED requirement — cream surface, coral accent.
- * Never called "verified": always "Reported by N applicants".
+ * Never called "verified". The report count is shown ONLY when a real one came
+ * back from the report table; there is no zero-fallback, because "Reported by
+ * 0 applicants" is a fabricated number wearing a truthful shape.
  */
 export function CommunityRequirement({
   item,
@@ -61,10 +63,15 @@ export function CommunityRequirement({
           <p className="mt-1 flex items-center gap-1.5 text-[0.8rem] font-semibold text-coral-deep">
             Not in the official requirements
           </p>
-          <p className="mt-0.5 text-[0.83rem] text-muted">
-            Reported by {item.communityReportCount ?? 0} applicants
-            {item.note ? ` · ${item.note}` : ""}
-          </p>
+          {(item.communityReportCount || item.note) && (
+            <p className="mt-0.5 text-[0.83rem] text-muted">
+              {item.communityReportCount
+                ? `Reported by ${item.communityReportCount} applicant${item.communityReportCount === 1 ? "" : "s"}`
+                : null}
+              {item.communityReportCount && item.note ? " · " : null}
+              {item.note}
+            </p>
+          )}
         </div>
       </div>
       <AvailabilityToggle

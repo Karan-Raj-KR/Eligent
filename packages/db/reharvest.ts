@@ -5,11 +5,13 @@
 //
 // For each opportunity: run the real harvest pipeline, and
 //   - criteria recovered -> replace its criteria in the database
-//   - still none         -> DELETE the opportunity
+//   - still none         -> mark criteria_status = 'unverified'
 //
 // An opportunity with no criteria returns `eligible` for every student alive.
-// A smaller accurate catalogue beats a larger wrong one, so the gate is
-// absolute: at least one criterion carrying a verbatim source_text, or it goes.
+// Such rows are NOT deleted — the opportunity is real, it is our eligibility
+// data that is missing. They are marked instead, and /api/matches refuses to
+// give them a verdict. (The guard there also treats "zero criterion rows" as
+// unverified on its own, so exclusion holds even before this column exists.)
 //
 // Dry run by default.
 
@@ -39,7 +41,8 @@ if (targets.length === 0) {
 console.log(`${targets.length} opportunities selected${apply ? "" : "  (DRY RUN)"}\n`);
 
 const recovered: Array<{ name: string; criteria: number; fields: string }> = [];
-const doomed: Array<{ id: string; name: string; url: string; category: string; why: string }> = [];
+/** Harvest ran clean and still found nothing quotable — excluded, never deleted. */
+const unverifiable: Array<{ id: string; name: string; url: string; category: string; why: string }> = [];
 /** Harvest errored — left exactly as it was, never deleted on a failure. */
 const skipped: Array<{ name: string; why: string }> = [];
 
@@ -69,7 +72,7 @@ for (const opportunity of targets) {
   }
 
   if (best.accepted.length === 0) {
-    doomed.push({ ...opportunity, why: "harvest succeeded but no criterion could be quoted verbatim" });
+    unverifiable.push({ ...opportunity, why: "harvest succeeded but no criterion could be quoted verbatim" });
     continue;
   }
 
@@ -89,22 +92,28 @@ for (const opportunity of targets) {
   }
 }
 
-// What a delete would take with it — application rows cascade.
-for (const d of doomed) {
-  const { count } = await sb.from("application").select("id", { count: "exact", head: true }).eq("opportunity_id", d.id);
-  d.why += `  [${count ?? 0} application(s) would cascade]`;
-}
+
 
 console.log("\n================ RECOVERED ================");
 for (const r of recovered) console.log(`  ✓ ${r.name.slice(0, 70)} — ${r.criteria} criteria (${r.fields})`);
 console.log("\n================ SKIPPED (harvest failed — row untouched) ================");
 for (const s of skipped) console.log(`  · ${s.name.slice(0, 70)} — ${s.why}`);
-console.log("\n================ TO DELETE ================");
-for (const d of doomed) console.log(`  ✗ ${d.name.slice(0, 70)}\n      ${d.url}\n      ${d.why}`);
+console.log("\n================ UNVERIFIED (kept, excluded from matching) ================");
+for (const d of unverifiable) console.log(`  ⃠ ${d.name.slice(0, 70)}\n      ${d.url}\n      ${d.why}`);
 
-if (apply && doomed.length) {
-  const { error: delErr } = await sb.from("opportunity").delete().in("id", doomed.map((d) => d.id));
-  if (delErr) console.error(`delete failed: ${delErr.message}`);
+if (apply && unverifiable.length) {
+  const { error: markErr } = await sb
+    .from("opportunity")
+    .update({ criteria_status: "unverified" })
+    .in("id", unverifiable.map((d) => d.id));
+  if (markErr) {
+    // Not fatal: /api/matches excludes a zero-criteria row on its own, so these
+    // opportunities are already invisible to matching. The column is the
+    // explicit record of WHY, and it needs the migration applied first.
+    console.error(`\ncould not set criteria_status (${markErr.message})`);
+    console.error(`these rows stay excluded anyway — the guard keys off "zero criteria", not the column.`);
+    console.error(`apply supabase/migrations/20260830120000_criteria_status.sql, then re-run to record it.`);
+  }
 }
 
-console.log(`\n${apply ? "APPLIED" : "DRY RUN"}: recovered ${recovered.length}, deleted ${doomed.length}, skipped ${skipped.length}`);
+console.log(`\n${apply ? "APPLIED" : "DRY RUN"}: recovered ${recovered.length}, unverified ${unverifiable.length}, skipped ${skipped.length}`);

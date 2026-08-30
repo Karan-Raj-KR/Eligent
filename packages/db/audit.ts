@@ -1,10 +1,11 @@
 // Accuracy audit of the live catalogue. Read-only: prints a table and writes
-// scripts/ACCURACY-AUDIT.md. Run from packages/db:
+// ACCURACY-AUDIT.md at the repo root. Run from packages/db:
 //   npx tsx --env-file=../../apps/web/.env.local audit.ts
 //
 // It answers one question per opportunity: could this row give a student a
 // verdict that is simply wrong? Three ways it can:
-//   1. ZERO criteria      -> passes for literally everyone
+//   1. ZERO criteria      -> would pass for literally everyone (now EXCLUDED
+//                            from /api/matches rather than deleted)
 //   2. UNENCODED RESTRICTION -> the page states a limit no criterion encodes
 //   3. VOCAB MISMATCH     -> criterion value can never === any profile value
 
@@ -152,23 +153,24 @@ lines.push("## Summary", "");
 lines.push("| | count |", "|---|---|");
 lines.push(`| Opportunities | ${rows.length} |`);
 lines.push(`| Criteria rows | ${rows.reduce((n, o) => n + o.criterion.length, 0)} |`);
-lines.push(`| **Zero criteria** (pass for everyone) | **${zero.length}** |`);
+lines.push(`| **Zero criteria** (excluded from matching) | **${zero.length}** |`);
 lines.push(`| **Unencoded restriction** (page restricts, criteria don't) | **${unencoded.length}** |`);
 lines.push(`| **Vocabulary mismatch** (can never match a profile) | **${vocab.length}** |`);
 lines.push("");
 
 lines.push("## Every opportunity", "");
-lines.push("| Opportunity | Category | Criteria | Fields covered | Flags |");
-lines.push("|---|---|---:|---|---|");
+lines.push("| Opportunity | Category | Criteria | Fields covered | Status | Flags |");
+lines.push("|---|---|---:|---|---|---|");
 for (const o of rows) {
   const flags = (flagged.get(o.id) ?? []).map((f) => f.kind);
   const mark = flags.length ? [...new Set(flags)].join(" + ") : "ok";
-  lines.push(`| ${o.name.replace(/\|/g, "-").slice(0, 78)} | ${o.category} | ${o.criterion.length} | ${fieldsOf(o)} | ${mark} |`);
+  const status = o.criterion.length === 0 ? "**unverified — excluded**" : "verified";
+  lines.push(`| ${o.name.replace(/\|/g, "-").slice(0, 78)} | ${o.category} | ${o.criterion.length} | ${fieldsOf(o)} | ${status} | ${mark} |`);
 }
 lines.push("");
 
 for (const [kind, title, note] of [
-  ["ZERO", "Zero criteria — the biggest accuracy risk", "These return `eligible` for every profile, because `evaluate()` with an empty criteria list has nothing to fail on. Either they get a real criterion with a verbatim quote, or they leave the catalogue."],
+  ["ZERO", "Zero criteria — excluded from matching", "`evaluate()` with an empty criteria list has nothing to fail on, so these would return `eligible` for every profile alive. They are NOT deleted — the opportunity is real, our eligibility data is what is missing. `/api/matches` returns them under a separate `unverified` key and never gives them a verdict."],
   ["UNENCODED", "Unencoded restrictions", "The page states a limit that no criterion encodes, so ineligible students are told they qualify. This is the Kotak Kanya class of bug."],
   ["VOCAB", "Vocabulary mismatches", "The stored value cannot `===` any value a profile holds, so the criterion silently rejects (or passes) everyone. Fixed by canonicalising both sides — see `packages/db/vocab.ts`."],
 ] as const) {
@@ -182,10 +184,10 @@ for (const [kind, title, note] of [
   }
 }
 
-writeFileSync("../../scripts/ACCURACY-AUDIT.md", lines.join("\n"));
+writeFileSync("../../ACCURACY-AUDIT.md", lines.join("\n"));
 
 console.log(`opportunities: ${rows.length}   criteria: ${rows.reduce((n, o) => n + o.criterion.length, 0)}`);
 console.log(`ZERO criteria: ${zero.length}`);
 console.log(`UNENCODED restriction: ${unencoded.length}`);
 console.log(`VOCAB mismatch: ${vocab.length}`);
-console.log("\nwrote scripts/ACCURACY-AUDIT.md");
+console.log("\nwrote ACCURACY-AUDIT.md");

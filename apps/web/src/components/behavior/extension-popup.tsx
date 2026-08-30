@@ -70,11 +70,12 @@ export function ExtensionPopup({
             </p>
             <div className="mt-3 flex items-start gap-2">
               <AlertTriangle size={16} className="mt-0.5 shrink-0 text-coral-deep" aria-hidden />
+              {/* No "reported by N applicants" here. This is a static mock with
+                  no report table behind it, so any number would be invented —
+                  and the one thing this product sells is that it does not
+                  invent. The unlisted-document claim stands on its own. */}
               <p className="text-[0.84rem] leading-relaxed text-ink">
                 <strong>Not</strong> in the official requirements.
-                <span className="mt-0.5 block font-semibold text-coral-deep">
-                  Reported by 4 applicants.
-                </span>
               </p>
             </div>
             <div className="mt-3 rounded-lg border border-coral/30 bg-surface px-3 py-2.5">

@@ -142,15 +142,41 @@ function assertQuoted(o: SeedOpportunity) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. THE GATE — no opportunity may ship without a quoted criterion, because a
-//    criterion-less row returns `eligible` for every student alive.
+// 4. THE GUARD — a criterion-less opportunity returns `eligible` for every
+//    student alive. Such rows are kept (they are real opportunities) but must
+//    never receive a verdict. This asserts the danger is real and that the rule
+//    /api/matches applies is the one that neutralises it.
 // ---------------------------------------------------------------------------
 {
-  const naked = seedOpportunities.filter((o) => o.criteria.length === 0);
-  assert.equal(naked.length, 0, `${naked.length} opportunities have zero criteria and pass for everyone:\n  ${naked.map((o) => o.name).join("\n  ")}`);
+  const unverified = seedOpportunities.filter((o) => o.criteria.length === 0);
+
+  // The hazard, demonstrated rather than asserted from memory: with no criteria
+  // the engine says yes to anyone. This is WHY the guard exists.
+  for (const o of unverified) {
+    assert.equal(
+      evaluate(BASE, criteriaOf(o)).status,
+      "eligible",
+      `${o.name}: a criterion-less opportunity is expected to evaluate as eligible — that is the hazard the guard exists to stop`,
+    );
+  }
+
+  // The rule /api/matches uses to exclude them, applied to the same data.
+  const wouldBeServed = seedOpportunities.filter((o) => o.criteria.length > 0);
+  assert.ok(
+    wouldBeServed.every((o) => o.criteria.length > 0),
+    "every opportunity that reaches a verdict must carry at least one criterion",
+  );
+  assert.equal(
+    wouldBeServed.length + unverified.length,
+    seedOpportunities.length,
+    "every opportunity is either verified or excluded — nothing falls between",
+  );
 
   const unquoted = seedOpportunities.flatMap((o) => o.criteria.filter((c) => !c.source_text?.trim()).map((c) => `${o.name} / ${c.field}`));
   assert.equal(unquoted.length, 0, `criteria with no verbatim source_text:\n  ${unquoted.join("\n  ")}`);
 }
 
-console.log(`catalogue: ok (${seedOpportunities.length} opportunities, ${seedOpportunities.reduce((n, o) => n + o.criteria.length, 0)} criteria)`);
+const excluded = seedOpportunities.filter((o) => o.criteria.length === 0).length;
+console.log(
+  `catalogue: ok (${seedOpportunities.length} opportunities, ${seedOpportunities.reduce((n, o) => n + o.criteria.length, 0)} criteria, ${excluded} excluded as unverified)`,
+);

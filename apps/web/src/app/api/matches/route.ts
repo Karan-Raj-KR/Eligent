@@ -11,11 +11,17 @@ export async function GET() {
   const profile = await loadProfile(supabase, user.id);
   if (!profile) return NextResponse.json({ error: "complete onboarding first" }, { status: 400 });
 
-  const FULL = "id, name, provider, url, deadline, amount, category, location_type, funded, criterion(*)";
+  const FULL = "id, name, provider, url, deadline, amount, category, location_type, funded, criteria_status, criterion(*)";
+  const NO_STATUS = "id, name, provider, url, deadline, amount, category, location_type, funded, criterion(*)";
   const LEGACY = "id, name, provider, url, deadline, amount, criterion(*)";
   let { data: opportunities, error } = await supabase.from("opportunity").select(FULL);
-  // The broaden migration may not have been applied yet — fall back so /matches
-  // keeps rendering. Rows then read as scholarship / india / true (the defaults).
+  // Either migration may not have been applied yet — fall back so /matches keeps
+  // rendering. Losing criteria_status does NOT weaken the guard below: an
+  // opportunity with no criterion rows is unverified whether or not a column
+  // says so, and that is the check the guard actually relies on.
+  if (error && /column .*criteria_status/i.test(error.message)) {
+    ({ data: opportunities, error } = await supabase.from("opportunity").select(NO_STATUS));
+  }
   if (error && /column .*(category|location_type|funded)/i.test(error.message)) {
     ({ data: opportunities, error } = await supabase.from("opportunity").select(LEGACY));
   }
@@ -34,12 +40,28 @@ export async function GET() {
     rejected: [],
   };
 
+  // Opportunities we hold no verified criteria for. They get NO verdict — not
+  // eligible, not near miss, not rejected — and are returned separately so the
+  // UI can show them under their own honest label.
+  const unverified: Array<{ opportunity: Record<string, unknown> }> = [];
+
   for (const row of opportunities ?? []) {
     const { criterion, ...opportunity } = row as { criterion: Criterion[] } & Record<string, unknown>;
     const criteria = criterion ?? [];
+
+    // THE GUARD. evaluate() with an empty criteria list has nothing to fail on,
+    // so it returns `eligible` — a confident yes for every student alive. That
+    // must never reach a student as a verdict. Zero criteria is the derived
+    // truth and is authoritative on its own; criteria_status is belt-and-braces
+    // for a row explicitly marked unverified by the harvester.
+    if (criteria.length === 0 || opportunity.criteria_status === "unverified") {
+      unverified.push({ opportunity });
+      continue;
+    }
+
     const evaluation = evaluateOpportunity(profile, criteria);
     grouped[evaluation.status].push({ opportunity, evaluation, criteria });
   }
 
-  return NextResponse.json(grouped);
+  return NextResponse.json({ ...grouped, unverified });
 }

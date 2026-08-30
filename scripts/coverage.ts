@@ -30,7 +30,13 @@ const details: Record<string, Array<{ name: string; failed: string[] }>> = {
   rejected: [],
 };
 
-for (const opp of seedOpportunities) {
+// Same guard as /api/matches: an opportunity with no criteria gets NO verdict.
+// Counting them here would inflate `eligible` with rows the product never
+// shows — the report has to measure what a student actually sees.
+const unverifiedOpps = seedOpportunities.filter((o) => o.criteria.length === 0);
+const verifiedOpps = seedOpportunities.filter((o) => o.criteria.length > 0);
+
+for (const opp of verifiedOpps) {
   const criteria = opp.criteria.map((c) => ({
     field: c.field,
     operator: c.operator as "gte" | "lte" | "eq" | "in" | "not_in" | "between",
@@ -57,18 +63,18 @@ if (canonicalised.length > 0) {
 }
 console.log(`\nOpportunities in catalog: ${seedOpportunities.length}  (target: 40)`);
 
-// The accuracy gate: a criterion-less opportunity returns `eligible` for every
-// student alive, so it is counted here and must be zero.
-const noCriteria = seedOpportunities.filter((o) => o.criteria.length === 0);
-console.log(`Opportunities with ZERO criteria: ${noCriteria.length}  (gate: 0)`);
-for (const o of noCriteria) console.log(`  ⚠️  ${o.name}`);
+// A criterion-less opportunity would return `eligible` for every student alive.
+// These are kept but excluded from matching, and get no verdict at all.
+console.log(`Excluded as unverified (no criteria): ${unverifiedOpps.length}`);
+for (const o of unverifiedOpps) console.log(`  ⃠  ${o.name}`);
+console.log(`Opportunities actually evaluated: ${verifiedOpps.length}`);
 
 const byCategory = new Map<string, number>();
 for (const o of seedOpportunities) byCategory.set(o.category, (byCategory.get(o.category) ?? 0) + 1);
 console.log("\nRows per category:");
 for (const [cat, n] of [...byCategory].sort()) console.log(`  ${cat}: ${n}`);
 
-const fundedScholarships = seedOpportunities.filter(
+const fundedScholarships = verifiedOpps.filter(
   (o) => o.category === "scholarship" || (o.category === "programme" && o.funded),
 ).length;
 console.log(`\nScholarships or funded programmes: ${fundedScholarships}  (gate: >= 8)`);

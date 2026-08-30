@@ -165,6 +165,26 @@ export const seedOpportunities: SeedOpportunity[] = [
     ],
   },
   {
+    name: "All Things Agentic Hackathon",
+    provider: "Devpost",
+    url: "https://allthingsagentichackathon.devpost.com",
+    deadline: "2026-08-31",
+    amount: "$180,000 in prizes",
+    category: "hackathon",
+    location_type: "online",
+    funded: true,
+    official_documents: ["View full rules","FAQs","Official Rules"],
+    criteria: [
+      {
+        field: "institution_type",
+        operator: "eq",
+        value: "Incorporated",
+        display_text: "Must be submitting on behalf of an incorporated organization",
+        source_text: "Must be submitting on behalf of an organization that is incorporated, and you must provide a corporate email address",
+      }
+    ],
+  },
+  {
     name: "Amazon Future Engineer Scholarship (India) 2026-27: Application Form, Eligibility & Selection List",
     provider: "Amazon India & Foundation for Excellence (FFE)",
     url: "https://www.indiascholarships.in/scholarships/amazon-future-engineer-scholarship-india",
@@ -1000,6 +1020,26 @@ export const seedOpportunities: SeedOpportunity[] = [
     ],
   },
   {
+    name: "Midnight Hackathon: August 2026",
+    provider: "Major League Hacking",
+    url: "https://midnight-hackathon-august-2026.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "$0",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+      {
+        field: "team_size",
+        operator: "lte",
+        value: 5,
+        display_text: "Maximum team size: 5",
+        source_text: "Each team can have a maximum of 5 members.",
+      }
+    ],
+  },
+  {
     name: "Narotam Sekhsaria Postgraduate Scholarship 2026-27: Application Form, Eligibility & Selection List",
     provider: "Narotam Sekhsaria Foundation",
     url: "https://www.indiascholarships.in/scholarships/narotam-sekhsaria-postgraduate-scholarship",
@@ -1276,6 +1316,20 @@ export const seedOpportunities: SeedOpportunity[] = [
     ],
   },
   {
+    name: "Smart City Hackathon Lahore",
+    provider: "Code for Pakistan",
+    url: "https://smart-city-hackathon-lahore.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "$642",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
     name: "SSP Pre-Matric & Post-Matric Scholarship (Karnataka) 2026-27",
     provider: "Government of Karnataka",
     url: "https://www.indiascholarships.in/scholarships/ssp-pre-matric-post-matric-scholarship-karnataka",
@@ -1431,6 +1485,34 @@ export const seedOpportunities: SeedOpportunity[] = [
     ],
   },
   {
+    name: "The WebMCP Challenge",
+    provider: "Devpost",
+    url: "https://webmcp.devpost.com",
+    deadline: "2026-09-03",
+    amount: "$ 35,000 in prizes",
+    category: "hackathon",
+    location_type: "online",
+    funded: true,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
+    name: "Veteran Innovation Hackathon",
+    provider: "Hacker Dojo",
+    url: "https://veteran-innovation-hackathon.devpost.com/",
+    deadline: "2026-08-30",
+    amount: "$500",
+    category: "hackathon",
+    location_type: "abroad",
+    funded: false,
+    official_documents: [],
+    criteria: [
+
+    ],
+  },
+  {
     name: "VIT B.Tech GV School Development Programme (GVSDP) Merit Scholarship 2026-27: Application Form, Eligibility & Selection List",
     provider: "Vellore Institute of Technology",
     url: "https://www.indiascholarships.in/scholarships/viteee-gvsdp-merit-scholarship",
@@ -1454,6 +1536,40 @@ export const seedOpportunities: SeedOpportunity[] = [
         value: 2000000,
         display_text: "Income limit up to 20.0 Lakh/year",
         source_text: "Income Limit Up to ₹20.0 Lakh/year",
+      }
+    ],
+  },
+  {
+    name: "VLSI Design Internship at Kukbit SL",
+    provider: "Kukbit SL",
+    url: "https://unstop.com/internships/vlsi-design-internship-kukbit-sl-1737771",
+    deadline: null,
+    amount: null,
+    category: "internship",
+    location_type: "india",
+    funded: false,
+    official_documents: [],
+    criteria: [
+      {
+        field: "category",
+        operator: "eq",
+        value: "Undergraduate",
+        display_text: "Eligibility: Undergraduate",
+        source_text: "Undergraduate",
+      },
+      {
+        field: "category",
+        operator: "eq",
+        value: "Postgraduate",
+        display_text: "Eligibility: Postgraduate",
+        source_text: "Postgraduate",
+      },
+      {
+        field: "branch",
+        operator: "in",
+        value: ["Engineering","Computer Science","Electronics","Mechanical","Civil","Chemical","CSE"],
+        display_text: "Eligibility: Engineering Students",
+        source_text: "Engineering Students",
       }
     ],
   }
