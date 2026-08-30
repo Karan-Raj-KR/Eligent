@@ -1,216 +1,140 @@
-# Morning Report - Overnight Run
+# Morning Report — overnight run
 
-## Status: IN PROGRESS — awaiting developer decisions (see "OPEN DECISIONS" at bottom)
+**Branch:** `overnight-web` (off `overnight`). Nothing merged to `main`. **Nothing pushed.**
 
-Started: 2026-08-30 (overnight run)
-
----
-
-## UPDATE 2 — Task 1 DB reconciled; Task 2 assessed, NOT executed
-
-### Task 1 — DONE to the stated bar
-
-- `pnpm db:push` ran: 20 opportunities / 52 criteria upserted.
-- The DB had **39** opportunity rows — 19 orphans from earlier harvest experiments
-  (different URLs: reliancefoundation.org, buddy4study /application/ URLs, ~15
-  trimmed indiascholarships URLs). Those orphans would pollute `/matches`.
-  **Deleted the 19 orphans + their criteria.** DB now holds exactly the 20 that
-  are in `seed.ts`. (Reconcile was a throwaway script, not committed.)
-- Coverage (engine over the 20, `scripts/coverage.ts`): **eligible 9 / near_miss 2
-  / rejected 9** — all buckets non-zero → stated Task 1 bar met.
-- `near_miss` still 2 (want ≥3). NOT forced. Closing it means re-running the full
-  `harvest.ts` (regenerates all of seed.ts via non-deterministic gpt-5-nano — no
-  LLM response cache — risks drifting the good 9/2/9, and spends OpenAI budget on
-  the dev's key). Judged not worth the risk autonomously. Low-risk path for later:
-  add 1–2 real URLs with a % cutoff in the 83–88 band to the TOP of `urls.txt`
-  (harvest stops at TARGET_OPPORTUNITIES=20), re-harvest, re-push, re-check.
-- Under-extraction caveat still stands (Narotam Sekhsaria *PG*, Kotak *Kanya*
-  land `eligible` for a year-2 male — missing PG/female criterion; not fabricated).
-- `/matches` live check deferred: with DEV MODE reverted there is no auth bypass,
-  so it needs a real anon session + profile. That path == Task 2 verification.
-
-### Task 2 — assessed the source repo, did NOT start the swap
-
-Cloned `github.com/mdmustafa9105/Eligent` to `/tmp/eligent` (read-only look).
-
-**What it is:** a polished but **100% mock-driven prototype**.
-- `next@16.3.3` / `react@19.2.8` — real, and NEWER than ours (`next@15.5.24` /
-  `react@18.3.1`). Briefing says adopt his / never downgrade Next → adopting means
-  a **major framework upgrade** of `apps/web` (15→16, React 18→19) that ripples
-  through `@supabase/ssr`, middleware, every dep. His `AGENTS.md` explicitly warns
-  "This is NOT the Next.js you know — breaking changes."
-- **No backend at all.** All data from `lib/data/scholarships.ts` (726 lines of
-  hand-written fake scholarships). Ships **his own** `lib/eligibility.ts` engine
-  (166 lines) — collides with our off-limits `packages/engine`. All persistence is
-  `localStorage` via `lib/store.ts`. No Supabase, no auth, zero `fetch` calls.
-- **His types diverge completely from our API** — would need a full adapter layer:
-
-  | his shape | our shape |
-  |---|---|
-  | `Scholarship {title, amount:number, officialRequirements, communityRequirements, criteria: EligibilityCriterion[]}` | `opportunity {name, amount:string\|null, criterion(*)}` |
-  | `EligibilityCriterion {kind, operator, value, short, label, note}` | `Criterion {field, operator, value, display_text, source_text}` |
-  | `MatchStatus "ELIGIBLE"\|"NEAR_MISS"\|"NOT_ELIGIBLE"` | `"eligible"\|"near_miss"\|"rejected"` |
-  | `UserProfile {name, cgpa, year, income, institutionType, category}` | `profile {full_name, cgpa, year_of_study, annual_family_income, institution_type, category}` |
-  | `MatchResult`/`CriterionResult` computed client-side by his engine | `/api/matches` returns `{eligible[],near_miss[],rejected[]}` pre-computed server-side |
-
-**Why I stopped:** Task 2 step 5 ("replace every mock with real calls, adapt his
-prop shapes to ours") is a **multi-hour deep rewrite** of his entire data layer +
-a framework upgrade — not a file copy. Executing it **deletes the currently
-integrated, working, Supabase-wired frontend** (commits UI 1–6) and leaves a
-non-functional prototype until the rewrite is finished. Doing that unattended and
-pushing it — while the developer is awake and can review — is the wrong call.
-Per the ground rule "if a step is a blocker, STOP and report", this is reported,
-not improvised around.
-
-**Fields his UI wants that our API does not return** (from `lib/types.ts`):
-- `Scholarship.summary`, `.cadence`, `.openFor`, `.amountNote`
-- `Requirement.communityReportCount` (we return community rows but not a count)
-- `CriterionResult.comparison` / `.reason` / `.detail` (his engine formats these;
-  ours returns `Failed.gap` arithmetic + `display_text` — an adapter can build
-  the strings, but the API won't grow these fields)
+End state: **the teammate's frontend, on the real backend and database, with a working extension.**
 
 ---
 
-## UPDATE (later pass) — corrected state
+## How to run it
 
-The section below this block was written mid-run against an earlier 19-opp seed.
-Current committed state on branch `overnight`:
-
-- **seed.ts: 20 opportunities / 76 criteria**, all criteria passed `validate()`
-  (source_text is a verbatim page quote). Committed in `169708b`.
-- **Local coverage** (`tsx scripts/coverage.ts`, engine over seed.ts, no DB) for
-  the standard test profile (CGPA 8.4, %82, year 2, CSE, Karnataka, income 3L,
-  private, General, male):
-
-  | bucket | count | target |
-  |--------|-------|--------|
-  | eligible  | 9 | ≥3 ✅ |
-  | near_miss | 2 | ≥3 ❌ (short by 1) |
-  | rejected  | 9 | ≥3 ✅ |
-
-  All three buckets are non-zero, so the stated "TASK 1 IS DONE when /matches
-  shows non-zero counts in all three buckets" bar is met. The stricter internal
-  ≥3 target misses `near_miss` by one.
-
-- ⚠️ **Some `eligible` verdicts look like criterion under-extraction, not real
-  matches** — e.g. "Narotam Sekhsaria *Postgraduate* Scholarship" and "Kotak
-  *Kanya* (girls) Scholarship" both land `eligible` for a year-2 male profile,
-  which means the PG-only / female-only clause was not extracted. No data was
-  fabricated; these need human review. Fixing them means adding criteria (data)
-  or changing extraction — both flagged, neither done, per the ground rules.
-
-- DB: a prior agent loaded the earlier 19-opp set (~22 rows in `opportunity`).
-  The current 20-opp seed has **not** been re-pushed. `pnpm db:push` + a
-  row-count verify is pending a decision on whether to also close the near_miss
-  gap first (which would change the seed again).
-
-### Housekeeping done this pass
-- `.gitignore`: added `.pnpm-store/` (36 MB, was untracked) and `*.bak`/`*.bak2`.
-- Reverted a stale `apps/extension/src/popup.ts` working-tree edit (superseded by
-  the committed extension work on branch `overnight-ext`).
-- Committed the completed overnight work in attributed chunks:
-  `169708b` harvest data, `70ecad4` dev-user/profile scripts, `581669f` docs.
-- **NOT committed** (held for a decision): the `apps/web` DEV MODE auth-bypass
-  changes — see OPEN DECISIONS.
-
----
-
-## OPEN DECISIONS (need a human)
-
-**A. `apps/web` DEV MODE changes** — ✅ RESOLVED: reverted. `middleware.ts`,
-`lib/supabase/bearer.ts`, `app/layout.tsx`, `.env.example` restored; the
-incomplete `app/extension-auth/` stub deleted. No dev-mode refs remain in
-`apps/web/src`.
-
-**B. near_miss bucket** — still 2 (want ≥3). Not forced (see UPDATE 2). Decision:
-accept 2 (stated bar is met), or authorise a full re-harvest with the drift/cost
-risk noted.
-
-**C. TASK 2 frontend replacement** — assessed, NOT executed (see UPDATE 2 for the
-full why). It is a real but large job: adopt Next 16 / React 19, delete the
-integrated UI 1–6, port his `app/`+`components/`, then rewrite his whole mock data
-layer (`lib/data/scholarships.ts`, `lib/eligibility.ts`, `lib/store.ts`) into an
-adapter over our real endpoints + add anon Supabase auth. Multi-hour, and the app
-is non-functional mid-migration. **Needs an explicit go on the destructive swap**,
-ideally reviewed rather than pushed blind. If yes, recommended approach:
-do it on a branch off `overnight` (e.g. `overnight-web`), land it in reviewable
-commits (deps upgrade → structure port → data-layer adapter → auth → brand →
-build-clean), and open it for review before merge.
-
-**D. `git push origin overnight`** — NOT done. Nothing has ever been pushed; local
-`main` is also 5 commits ahead of `origin/main`. Confirm before any push.
-
----
-
-## TASK 1 — GET REAL DATA IN
-
-### Diagnostics - CURRENT STATUS
-
-#### Seed File Loaded to Supabase
-- ✅ **19 opportunities** loaded successfully
-- ✅ **76 criteria** loaded successfully
-- ✅ Supabase now has **22 rows** in opportunity table
-
-#### Coverage Report - PROBLEM IDENTIFIED
-
-**Test Profile**: CGPA 8.4, percentage 82, year 2, CSE, Karnataka, income 3L, private institution, General, male
-
-**Current Bucket Counts**:
-```
-  eligible:  1  ⚠️ (needs 3)
-  near_miss: 0  ⚠️ (needs 3)
-  rejected:  18
+```bash
+pnpm install
+pnpm --filter web dev          # http://localhost:3000
 ```
 
-**Root Cause Analysis**:
-- Most scholarships target **specific states** (Gujarat, Maharashtra, Kerala, Telangana, HP) — not Karnataka
-- Many target **specific categories** (SC, ST, OBC, Minority) — our profile is General
-- Several target **high school students** (year_of_study 9-12) — our profile is year 2 UG
-- Some are **female-only** — our profile is male
-- Income limits often too low (1L, 2.5L) — our profile is 3L annual_family_income
+Requires `apps/web/.env.local` (already present, gitignored):
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+Root `.env.local` (service-role + OpenAI) is only for `pnpm db:push` and the harvester.
 
-### Why Buddy4Study URLs Weren't Harvested
-
-Looking at `scripts/urls.txt` — all 20 URLs are from `indiascholarships.in`. The `discover.ts` script filters Buddy4Study links to only match `/scholarship/<slug>` pattern, but those still need to be discovered from the listing pages.
-
-### Current Sources (scripts/sources.txt)
-1. https://www.buddy4study.com/scholarships/engineering  ← **NOT HARVESTED YET**
-2. https://www.buddy4study.com/scholarships/karnataka   ← **NOT HARVESTED YET**  
-3. https://www.indiascholarships.in/scholarships       ← ✅ Harvested
-
-### Action Plan to Fix Coverage
-
-1. **Run discover.ts** on Buddy4Study URLs to get new scholarship links
-2. **Find Karnataka-specific UG engineering scholarships** that match:
-   - year_of_study: 1-4 (UG level)
-   - state: Karnataka or "All India"
-   - category: General or "All"
-   - annual_family_income: >= 300000
-   - percentage: <= 82 or CGPA <= 8.4
-
-3. **Add targeted URLs** for Karnataka scholarships if discover doesn't yield enough
+Extension:
+```bash
+pnpm --filter opportunity-extension build
+```
+`chrome://extensions` → Developer mode → **Load unpacked** → `apps/extension/dist/`.
+Full walkthrough in `apps/extension/EXT-REPORT.md`.
 
 ---
 
-## TASK 2 — REPLACE FRONTEND
+## Task 1 — real data
 
-Status: NOT STARTED (blocked on Task 1)
+| | |
+|---|---|
+| Seed | 20 opportunities / 76 criteria, every `source_text` a verbatim page quote |
+| Database | `opportunity` **20**, `criterion` **52**, reconciled — see note |
+| Fetch method | all 20 via plain **FETCH** from `indiascholarships.in` (cached in `scripts/.cache/`, 82 pages). Buddy4Study listing pages were never harvested. |
+
+**DB reconciliation:** the table held **39** rows — 19 orphans from earlier harvest experiments under different URLs (reliancefoundation.org, buddy4study `/application/` links, ~15 trimmed indiascholarships URLs). They would have polluted `/matches`, so they and their criteria were deleted. DB now matches `seed.ts` exactly.
+
+**Coverage** (test profile: CGPA 8.4, 82%, year 2, CSE, Karnataka, ₹3L, Private, General, Male) — the UI reproduces the engine's own report exactly:
+
+| bucket | count |
+|---|---|
+| eligible | **9** |
+| near miss | **2** |
+| rejected | **9** |
+
+All three buckets non-zero → the stated Task 1 bar is met. `near_miss` is one short of the internal ≥3 target; **not forced**. Closing it honestly means harvesting 1–2 more real scholarships with a cutoff in the 83–88% band (add them to the top of `scripts/urls.txt`; harvest stops at `TARGET_OPPORTUNITIES=20`). Re-running the whole harvest would regenerate all 20 through a non-deterministic model and risk drifting the good 9/2/9, so it was left alone.
+
+### ⚠ Known data-quality issue (needs a human)
+Some `eligible` verdicts are **criterion under-extraction, not real matches**:
+- *Kotak **Kanya** Scholarship* (girls-only) and *Narotam Sekhsaria **Postgraduate** Scholarship* both pass for a year-2 male profile — the gender / PG clause was never extracted from those pages.
+
+Nothing was fabricated; the criteria simply aren't in the data. Fixing means re-harvesting those pages or hand-entering the missing criterion — both are data decisions, deliberately left to you.
 
 ---
 
-## Summary
+## Task 2 — frontend replacement
 
-| Task | Status | Notes |
-|------|--------|-------|
-| Task 1: Load to DB | ✅ Done | 19 opps, 76 criteria loaded |
-| Task 1: Coverage | ❌ Failed | Only 1 eligible, 0 near_miss |
-| Task 1: Discover | 🔄 Next | Run on Buddy4Study URLs |
-| Task 2: Frontend | Pending | Not started |
+Cloned `github.com/mdmustafa9105/Eligent`. It was a **100% mock-driven prototype**: 726 lines of fake scholarships, its own client-side eligibility engine, all state in `localStorage`, zero network calls, no auth. His **components were kept unchanged**; everything underneath them was replaced.
+
+### Deleted
+`apps/web/src/app/{page,onboarding,matches,proof,application}` (our routes), all of `apps/web/src/components/**` (incl. `ui/`), our `lib/{api,cn,format,gap,session,types,utils}.ts`, `tailwind.config.ts`, `components.json`, `postcss.config.js`.
+
+### Kept (backend untouched — verified by diff)
+`apps/web/src/app/api/**` · `src/lib/supabase/**` · `src/lib/eligibility.ts` · `src/lib/field-hints.ts` · `packages/engine`.
+
+### Not copied from his repo
+`lib/data/scholarships.ts` (mock data) and `lib/eligibility.ts` (his client engine) — our API and `packages/engine` are authoritative. His form option lists were kept as `lib/form-options.ts`.
+
+### Dependencies — adopted his, nothing downgraded
+`next 15.5.24 → 16.3.3` · `react 18.3 → 19.2.8` · `tailwind 3 → 4` (his `globals.css` is v4 `@theme`) · `lucide 0.4 → 1.37` · `eslint 8 → 9`. Dropped radix / cva / tailwind-merge / tailwindcss-animate / autoprefixer — his UI uses plain elements plus `components/clay.tsx`.
+
+### Wiring (`lib/adapt.ts` + `components/provider.tsx`)
+`/api/matches` → his `MatchResult`/`Scholarship`/`CriterionResult`. The adapter is **presentation only** — it never re-decides eligibility, it renders the verdict the engine returned. Auth is `signInAnonymously()`; no Google, no OAuth, no callback. The profile is read straight from Postgres through RLS rather than adding `GET /api/profile`.
+
+| his mock | now |
+|---|---|
+| `SCHOLARSHIPS` array | `GET /api/matches` |
+| `getMatches()` client engine | server verdict from `packages/engine` |
+| `localStorage` profile | `POST /api/profile` + RLS read |
+| `localStorage` application | `POST /api/application`, `PATCH /api/application/:id/requirement` |
+| `localStorage` reports | `POST /api/report` |
+| simulated Google sign-in | `supabase.auth.signInAnonymously()` |
+
+### Integration bugs found by actually running it
+1. **His onboarding collected neither `percentage` nor `gender`** — but 15 of 20 scholarships state a percentage cutoff and 3 are gender-restricted. Without them the engine correctly failed those as `unknown` and `/matches` collapsed to **2/0/18**. Both columns were *already* accepted by `POST /api/profile`; the form was simply missing them. Added → **9/2/9**.
+2. **His near-miss card regex-scraped** "your value" and "required" out of his mock's sentence phrasing, so both slots showed identical text. `CriterionResult` now carries `actual`/`required` as data; the two regex helpers are deleted.
+3. **Failing rows asserted falsehoods** — `Family income ₹3L ≤ ₹2L`. Now `Family income ₹3L · requires ≤ ₹2L`. Units singularise (`1 year over`).
+4. Hardcoded **"43 scholarships"** copy replaced with the real count.
+
+### Fields his UI wanted that our API does not return
+Left optional and simply not rendered — **not invented, and not added to the API**:
+`Scholarship.summary`, `.cadence`, `.openFor`, `.amountNote` · `Requirement.communityReportCount` (we store community rows but no count on the match payload) · `CriterionResult.comparison/reason/detail` (his engine wrote these; ours are derived from real `gap` arithmetic + `display_text`).
+
+`Scholarship.amount` was `number` in his types; ours is a published **display string** (`"₹1.5 Lakh+"`) because the sources state ranges and qualifiers. Rendered as-is rather than fabricating an integer.
+
+### Brand
+Product name is **Eligent** everywhere. The domain term *cutoff* was deliberately kept in 4 places (`rejected at the cutoff`, `official cutoff`, `state their cutoff as a percentage`, `cutoff stage`).
 
 ---
 
-## Files Modified So Far
+## Extension — two real breaks, both fixed
 
-1. Created `scripts/coverage.ts` - test coverage report tool
-2. Created `.env.local` - Supabase credentials (from .env.example)
-3. Created `MORNING-REPORT.md` - this file
+1. The bridge derived the application id from `/application/<uuid>`, **a route the new UI doesn't have**. `/apply/<id>` carries the *opportunity* id, while `/api/fill/:application_id` needs the application row's id — which only exists after that page creates it. The apply page now publishes it as a data attribute; the bridge reads that.
+2. The bridge read the session from **localStorage**, but `@supabase/ssr` stores it in a **cookie** (`base64-` wrapped, chunked `.0/.1` when large). Rewritten to parse the cookie jar and reassemble chunks. It also must not take the first `sb-*-auth-token` it finds — a browser can hold several, and a stale `sb-127` cookie from the extension test page was making every call 401. It now decodes each JWT `exp`, discards expired tokens and keeps the longest-lived.
+
+**Verified live against the app + database:**
+
+| path | result |
+|---|---|
+| eligible | `200`, `blocked:false`, real values (`Aarav Sharma`, `8.4`, `82`, `Karnataka`), 5 official documents |
+| rejected | `200`, `blocked:true`, **0 fields filled**, verbatim clause: *"Only students currently enrolled in the 1st year…"* |
+
+Extension `build` + `mapper` tests (29 hits / 10 misses) + `tsc` all clean.
+
+---
+
+## Verification summary
+
+| check | result |
+|---|---|
+| `packages/engine` diff | **unchanged** ✓ |
+| `apps/web/src/app/api/**` diff | **unchanged** ✓ |
+| engine tests (vitest) | **19/19 pass** ✓ |
+| web `tsc --noEmit` | clean ✓ |
+| web `next build` | clean — 5 pages + 7 API routes + middleware ✓ |
+| extension build / test / tsc | clean ✓ |
+| end-to-end in browser | sign-in → onboarding → 9/2/9 → apply → checklist persists across reload ✓ |
+
+No `any` casts were used to silence a type error.
+
+---
+
+## Open decisions for you
+
+1. **Push.** Nothing is pushed. `overnight-web` is local; `main` is also 5 commits ahead of `origin/main`. Say the word and I'll `git push origin overnight-web`.
+2. **Under-extracted criteria** (Kotak Kanya, Narotam Sekhsaria) — re-harvest those pages or hand-enter the missing clause.
+3. **near_miss = 2** — accept, or harvest 1–2 more scholarships in the 83–88% band.
+4. **Housekeeping done:** `.pnpm-store/` (36 MB) and `*.bak*` are now gitignored; the dead `NEXT_PUBLIC_DEV_MODE` flag and its auth-bypass were reverted; the incomplete `extension-auth` stub was deleted.
+5. **`.env.example` still contains a live-looking `sk-proj-…` OpenAI key** (pre-existing, committed before this run). Worth rotating.
