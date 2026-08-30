@@ -19,6 +19,7 @@ export interface CheckoutOptions {
   order_id: string;
   name: string;
   description?: string;
+  prefill?: { email?: string; contact?: string; name?: string };
   handler: (response: CheckoutHandlerResponse) => void;
   modal?: { ondismiss?: () => void };
   theme?: { color?: string };
