@@ -63,6 +63,13 @@ Allowed operators ONLY: gte, lte, eq, in, not_in, between.
 source_text must be a verbatim sentence from the page. If you cannot quote
 it, do not output that criterion — put a note in unextractable instead.
 
+CRITICAL RULES FOR RESTRICTIONS:
+- Only extract criteria that actually RESTRICT eligibility.
+- If a scholarship is open to "All India" / "All States" / nationwide, do NOT emit a state criterion (emitting state: "All India" breaks matching for applicants in Karnataka). Only emit a state criterion if restricted to specific states (e.g. Karnataka, Maharashtra).
+- If open to all genders ("Male and Female" or unrestricted), do NOT emit a gender criterion. Only emit if restricted (e.g. gender: "female").
+- If open to all categories ("General, SC, ST, OBC" or unrestricted), do NOT emit a category criterion. Only emit if restricted to specific categories (e.g. "SC", "ST", "OBC", "Minority").
+- If open to all institution types (Government, Private, Aided), do NOT emit an institution_type criterion.
+
 TYPES. cgpa, percentage, year_of_study and annual_family_income are numeric.
 Their value MUST be a JSON number, never a string:
   75            not "75" and not "75%"
@@ -257,7 +264,7 @@ export function isPastDeadline(deadline: string): boolean {
   return parsed.getTime() < todayDateOnly;
 }
 
-async function harvestUrl(url: string): Promise<HarvestEntry[]> {
+export async function harvestUrl(url: string): Promise<HarvestEntry[]> {
   const failed = (status: string): HarvestEntry[] => [
     {
       url,
@@ -500,12 +507,17 @@ ${sections.join("\n\n---\n\n")}
 
 const TEST_PROFILE: Profile = {
   cgpa: 8.4,
+  percentage: 82,
   year_of_study: 2,
   branch: "CSE",
   state: "Karnataka",
   annual_family_income: 300000,
   institution_type: "private",
+  category: "General",
+  gender: "male",
 };
+
+const TARGET_OPPORTUNITIES = 20;
 
 function printCoverageReport(entries: HarvestEntry[]) {
   const seeded = entries.filter((e) => e.name);
@@ -527,7 +539,7 @@ function printCoverageReport(entries: HarvestEntry[]) {
     buckets[result.status] += 1;
   }
 
-  console.log("\nTest profile (CGPA 8.4, year 2, CSE, Karnataka, income 3L, private institution):");
+  console.log("\nTest profile (CGPA 8.4, percentage 82, year 2, CSE, Karnataka, income 3L, private institution, General, male):");
   console.log(`  eligible:  ${buckets.eligible}`);
   console.log(`  near_miss: ${buckets.near_miss}`);
   console.log(`  rejected:  ${buckets.rejected}`);
@@ -563,7 +575,14 @@ async function main() {
   const entries: HarvestEntry[] = [];
   for (const url of urls) {
     console.log(`\nHarvesting ${url} ...`);
-    entries.push(...(await harvestUrl(url)));
+    const newEntries = await harvestUrl(url);
+    entries.push(...newEntries);
+
+    const validCount = entries.filter((e) => e.name && e.fetchStatus === "ok").length;
+    if (validCount >= TARGET_OPPORTUNITIES) {
+      console.log(`\nReached target of ${TARGET_OPPORTUNITIES} opportunities. Stopping harvest.`);
+      break;
+    }
   }
   await closeHeadlessBrowser();
 
