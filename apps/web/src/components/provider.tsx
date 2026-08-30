@@ -180,13 +180,23 @@ export function EligentProvider({ children }: { children: ReactNode }) {
           if (session) {
             setSignedIn(true);
             await load();
+            // Source-of-truth entitlement: a verified payment row. RLS lets the
+            // owner read only their own rows. Survives a localStorage clear and
+            // works across devices.
+            const { count } = await sb
+              .from("purchase")
+              .select("id", { count: "exact", head: true });
+            if (!cancelled && count && count > 0) {
+              setApplyMode(true);
+              writeStorage(STORAGE_KEYS.applyMode, true);
+            }
           }
         }
         // If sb is null, env vars are missing — stay not-signed-in.
       } catch (err) {
         console.error("[EligentProvider] init error:", err);
       }
-      setApplyMode(readStorage(STORAGE_KEYS.applyMode, false));
+      setApplyMode((prev) => prev || readStorage(STORAGE_KEYS.applyMode, false));
       if (!cancelled) setHydrated(true);
     })();
     return () => {

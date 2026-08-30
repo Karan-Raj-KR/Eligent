@@ -4,11 +4,21 @@ import { APPLY_MODE_PAISE, createOrder } from "@/lib/razorpay";
 
 // Creates the ₹99 Apply Mode order. The amount is NOT taken from the request —
 // it is a server constant, so there is nothing for a client to under-pay.
+// Requires a valid email so it can be stored in the purchase record after
+// signature verification.
 export async function POST(request: Request) {
   const { user } = await getSessionUser();
   if (!user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
 
-  const body = (await request.json().catch(() => ({}))) as { opportunity_id?: string };
+  const body = (await request.json().catch(() => ({}))) as {
+    opportunity_id?: string;
+    email?: string;
+  };
+
+  if (!body.email || !body.email.includes("@")) {
+    return NextResponse.json({ error: "A valid email address is required." }, { status: 400 });
+  }
+
   const receipt = `apply_${(body.opportunity_id ?? "any").slice(0, 12)}_${Date.now()}`;
 
   try {

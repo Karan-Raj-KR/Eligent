@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, FileWarning, ShieldX } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Check, Clock, Download, FileWarning, ShieldX } from "lucide-react";
 import {
   ExtensionPopup,
   ExtensionSwitcher,
   type ExtensionState,
 } from "@/components/behavior/extension-popup";
+
+// TODO: replace with the real extension ZIP download URL when available.
+const EXTENSION_DOWNLOAD_URL = "#extension-download-placeholder";
 
 const MOMENTS: Array<{
   variant: ExtensionState;
@@ -36,9 +40,94 @@ const MOMENTS: Array<{
 
 export default function ExtensionPage() {
   const [variant, setVariant] = useState<ExtensionState>("document-needed");
+  const searchParams = useSearchParams();
+  const justPurchased = searchParams.get("purchased") === "1";
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
+      {/* ---------------------------------------------------------------- */}
+      {/* Post-purchase confirmation banner                               */}
+      {/* Only shown when ?purchased=1 is in the URL after checkout.      */}
+      {/* ---------------------------------------------------------------- */}
+      {justPurchased && (
+        <div className="mb-10 rounded-2xl border-2 border-lime-dark/40 bg-lime-tint px-6 py-6 sm:px-8">
+          <div className="flex items-start gap-4">
+            <span
+              aria-hidden
+              className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-lime-dark/20 text-lime-ink"
+            >
+              <Check size={20} strokeWidth={3} />
+            </span>
+            <div className="min-w-0">
+              <h2 className="font-display text-xl font-bold tracking-tight text-lime-ink">
+                You&apos;re in. Apply Mode unlocked.
+              </h2>
+              <p className="mt-1 text-[0.92rem] leading-relaxed text-lime-ink/80">
+                The extension isn&apos;t on the Chrome Web Store yet — here&apos;s
+                how to install it right now:
+              </p>
+
+              <ol className="mt-4 space-y-3">
+                {[
+                  <>
+                    <a
+                      href={EXTENSION_DOWNLOAD_URL}
+                      className="font-semibold underline"
+                      download
+                    >
+                      <Download size={13} className="mr-1 inline" aria-hidden />
+                      Download the extension ZIP
+                    </a>{" "}
+                    and unzip it anywhere on your computer.
+                  </>,
+                  <>
+                    Open Chrome and go to{" "}
+                    <code className="rounded bg-lime-dark/10 px-1.5 py-0.5 text-[0.85em]">
+                      chrome://extensions
+                    </code>
+                    . Enable <strong>Developer mode</strong> (toggle, top-right).
+                  </>,
+                  <>
+                    Click <strong>Load unpacked</strong> and select the unzipped
+                    folder. The ELIGENT icon will appear in your toolbar.
+                  </>,
+                ].map((step, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span
+                      aria-hidden
+                      className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg bg-lime-dark/20 font-display text-[0.8rem] font-bold text-lime-ink"
+                    >
+                      {i + 1}
+                    </span>
+                    <span className="text-[0.9rem] leading-relaxed text-lime-ink">
+                      {step}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+
+              <p className="mt-5 text-[0.86rem] leading-relaxed text-lime-ink/80">
+                We&apos;ll email you the moment it&apos;s live on the Web Store — you
+                won&apos;t need to reinstall, just install normally then.
+              </p>
+              <p className="mt-2 text-[0.86rem] text-lime-ink/80">
+                Reply to your confirmation email if anything breaks.{" "}
+                <a
+                  href="mailto:mail@karanrajkr.com"
+                  className="font-semibold underline"
+                >
+                  mail@karanrajkr.com
+                </a>{" "}
+                — Karan, Eligent
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Extension page body                                             */}
+      {/* ---------------------------------------------------------------- */}
       <div className="max-w-2xl">
         <p className="kicker text-cobalt">ELIGENT for Chrome</p>
         <h1 className="mt-4 font-display text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-5xl">
@@ -46,8 +135,8 @@ export default function ExtensionPage() {
         </h1>
         <p className="mt-5 max-w-xl text-[1.02rem] leading-relaxed text-muted">
           A reusable popup that lives on the real application portal.
-          It restores your form, warns you about documents that aren't in the
-          official requirements, and refuses to help when you don't qualify.
+          It restores your form, warns you about documents that aren&apos;t in the
+          official requirements, and refuses to help when you don&apos;t qualify.
         </p>
       </div>
 
@@ -102,8 +191,8 @@ export default function ExtensionPage() {
 
           <div className="rounded-2xl border border-lime-dark/40 bg-lime-tint px-5 py-4">
             <p className="text-[0.88rem] font-semibold leading-relaxed text-lime-ink">
-              ELIGENT is honest: if you don't qualify, it won't fill the form.
-              That's the whole point of ₹99 — it protects the hours Apply Mode
+              ELIGENT is honest: if you don&apos;t qualify, it won&apos;t fill the form.
+              That&apos;s the whole point of ₹99 — it protects the hours Apply Mode
               would have spent on an application that can never finish.
             </p>
           </div>
