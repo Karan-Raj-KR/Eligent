@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
@@ -25,6 +25,12 @@ export const metadata: Metadata = {
   description:
     "Free tells you whether you qualify. ₹99 gets you ready to submit.",
   metadataBase: new URL("https://eligent.in"),
+};
+
+// Emits <meta name="color-scheme" content="only light">, so a browser in dark
+// mode is told this page has no dark variant rather than inventing one.
+export const viewport: Viewport = {
+  colorScheme: "only light",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -55,14 +55,14 @@ export default function ExtensionPage() {
         <ExtensionSwitcher variant={variant} onChange={setVariant} />
       </div>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[360px_1fr] lg:items-start">
+      <div className="mt-8 grid gap-10 lg:grid-cols-[max-content_1fr] lg:items-start">
         <div>
           <div className="hash-bg rounded-3xl border border-line bg-sand/60 p-6 sm:p-8 lg:p-10">
-            <div className="mx-auto w-fit">
+            <div className="mx-auto w-full max-w-[360px]">
               <ExtensionPopup variant={variant} />
             </div>
           </div>
-          <p className="mt-4 text-center text-[0.8rem] text-soft lg:text-left">
+          <p className="mt-4 max-w-[360px] text-center text-[0.8rem] text-soft lg:text-left">
             Popup width 360px — sized for the browser toolbar, not a phone.
           </p>
         </div>

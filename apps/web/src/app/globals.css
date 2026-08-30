@@ -58,7 +58,11 @@
 }
 
 :root {
-  color-scheme: light;
+  /* `only light` — not plain `light`. The bare keyword still lets Chromium's
+     auto-dark-mode (and Dia's) algorithmically invert the page, which turns
+     this cream/clay palette into muddy brown. `only` is the documented opt-out.
+     ELIGENT has no dark theme; it is a light-only design by intent. */
+  color-scheme: only light;
 }
 
 html {

@@ -22,9 +22,11 @@ export function ExtensionPopup({
   variant,
   scholarshipTitle = SCHOLARSHIP,
 }: ExtensionPopupProps) {
+  // 360px is the real toolbar popup width. Below that the mock has to fit the
+  // phone instead — a fixed 360 made the whole page scroll sideways at 375px.
   return (
     <div
-      className="w-[360px] overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-24px_rgba(23,21,37,0.4)]"
+      className="w-full max-w-[360px] overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_24px_60px_-24px_rgba(23,21,37,0.4)]"
       aria-label={`ELIGENT extension — ${stateLabel(variant)}`}
     >
       <div className="flex items-center justify-between border-b border-line/80 bg-bg px-4 py-3">
