@@ -1,8 +1,81 @@
 # Morning Report - Overnight Run
 
-## Status: IN PROGRESS
+## Status: IN PROGRESS — awaiting developer decisions (see "OPEN DECISIONS" at bottom)
 
 Started: 2026-08-30 (overnight run)
+
+---
+
+## UPDATE (later pass) — corrected state
+
+The section below this block was written mid-run against an earlier 19-opp seed.
+Current committed state on branch `overnight`:
+
+- **seed.ts: 20 opportunities / 76 criteria**, all criteria passed `validate()`
+  (source_text is a verbatim page quote). Committed in `169708b`.
+- **Local coverage** (`tsx scripts/coverage.ts`, engine over seed.ts, no DB) for
+  the standard test profile (CGPA 8.4, %82, year 2, CSE, Karnataka, income 3L,
+  private, General, male):
+
+  | bucket | count | target |
+  |--------|-------|--------|
+  | eligible  | 9 | ≥3 ✅ |
+  | near_miss | 2 | ≥3 ❌ (short by 1) |
+  | rejected  | 9 | ≥3 ✅ |
+
+  All three buckets are non-zero, so the stated "TASK 1 IS DONE when /matches
+  shows non-zero counts in all three buckets" bar is met. The stricter internal
+  ≥3 target misses `near_miss` by one.
+
+- ⚠️ **Some `eligible` verdicts look like criterion under-extraction, not real
+  matches** — e.g. "Narotam Sekhsaria *Postgraduate* Scholarship" and "Kotak
+  *Kanya* (girls) Scholarship" both land `eligible` for a year-2 male profile,
+  which means the PG-only / female-only clause was not extracted. No data was
+  fabricated; these need human review. Fixing them means adding criteria (data)
+  or changing extraction — both flagged, neither done, per the ground rules.
+
+- DB: a prior agent loaded the earlier 19-opp set (~22 rows in `opportunity`).
+  The current 20-opp seed has **not** been re-pushed. `pnpm db:push` + a
+  row-count verify is pending a decision on whether to also close the near_miss
+  gap first (which would change the seed again).
+
+### Housekeeping done this pass
+- `.gitignore`: added `.pnpm-store/` (36 MB, was untracked) and `*.bak`/`*.bak2`.
+- Reverted a stale `apps/extension/src/popup.ts` working-tree edit (superseded by
+  the committed extension work on branch `overnight-ext`).
+- Committed the completed overnight work in attributed chunks:
+  `169708b` harvest data, `70ecad4` dev-user/profile scripts, `581669f` docs.
+- **NOT committed** (held for a decision): the `apps/web` DEV MODE auth-bypass
+  changes — see OPEN DECISIONS.
+
+---
+
+## OPEN DECISIONS (need a human)
+
+**A. `apps/web` DEV MODE changes** — `middleware.ts` + `lib/supabase/bearer.ts` +
+`app/layout.tsx` add a `NEXT_PUBLIC_DEV_MODE` flag that bypasses auth and injects
+a hardcoded dev user id. `app/extension-auth/page.tsx` is an incomplete stub.
+TASK 2 explicitly forbids dummy auth fallbacks ("anonymous sessions only", "no
+dummy fallbacks anywhere"). Recommendation: **revert**. Kept uncommitted pending
+your call.
+
+**B. near_miss bucket** — one short. Closing it legitimately means harvesting
+1–2 more real scholarships whose CGPA/%/income cutoff sits just above the test
+profile. Live fetch works. Not attempted yet (writes to the shared dev Supabase,
+uncertain yield). NEVER by editing data or thresholds.
+
+**C. TASK 2 frontend replacement** — not started. Concerns before executing:
+  1. The teammate's UI is *already integrated* (commits UI 1–6).
+  2. The briefing's paths (`apps/web/app`, `apps/web/components`, `apps/web/lib/ui`)
+     do not match our actual layout (`apps/web/src/app`, `.../src/components`,
+     `.../src/lib`). Followed literally it deletes the wrong things / nothing.
+  3. Destructive (deletes current frontend) + runs third-party code from
+     `github.com/mdmustafa9105/Eligent` (`pnpm install`/`build` on the clone).
+  Need confirmation that his GitHub repo is genuinely newer than UI 1–6 and that
+  the swap is wanted.
+
+**D. `git push origin overnight`** — nothing has ever been pushed; local `main`
+is 5 commits ahead of `origin/main` too. Confirm before any push.
 
 ---
 
