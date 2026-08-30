@@ -11,6 +11,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { seedOpportunities } from "./seed";
+import { canonicalCriterion } from "./vocab";
 
 const url = process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -64,7 +65,12 @@ async function main() {
     if (criteria.length > 0) {
       const { error: insertError } = await supabase
         .from("criterion")
-        .insert(criteria.map((c) => ({ ...c, opportunity_id: saved.id })));
+        // Canonicalise on the way in: the engine compares categorical values
+        // with === , so "female" here and "Female" on a profile is a silent
+        // wrong verdict. See vocab.ts.
+        .insert(
+          criteria.map((c) => ({ ...c, ...canonicalCriterion(c), opportunity_id: saved.id })),
+        );
       if (insertError) {
         console.error(`✗ ${opportunity.name}: inserting criteria failed — ${insertError.message}`);
         process.exitCode = 1;

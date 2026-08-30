@@ -136,12 +136,42 @@ function gapPhrase(gap: NonNullable<ApiEvaluationEntry["gap"]>): string {
   return `${n} ${unit} ${gap.direction}`;
 }
 
-function toCriterion(field: string, apiCriteria: ApiCriterion[], displayText?: string): EligibilityCriterion {
-  const source = apiCriteria.find(
+/**
+ * Resolves the criterion row an evaluation entry came from.
+ *
+ * A range is stored as TWO rows sharing a field and a display_text — "Ages 13
+ * to 18 only" is `age gte 13` plus `age lte 18`. Matching on field and label
+ * alone returns the same row for both, which rendered the wrong requirement on
+ * one of the pair and handed React duplicate keys, so it could drop a clause
+ * entirely. The requirement value is what separates them, so match on it first.
+ *
+ * When the requirement is `"unknown"` — the profile has no value at all, so the
+ * engine cannot report one — there is nothing to match on. Those entries take
+ * the next row not already claimed, via `used`, which keeps a pair distinct
+ * instead of collapsing both onto the first row.
+ */
+function toCriterion(
+  field: string,
+  apiCriteria: ApiCriterion[],
+  displayText?: string,
+  requirement?: ApiEvaluationEntry["requirement"],
+  used?: Set<string>,
+): EligibilityCriterion {
+  const sameField = apiCriteria.filter(
     (c) => c.field === field && (!displayText || c.display_text === displayText),
   );
+  const unclaimed = sameField.filter((c) => !(c.id && used?.has(c.id)));
+  const source =
+    (requirement !== undefined && requirement !== "unknown"
+      ? unclaimed.find((c) => JSON.stringify(c.value) === JSON.stringify(requirement)) ??
+        sameField.find((c) => JSON.stringify(c.value) === JSON.stringify(requirement))
+      : undefined) ??
+    unclaimed[0] ??
+    sameField[0];
+  if (source?.id) used?.add(source.id);
   return {
-    id: source?.id ?? `${field}:${displayText ?? ""}`,
+    // The value keeps the fallback id unique across a pair when no row matched.
+    id: source?.id ?? `${field}:${displayText ?? ""}:${JSON.stringify(requirement ?? "")}`,
     kind: field,
     operator: (source?.operator as EligibilityCriterion["operator"]) ?? "eq",
     value: source?.value ?? "",
@@ -155,8 +185,9 @@ function toResult(
   entry: ApiEvaluationEntry,
   status: CriterionStatus,
   apiCriteria: ApiCriterion[],
+  used?: Set<string>,
 ): CriterionResult {
-  const criterion = toCriterion(entry.field, apiCriteria, entry.displayText);
+  const criterion = toCriterion(entry.field, apiCriteria, entry.displayText, entry.requirement, used);
   const symbol = OPERATOR_SYMBOL[criterion.operator] ?? "";
   const actual = fmt(entry.field, entry.profileValue);
   const required = entry.requirement === "unknown" ? "not stated" : fmt(entry.field, entry.requirement);
@@ -226,8 +257,11 @@ export function toMatch(m: ApiMatch): MatchResult {
   // that per criterion — we read the verdict the engine already returned.
   const failStatus: CriterionStatus = status === "NEAR_MISS" ? "near" : "fail";
 
-  const passed = m.evaluation.passed.map((e) => toResult(e, "pass", m.criteria));
-  const failed = m.evaluation.failed.map((e) => toResult(e, failStatus, m.criteria));
+  // Shared across both lists: one criterion row backs exactly one displayed
+  // clause, so a range never renders as the same requirement twice.
+  const used = new Set<string>();
+  const passed = m.evaluation.passed.map((e) => toResult(e, "pass", m.criteria, used));
+  const failed = m.evaluation.failed.map((e) => toResult(e, failStatus, m.criteria, used));
 
   return {
     scholarship: toScholarship(m.opportunity, m.criteria),

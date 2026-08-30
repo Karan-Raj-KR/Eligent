@@ -1,8 +1,9 @@
 import { evaluate } from "@opportunity/engine";
 import { seedOpportunities } from "../packages/db/seed";
+import { canonicalValue } from "../packages/db/vocab";
 
-// Test profile
-const TEST_PROFILE = {
+// The agreed test profile, written exactly as the brief states it.
+const SPEC_PROFILE = {
   cgpa: 8.4,
   percentage: 82,
   year_of_study: 2,
@@ -14,6 +15,14 @@ const TEST_PROFILE = {
   gender: "male",
 };
 
+// What this student's row ACTUALLY holds. POST /api/profile canonicalises
+// categorical values on save, so "private" is stored as "Private". Evaluating
+// the raw spelling instead would measure a profile no student can have, and
+// the engine compares categorical values with ===.
+const TEST_PROFILE = Object.fromEntries(
+  Object.entries(SPEC_PROFILE).map(([field, value]) => [field, canonicalValue(field, value)]),
+) as typeof SPEC_PROFILE;
+
 const buckets = { eligible: 0, near_miss: 0, rejected: 0 };
 const details: Record<string, Array<{ name: string; failed: string[] }>> = {
   eligible: [],
@@ -21,7 +30,13 @@ const details: Record<string, Array<{ name: string; failed: string[] }>> = {
   rejected: [],
 };
 
-for (const opp of seedOpportunities) {
+// Same guard as /api/matches: an opportunity with no criteria gets NO verdict.
+// Counting them here would inflate `eligible` with rows the product never
+// shows — the report has to measure what a student actually sees.
+const unverifiedOpps = seedOpportunities.filter((o) => o.criteria.length === 0);
+const verifiedOpps = seedOpportunities.filter((o) => o.criteria.length > 0);
+
+for (const opp of verifiedOpps) {
   const criteria = opp.criteria.map((c) => ({
     field: c.field,
     operator: c.operator as "gte" | "lte" | "eq" | "in" | "not_in" | "between",
@@ -40,14 +55,26 @@ for (const opp of seedOpportunities) {
 
 console.log("\n=== COVERAGE REPORT ===");
 console.log(`Test profile: CGPA 8.4, percentage 82, year 2, CSE, Karnataka, income 3L, private institution, General, male`);
-console.log(`\nOpportunities in catalog: ${seedOpportunities.length}  (target: 35)`);
+const canonicalised = Object.keys(SPEC_PROFILE).filter(
+  (k) => (SPEC_PROFILE as Record<string, unknown>)[k] !== (TEST_PROFILE as Record<string, unknown>)[k],
+);
+if (canonicalised.length > 0) {
+  console.log(`  (stored canonically as: ${canonicalised.map((k) => `${k}="${(TEST_PROFILE as Record<string, string>)[k]}"`).join(", ")})`);
+}
+console.log(`\nOpportunities in catalog: ${seedOpportunities.length}  (target: 40)`);
+
+// A criterion-less opportunity would return `eligible` for every student alive.
+// These are kept but excluded from matching, and get no verdict at all.
+console.log(`Excluded as unverified (no criteria): ${unverifiedOpps.length}`);
+for (const o of unverifiedOpps) console.log(`  ⃠  ${o.name}`);
+console.log(`Opportunities actually evaluated: ${verifiedOpps.length}`);
 
 const byCategory = new Map<string, number>();
 for (const o of seedOpportunities) byCategory.set(o.category, (byCategory.get(o.category) ?? 0) + 1);
 console.log("\nRows per category:");
 for (const [cat, n] of [...byCategory].sort()) console.log(`  ${cat}: ${n}`);
 
-const fundedScholarships = seedOpportunities.filter(
+const fundedScholarships = verifiedOpps.filter(
   (o) => o.category === "scholarship" || (o.category === "programme" && o.funded),
 ).length;
 console.log(`\nScholarships or funded programmes: ${fundedScholarships}  (gate: >= 8)`);
