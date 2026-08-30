@@ -3,7 +3,7 @@ import type { Session } from "./background";
 
 interface FieldSpec {
   value: unknown;
-  hints: string[];
+  hints?: string[];
 }
 
 interface BlockedResponse {
@@ -19,10 +19,25 @@ interface BlockedResponse {
   source_text?: string | null;
 }
 
+interface Requirement {
+  document_type: string;
+  source?: string;
+}
+
 interface FillResponse {
   blocked: false;
   fields: Record<string, FieldSpec>;
-  opportunity?: { name?: string | null } | null;
+  requirements?: Requirement[];
+  opportunity?: { name?: string | null; official_documents?: string[] | null } | null;
+}
+
+type ApiResponse = BlockedResponse | FillResponse;
+
+interface PageResult {
+  blocked?: boolean;
+  error?: string;
+  fill?: { filled: number; skipped: Array<{ name: string; reason: string }> };
+  diff?: { formDemands: number; pageListed: number; unlisted: string[]; matched: string[] };
 }
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
@@ -34,87 +49,35 @@ function setStatus(text: string, kind: "" | "error" | "done" = "") {
   el.className = kind;
 }
 
-/**
- * Injected into the scholarship form's page. Must be entirely self-contained:
- * chrome.scripting serialises it, so it cannot close over anything above.
- *
- * It fills inputs and dispatches the events a framework-backed form listens for.
- * It never calls form.submit(), never clicks a button, and never touches an
- * input of type submit — a human presses submit, always.
- */
-function fillPage(fields: Record<string, FieldSpec>): { filled: number; skipped: string[] } {
-  const skipped: string[] = [];
-  let filled = 0;
-
-  for (const [name, spec] of Object.entries(fields)) {
-    if (spec.value === null || spec.value === undefined || spec.value === "") {
-      skipped.push(name);
-      continue;
-    }
-    const value = String(spec.value);
-
-    let target: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null = null;
-    for (const selector of spec.hints ?? []) {
-      let found: Element | null = null;
-      try {
-        found = document.querySelector(selector);
-      } catch {
-        continue; // A malformed hint selector must not stop the rest.
-      }
-      if (
-        found instanceof HTMLInputElement ||
-        found instanceof HTMLSelectElement ||
-        found instanceof HTMLTextAreaElement
-      ) {
-        // Never touch a submit control, however it was matched.
-        if (found instanceof HTMLInputElement && (found.type === "submit" || found.type === "button")) continue;
-        target = found;
-        break;
-      }
-    }
-
-    if (!target) {
-      skipped.push(name);
-      continue;
-    }
-
-    if (target instanceof HTMLSelectElement) {
-      const wanted = value.toLowerCase();
-      const option = Array.from(target.options).find(
-        (o) => o.value.toLowerCase() === wanted || o.text.toLowerCase().includes(wanted),
-      );
-      if (!option) {
-        skipped.push(name);
-        continue;
-      }
-      target.value = option.value;
-    } else {
-      target.value = value;
-      target.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-    target.dispatchEvent(new Event("change", { bubbles: true }));
-    filled += 1;
-  }
-
-  return { filled, skipped };
+const SECTIONS = ["signed-out", "no-application", "ready", "filled", "docs", "blocked"];
+function only(section: string) {
+  for (const s of SECTIONS) show(s, s === section);
 }
 
+// --------------------------------------------------------------------- session --
+
 let session: Session | null = null;
+let demo = false;
+let demoCase: "eligible" | "blocked" = "eligible";
 
 function render() {
-  show("signed-out", !session);
-  show("no-application", Boolean(session) && !session?.applicationId);
-  show("ready", Boolean(session?.applicationId));
-  show("blocked", false);
-  show("sign-out", Boolean(session));
-  if (session?.applicationId) {
-    $("application-name").textContent = session.applicationName ?? "Your application";
+  $("sign-out").classList.toggle("hidden", !session);
+  if (demo) {
+    only("ready");
+    $("application-name").textContent = "Demo fixture (offline)";
+    return;
   }
+  if (!session) return only("signed-out");
+  if (!session.applicationId) return only("no-application");
+  only("ready");
+  $("application-name").textContent = session.applicationName ?? "Your application";
 }
 
 function openApp() {
   chrome.tabs.create({ url: session?.origin ?? "http://localhost:3000" });
 }
+
+// --------------------------------------------------------------------- blocked --
 
 function renderBlocked(body: BlockedResponse) {
   const reasons: Record<string, string> = {
@@ -126,7 +89,8 @@ function renderBlocked(body: BlockedResponse) {
 
   const clause = body.clause ?? null;
   $("blocked-clause").textContent =
-    clause?.displayText ?? (body.reason === "no_profile" ? "Finish your profile in Cutoff first." : "You do not meet a stated criterion.");
+    clause?.displayText ??
+    (body.reason === "no_profile" ? "Finish your profile in Eligent first." : "You do not meet a stated criterion.");
 
   const source = body.source_text?.trim();
   show("blocked-source", Boolean(source));
@@ -141,85 +105,180 @@ function renderBlocked(body: BlockedResponse) {
     $("blocked-gap").textContent =
       gap.direction === "short" ? `You are ${unit}${amount}${trail} short.` : `You are ${unit}${amount}${trail} over.`;
   }
+  only("blocked");
+}
 
-  show("signed-out", false);
-  show("no-application", false);
-  show("ready", false);
-  show("blocked", true);
+// ------------------------------------------------------------------ fill result --
+
+function renderSkipped(listId: string, skipped: Array<{ name: string; reason: string }>) {
+  const ul = $(listId);
+  ul.innerHTML = "";
+  for (const s of skipped) {
+    const li = document.createElement("li");
+    li.textContent = `${s.name} — ${s.reason}`;
+    ul.appendChild(li);
+  }
+  show(listId, skipped.length > 0);
+  const hdr = document.getElementById(`${listId}-hdr`);
+  if (hdr) hdr.classList.toggle("hidden", skipped.length === 0);
+}
+
+function renderResult(result: PageResult) {
+  const fill = result.fill ?? { filled: 0, skipped: [] };
+  const diff = result.diff;
+  const summary =
+    fill.filled > 0
+      ? `Filled ${fill.filled} field${fill.filled === 1 ? "" : "s"}. Check them, then submit yourself.`
+      : "No fields on this page matched your profile.";
+
+  if (diff && diff.unlisted.length > 0) {
+    $("docs-summary").textContent = summary;
+    $("docs-headline").textContent = `This form demands ${diff.formDemands} document${
+      diff.formDemands === 1 ? "" : "s"
+    }. Their page listed ${diff.pageListed}.`;
+    $("docs-lede").textContent = "Here are the ones nobody told you about:";
+    const ul = $("docs-list");
+    ul.innerHTML = "";
+    for (const name of diff.unlisted) {
+      const li = document.createElement("li");
+      li.textContent = name;
+      ul.appendChild(li);
+    }
+    renderSkipped("docs-skipped", fill.skipped);
+    only("docs");
+    return;
+  }
+
+  $("filled-summary").textContent = summary;
+  $("filled-docs").textContent = diff
+    ? `${diff.formDemands} document upload${diff.formDemands === 1 ? "" : "s"} on this page, all on the official list.`
+    : "";
+  show("filled-docs", Boolean(diff && diff.formDemands > 0));
+  renderSkipped("filled-skipped", fill.skipped);
+  only("filled");
+}
+
+// ----------------------------------------------------------------------- run it --
+
+async function loadResponse(): Promise<ApiResponse | null> {
+  if (demo) {
+    const file = demoCase === "blocked" ? "fixture-blocked.json" : "fixture.json";
+    setStatus("Loading offline fixture…");
+    const res = await fetch(chrome.runtime.getURL(file));
+    return (await res.json()) as ApiResponse;
+  }
+  if (!session?.applicationId) return null;
+  setStatus("Checking your eligibility…");
+  const res = await fetch(`${session.origin}/api/fill/${encodeURIComponent(session.applicationId)}`, {
+    headers: { Authorization: `Bearer ${session.token}` },
+  });
+  if (res.status === 401) {
+    setStatus("Your session expired. Open Eligent and sign in again.", "error");
+    return null;
+  }
+  if (!res.ok) {
+    setStatus(`Could not check eligibility (${res.status}).`, "error");
+    return null;
+  }
+  return (await res.json()) as ApiResponse;
+}
+
+function officialDocsOf(body: FillResponse): string[] {
+  const fromOpp = body.opportunity?.official_documents;
+  if (Array.isArray(fromOpp) && fromOpp.length) return fromOpp;
+  return (body.requirements ?? []).filter((r) => r.source !== "community").map((r) => r.document_type);
+}
+
+async function runOnPage(body: FillResponse): Promise<PageResult | null> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) {
+    setStatus("No active tab to fill.", "error");
+    return null;
+  }
+  try {
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] });
+  } catch {
+    setStatus("Can't run on this page. Open the scholarship form first.", "error");
+    return null;
+  }
+  try {
+    return (await chrome.tabs.sendMessage(tab.id, {
+      type: "ELIGENT_FILL",
+      response: { blocked: false, fields: body.fields ?? {} },
+      officialDocs: officialDocsOf(body),
+    })) as PageResult;
+  } catch {
+    setStatus("The page didn't respond. Reload it and try again.", "error");
+    return null;
+  }
 }
 
 async function checkAndFill() {
-  if (!session?.applicationId) return;
   const button = $("fill") as HTMLButtonElement;
   button.disabled = true;
-  setStatus("Checking your eligibility…");
-
   try {
-    const res = await fetch(`${session.origin}/api/fill/${encodeURIComponent(session.applicationId)}`, {
-      headers: { Authorization: `Bearer ${session.token}` },
-    });
+    const body = await loadResponse();
+    if (!body) return;
+    setStatus("");
 
-    if (res.status === 401) {
-      setStatus("Your session expired. Open Cutoff and sign in again.", "error");
-      return;
-    }
-    if (!res.ok) {
-      setStatus(`Could not check eligibility (${res.status}).`, "error");
-      return;
-    }
-
-    const body = (await res.json()) as BlockedResponse | FillResponse;
-
-    // The gate. Nothing below this line runs when the answer is "blocked".
+    // The gate. Nothing below runs when the answer is "blocked".
     if (body.blocked) {
-      setStatus("");
       renderBlocked(body);
       return;
     }
 
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id) {
-      setStatus("No active tab to fill.", "error");
+    const result = await runOnPage(body);
+    if (!result) return;
+    if (result.error) {
+      setStatus(`Fill failed: ${result.error}`, "error");
       return;
     }
-
-    const results = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: fillPage,
-      args: [body.fields ?? {}],
-    });
-
-    const outcome = results?.[0]?.result as { filled: number; skipped: string[] } | undefined;
-    if (!outcome) {
-      setStatus("Could not reach that page. Some sites block extensions.", "error");
-      return;
-    }
-    setStatus(
-      outcome.filled > 0
-        ? `Filled ${outcome.filled} field${outcome.filled === 1 ? "" : "s"}. Check them, then submit yourself.`
-        : "Found no matching fields on this page.",
-      outcome.filled > 0 ? "done" : "error",
-    );
-  } catch {
-    setStatus("Could not reach Cutoff. Is the app running?", "error");
+    renderResult(result);
+  } catch (err) {
+    setStatus(`Could not reach Eligent. ${err instanceof Error ? err.message : ""}`.trim(), "error");
   } finally {
-    // Always re-enabled, on every path.
     button.disabled = false;
   }
 }
 
-chrome.storage.local.get(["session"], (stored) => {
+// ------------------------------------------------------------------------- wire --
+
+function wireDemo() {
+  const toggle = $("demo-toggle") as HTMLInputElement;
+  const select = $("demo-case") as HTMLSelectElement;
+  toggle.checked = demo;
+  select.value = demoCase;
+  show("demo-case-wrap", demo);
+  toggle.addEventListener("change", () => {
+    demo = toggle.checked;
+    chrome.storage.local.set({ demo });
+    show("demo-case-wrap", demo);
+    setStatus("");
+    render();
+  });
+  select.addEventListener("change", () => {
+    demoCase = select.value === "blocked" ? "blocked" : "eligible";
+    chrome.storage.local.set({ demoCase });
+  });
+}
+
+chrome.storage.local.get(["session", "demo", "demoCase"], (stored) => {
   session = (stored.session as Session | undefined) ?? null;
+  demo = Boolean(stored.demo);
+  demoCase = stored.demoCase === "blocked" ? "blocked" : "eligible";
+  wireDemo();
   render();
 });
 
 $("open-app").addEventListener("click", openApp);
 $("open-app-2").addEventListener("click", openApp);
-$("back").addEventListener("click", () => {
-  setStatus("");
-  render();
-});
 $("fill").addEventListener("click", () => void checkAndFill());
+for (const id of ["back", "back-2"]) {
+  $(id).addEventListener("click", () => {
+    setStatus("");
+    render();
+  });
+}
 $("sign-out").addEventListener("click", () => {
   chrome.runtime.sendMessage({ type: "SIGN_OUT" }, () => {
     session = null;

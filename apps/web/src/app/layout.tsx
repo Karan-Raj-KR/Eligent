@@ -1,29 +1,45 @@
-import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { EligentProvider } from "@/components/provider";
+import { SiteFooter, SiteHeader } from "@/components/site-header";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "Opportunity - Scholarship Eligibility",
-  description: "Find scholarships you're actually eligible for",
+  title: {
+    default: "ELIGENT — Know which scholarships you qualify for",
+    template: "%s · ELIGENT",
+  },
+  description:
+    "Free tells you whether you qualify. ₹99 gets you ready to submit.",
+  metadataBase: new URL("https://eligent.in"),
 };
 
-export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>{children}</body>
+    <html
+      lang="en"
+      className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
+    >
+      <body className="flex min-h-full flex-col">
+        <EligentProvider>
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+        </EligentProvider>
+      </body>
     </html>
   );
 }

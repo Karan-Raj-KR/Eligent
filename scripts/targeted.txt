@@ -1,0 +1,25 @@
+# Targeted scholarships for test profile: CGPA 8.4, year 2, CSE, Karnataka, income 3L, private, General, male
+# These should yield eligible or near_miss opportunities
+
+# Engineering/UG focused
+https://www.indiascholarships.in/scholarships/reliance-foundation-undergraduate-scholarship
+https://www.indiascholarships.in/scholarships/op-jindal-engineering-management-scholarship
+https://www.indiascholarships.in/scholarships/infosys-foundation-stem-stars-scholarship-program
+https://www.indiascholarships.in/scholarships/foundation-for-excellence-ffe-scholarship
+https://www.indiascholarships.in/scholarships/sitaram-jindal-foundation-scholarship
+https://www.indiascholarships.in/scholarships/mahindra-all-india-talent-scholarship
+https://www.indiascholarships.in/scholarships/honeywell-scholarship
+https://www.indiascholarships.in/scholarships/aditya-birla-scholarship-programme
+
+# Karnataka specific
+https://www.indiascholarships.in/scholarships/cm-raitha-vidya-nidhi-farmers-children-scholarship-karnataka
+https://www.indiascholarships.in/scholarships/labour-department-scheme-for-unorganized-workers-children-karnataka
+
+# All India / General category
+https://www.indiascholarships.in/scholarships/buddy4study-india-foundation-scholarship
+https://www.indiascholarships.in/scholarships/lic-hfl-vidyadhan-scholarship
+
+# Additional engineering scholarships
+https://www.indiascholarships.in/scholarships/siemens-scholarship-program
+https://www.indiascholarships.in/scholarships/amazon-future-engineer-scholarship-india
+https://www.indiascholarships.in/scholarships/aditya-birla-capital-scholarship

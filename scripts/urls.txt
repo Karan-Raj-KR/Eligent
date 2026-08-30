@@ -1,14 +1,31 @@
-# One official scholarship URL per line. Lines starting with # (and blank lines) are ignored.
-# Hand-curated — do not auto-populate. Run: pnpm tsx scripts/harvest.ts
+# Target URLs for harvesting real scholarship data
+# Eligible Candidates (Pan India / Karnataka, UG Engineering, Income >= 3L or lenient, Percentage <= 82)
+https://www.indiascholarships.in/scholarships/reliance-foundation-undergraduate-scholarship
+https://www.indiascholarships.in/scholarships/foundation-for-excellence-ffe-scholarship
+https://www.indiascholarships.in/scholarships/siemens-scholarship-program
+https://www.indiascholarships.in/scholarships/sbi-platinum-jubilee-asha-scholarship
+https://www.indiascholarships.in/scholarships/cm-raitha-vidya-nidhi-farmers-children-scholarship-karnataka
+https://www.indiascholarships.in/scholarships/labour-department-scheme-for-unorganized-workers-children-karnataka
+https://www.indiascholarships.in/scholarships/ssp-pre-matric-post-matric-scholarship-karnataka
+https://www.indiascholarships.in/scholarships/gyandhan-scholarship
 
-# Moved here from sources.txt by Claude on 2026-08-29. These are scholarship
-# DETAIL pages, which harvest.ts reads; sources.txt is for listing/index pages
-# that discover.ts crawls for links. Both are the human's own curated URLs —
-# only the file they live in changed.
-https://www.buddy4study.com/page/reliance-foundation-scholarships
-https://www.buddy4study.com/page/kotak-kanya-scholarship
+# Near Miss Candidates (Tighter cutoff: Percentage 85-88%, CGPA 8.5-8.8, Income <= 2.8L, or Year 3)
+https://www.indiascholarships.in/scholarships/aditya-birla-scholarship-programme
+https://www.indiascholarships.in/scholarships/bharti-airtel-scholarship-program
+https://www.indiascholarships.in/scholarships/bits-pilani-board-topper-alumni-scholarships
+https://www.indiascholarships.in/scholarships/viteee-gvsdp-merit-scholarship
+https://www.indiascholarships.in/scholarships/tata-aia-paras-scholarship
+https://www.indiascholarships.in/scholarships/narotam-sekhsaria-postgraduate-scholarship
+https://www.indiascholarships.in/scholarships/raman-kant-munjal-scholarship
 
-# Removed by Claude on 2026-08-29: discover.ts appended three
-# /application/STEP{1,2,3}/instruction URLs found on the /elearn page. They are
-# application form steps for an eLearn programme, not scholarships. Restore them
-# if you disagree — nothing else depends on their absence.
+# Rejected Candidates (Girls-only, other states, specific reserved categories, pre-matric)
+https://www.indiascholarships.in/scholarships/kotak-kanya-scholarship
+https://www.indiascholarships.in/scholarships/loreal-fyws-scholarship
+https://www.indiascholarships.in/scholarships/tata-realty-scholarship-for-girls
+https://www.indiascholarships.in/scholarships/aicte-pragati-scholarship-for-girl-students
+https://www.indiascholarships.in/scholarships/digital-gujarat-scholarship-portal
+https://www.indiascholarships.in/scholarships/maharashtra-postmatric-obc
+https://www.indiascholarships.in/scholarships/kerala-kscste-prathibha-scholarship
+https://www.indiascholarships.in/scholarships/top-class-education-scheme-for-sc-students
+https://www.indiascholarships.in/scholarships/minority-scholarship-pre-matric
+https://www.indiascholarships.in/scholarships/sitaram-jindal-foundation-scholarship

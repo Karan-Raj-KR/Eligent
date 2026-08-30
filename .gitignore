@@ -42,3 +42,10 @@ supabase/.temp/
 
 # Harvest script cache
 scripts/.cache/
+
+# pnpm local store (created by pnpm add with a local store dir)
+.pnpm-store/
+
+# editor/script backups
+*.bak
+*.bak2

@@ -3,8 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "esbuild src/background.ts src/bridge.ts src/popup.ts --bundle --outdir=dist --format=esm --target=chrome100 && cp public/manifest.json public/popup.html dist/",
-    "dev": "esbuild src/background.ts src/bridge.ts src/popup.ts --bundle --outdir=dist --format=esm --target=chrome100 --watch",
+    "build": "esbuild src/background.ts src/bridge.ts src/popup.ts src/content.ts --bundle --outdir=dist --format=esm --target=chrome100 && cp public/manifest.json public/popup.html public/fixture.json public/fixture-blocked.json dist/",
+    "dev": "esbuild src/background.ts src/bridge.ts src/popup.ts src/content.ts --bundle --outdir=dist --format=esm --target=chrome100 --watch",
+    "test": "esbuild src/mapper.test.ts --bundle --platform=node --outfile=dist/mapper.test.cjs && node dist/mapper.test.cjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

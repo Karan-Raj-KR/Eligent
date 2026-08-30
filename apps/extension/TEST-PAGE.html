@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Bharat Vidya Scholarship 2026-27 — Application Form (TEST FIXTURE)</title>
+  <style>
+    body { font: 15px/1.6 system-ui, sans-serif; max-width: 620px; margin: 32px auto; padding: 0 16px; color: #111; }
+    h1 { font-size: 20px; }
+    h2 { font-size: 16px; margin-top: 28px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+    label { display: block; margin-top: 14px; font-weight: 600; }
+    input, select { width: 100%; padding: 7px; margin-top: 4px; font: inherit; box-sizing: border-box; }
+    input[type=checkbox] { width: auto; }
+    .decl { margin-top: 20px; font-weight: 400; }
+    button { margin-top: 24px; padding: 10px 20px; font: inherit; }
+  </style>
+</head>
+<body>
+  <h1>Bharat Vidya Scholarship 2026-27 — Application Form</h1>
+  <p>Fake portal for testing the Eligent extension. Nothing here submits anywhere.</p>
+
+  <form id="app-form" onsubmit="event.preventDefault()">
+    <h2>Personal details</h2>
+
+    <!-- 1 --> <label for="f1">Full Name</label>
+    <input id="f1" name="applicant_full_name" type="text" placeholder="As printed on your ID">
+
+    <!-- 2 --> <label for="f2">Gender</label>
+    <select id="f2" name="gender">
+      <option value="">Select</option><option>Male</option><option>Female</option><option>Other</option>
+    </select>
+
+    <!-- 3 --> <label for="f3">Category</label>
+    <select id="f3" name="social_category">
+      <option value="">Select</option><option>General</option><option>OBC</option><option>SC</option><option>ST</option>
+    </select>
+
+    <!-- 4 --> <label for="f4">State of Domicile</label>
+    <select id="f4" name="domicile_state">
+      <option value="">Select</option><option>Karnataka</option><option>Maharashtra</option><option>Tamil Nadu</option><option>Delhi</option>
+    </select>
+
+    <!-- 5 --> <label for="f5">Mobile Number</label>
+    <input id="f5" name="mobile" type="tel" placeholder="10-digit mobile">
+
+    <!-- 6 --> <label for="f6">Email Address</label>
+    <input id="f6" name="email" type="email">
+
+    <h2>Academic details</h2>
+
+    <!-- 7 --> <label for="f7">Current CGPA</label>
+    <input id="f7" name="current_cgpa" type="number" step="0.01" placeholder="e.g. 8.4">
+
+    <!-- 8 --> <label for="f8">Aggregate Percentage</label>
+    <input id="f8" name="aggregate_percentage" type="number" step="0.01">
+
+    <!-- 9 --> <label for="f9">Year of Study</label>
+    <select id="f9" name="year_of_study">
+      <option value="">Select</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option>
+    </select>
+
+    <!-- 10 --> <label for="f10">Branch / Stream</label>
+    <select id="f10" name="branch">
+      <option value="">Select</option><option>Computer Science</option><option>Mechanical</option><option>Civil</option><option>Electronics</option>
+    </select>
+
+    <!-- 11 --> <label for="f11">Institution Type</label>
+    <select id="f11" name="institution_type">
+      <option value="">Select</option><option>Government</option><option>Government-aided</option><option>Private</option>
+    </select>
+
+    <!-- 12 --> <label for="f12">Annual Family Income (INR)</label>
+    <input id="f12" name="annual_family_income" type="number" placeholder="Gross, all sources">
+
+    <h2>Documents to upload</h2>
+
+    <label for="d1">Class 10 Marksheet</label>
+    <input id="d1" name="doc_class10" type="file">
+
+    <label for="d2">Class 12 Marksheet</label>
+    <input id="d2" name="doc_class12" type="file">
+
+    <label for="d3">Income Certificate (latest)</label>
+    <input id="d3" name="doc_income" type="file">
+
+    <label for="d4">Aadhaar Card</label>
+    <input id="d4" name="doc_aadhaar" type="file">
+
+    <label for="d5">Domicile / Residence Certificate</label>
+    <input id="d5" name="doc_domicile" type="file">
+
+    <label for="d6">Migration Certificate</label>
+    <input id="d6" name="doc_migration" type="file">
+
+    <label class="decl" for="decl">
+      <input id="decl" type="checkbox" name="declaration">
+      I hereby declare that all information provided above is true and correct.
+    </label>
+
+    <button type="submit">Submit application</button>
+  </form>
+</body>
+</html>

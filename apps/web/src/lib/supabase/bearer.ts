@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 
 /**
  * Token-backed client for the Chrome extension, which has no cookie jar and
@@ -10,9 +11,10 @@ export async function getBearerUser(request: Request) {
   const token = authHeader.match(/^Bearer\s+(.+)$/i)?.[1];
   if (!token) return { supabase: null, user: null };
 
+  const { url, anonKey } = getSupabaseEnv();
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false } },
   );
 

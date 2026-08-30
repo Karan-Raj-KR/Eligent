@@ -15,7 +15,7 @@
 // This only reshapes page-supplied content. It never invents a value: every
 // field is either read verbatim from the page's own JSON or left null.
 
-import { htmlToText, normalizeWhitespace } from "./html";
+import { decodeEntities, htmlToText, normalizeWhitespace } from "./html";
 
 export interface PageRecord {
   /** Where a human applies for this specific opportunity. */
@@ -49,6 +49,59 @@ function parseNextData(html: string): unknown {
   } catch {
     return null;
   }
+}
+
+function parseIndiaScholarshipsData(html: string, pageUrl: string): PageRecord | null {
+  // Check if this is an indiascholarships.in scholarship detail page
+  if (!html.includes("indiascholarships.in")) return null;
+
+  // Extract title from <title> tag
+  const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+  const title = titleMatch ? decodeEntities(titleMatch[1].trim()) : null;
+
+  // Use htmlToText for extracting structured fields from rendered content
+  const text = htmlToText(html);
+  if (!text.trim()) return null;
+
+  // Extract provider from "Provided By" text
+  let provider: string | null = null;
+  const providerMatch = text.match(/Provided By\s+([^\n]+)/);
+  if (providerMatch) {
+    provider = providerMatch[1].trim();
+  }
+
+  // Extract deadline
+  let deadline: string | null = null;
+  const deadlineMatch = text.match(/Deadline\s+(\d{1,2}\s+\w{3,}\s+\d{4}|\d{4}-\d{2}-\d{2})/i);
+  if (deadlineMatch) {
+    const dateStr = deadlineMatch[1].trim();
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+      deadline = parsed.toISOString().split('T')[0];
+    }
+  }
+
+  // Extract amount from "Annual Award"
+  let amount: string | null = null;
+  const amountMatch = text.match(/Annual Award\s+([^\n]+)/i);
+  if (amountMatch) {
+    amount = amountMatch[1].trim();
+  }
+
+  // Extract a clean name from the title (remove "Apply Online, Portal Login & Status Check" suffix)
+  let name = title;
+  if (name) {
+    name = name.replace(/\s*:\s*Apply Online.*$/, '').replace(/\s*\|\s*IndiaScholarships.*$/, '').trim();
+  }
+
+  return {
+    url: pageUrl,
+    name,
+    provider,
+    deadline,
+    amount,
+    text,
+  };
 }
 
 // The fields that actually state eligibility, in the order a reader would meet
@@ -118,6 +171,12 @@ export function pageRecords(html: string, pageUrl: string): PageRecord[] {
       }
     }
     if (records.length) return records;
+  }
+
+  // Try indiascholarships.in parser
+  const indiaRecord = parseIndiaScholarshipsData(html, pageUrl);
+  if (indiaRecord) {
+    return [indiaRecord];
   }
 
   const text = htmlToText(html);

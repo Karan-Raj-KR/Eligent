@@ -1,249 +1,307 @@
 "use client";
 
-import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import type { Evaluation } from "@opportunity/engine";
-import { Button } from "@/components/ui/button";
-import { MatchCard } from "@/components/match-card";
-import { MatchesSkeleton } from "@/components/skeletons";
-import { apiGet, isAuthError, isMissingProfileError } from "@/lib/api";
-import type { Match, Matches } from "@/lib/types";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEligent } from "@/components/provider";
+import { toCounts } from "@/lib/adapt";
+import type { MatchGroups } from "@/lib/types";
+import {
+  MatchesLoading,
+  ErrorState,
+  EmptyState,
+  ClayPanel,
+} from "@/components/states";
+import { MatchSummary, ProfilePanel } from "@/components/matches/match-summary";
+import { EligibilityCard } from "@/components/matches/eligibility-card";
+import { NearMissCard } from "@/components/matches/near-miss-card";
+import { RejectedCard } from "@/components/matches/rejected-card";
+import { FindMore } from "@/components/matches/find-more";
 
-const EMPTY: Matches = { eligible: [], near_miss: [], rejected: [] };
+type Phase = "loading" | "ready" | "error";
 
-// Order and copy for the three buckets. Keys are the engine's own status
-// strings and are never renamed or mapped back into logic.
-const SECTIONS: Array<{
-  key: Evaluation["status"];
-  title: string;
-  blurb: string;
-  empty: string;
-}> = [
-  {
-    key: "eligible",
-    title: "Eligible",
-    blurb: "You meet every criterion these list. Worth your time.",
-    empty: "Nothing you fully qualify for yet — the near misses below show exactly what would change that.",
-  },
-  {
-    key: "near_miss",
-    title: "Near miss",
-    blurb: "Close enough to be worth knowing the number.",
-    empty: "No near misses. You are either clearly in or clearly out on everything here.",
-  },
-  {
-    key: "rejected",
-    title: "Not eligible",
-    blurb: "Ruled out, with the clause that does it — quoted from the scholarship's own page.",
-    empty: "Nothing ruled out. That is a good problem to have.",
-  },
+// Category chips filter client-side over the same three buckets. Default "All".
+const CATEGORY_CHIPS: Array<[string, string[] | null]> = [
+  ["All", null],
+  ["Scholarships", ["scholarship", "fellowship", "grant"]],
+  ["Hackathons", ["hackathon"]],
+  ["Internships", ["internship"]],
+  ["Programmes", ["programme"]],
+  ["Events", ["event", "competition"]],
 ];
 
-function Shell({ children }: { children: React.ReactNode }) {
+const LOCATION_CHIPS: Array<[string, string | null]> = [
+  ["All", null],
+  ["India", "india"],
+  ["Abroad", "abroad"],
+  ["Online", "online"],
+];
+
+function filterGroups(groups: MatchGroups, cats: string[] | null, loc: string | null): MatchGroups {
+  const keep = (m: MatchGroups["eligible"][number]) => {
+    const s = m.scholarship;
+    if (cats && !cats.includes(s.category ?? "scholarship")) return false;
+    if (loc && (s.locationType ?? "india") !== loc) return false;
+    return true;
+  };
+  return {
+    eligible: groups.eligible.filter(keep),
+    nearMiss: groups.nearMiss.filter(keep),
+    notEligible: groups.notEligible.filter(keep),
+  };
+}
+
+const STEPS = [
+  ["QUALIFY", "Free check against every opportunity we hold official criteria for."],
+  ["UNDERSTAND", "Exactly why you qualify — or by how much you miss."],
+  ["CHECK", "Every document, official and community-reported."],
+  ["PREPARE", "₹99 Apply Mode gets what you need, counted, no guesswork."],
+  ["APPLY", "The extension fills the real portal form and restores progress."],
+  ["DON'T WASTE TIME", "Mismatched criteria? ELIGENT refuses to fill the form."],
+] as const;
+
+export default function MatchesPage() {
+  const { hydrated, signedIn, user, groups, counts, loading, error, refresh } = useEligent();
+  const router = useRouter();
+  const [phase, setPhase] = useState<Phase>("loading");
+  const [category, setCategory] = useState("All");
+  const [locationType, setLocationType] = useState("All");
+
+  const view = useMemo(() => {
+    if (!groups) return null;
+    const cats = CATEGORY_CHIPS.find(([k]) => k === category)?.[1] ?? null;
+    const loc = LOCATION_CHIPS.find(([k]) => k === locationType)?.[1] ?? null;
+    return filterGroups(groups, cats, loc);
+  }, [groups, category, locationType]);
+  const vCounts = useMemo(() => (view ? toCounts(view) : null), [view]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (!signedIn) {
+      router.replace("/signin");
+      return;
+    }
+    if (!user) {
+      router.replace("/onboarding");
+      return;
+    }
+    if (error) setPhase("error");
+    else if (loading || !groups) setPhase("loading");
+    else setPhase("ready");
+  }, [hydrated, signedIn, user, router, loading, error, groups]);
+
+  const notHydrated = !hydrated || !user;
+  // Only blank the page to a skeleton on the FIRST load. A later refresh (the
+  // "Find more" run finishing) must re-render in place — swapping to the
+  // skeleton would unmount that panel and destroy the progress log and
+  // rejection list at the exact moment the user wants to read them.
+  const showSkeleton = notHydrated || (phase === "loading" && !groups);
+  const showError = phase === "error";
+  const showEmpty =
+    phase === "ready" && groups && counts && counts.eligible + counts.nearMiss === 0;
+
+  if (notHydrated || showSkeleton) {
+    return (
+      <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+        <MatchesLoading />
+      </div>
+    );
+  }
+
+  if (showError) {
+    return (
+      <div className="mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
+        <ErrorState
+          onRetry={() => {
+            setPhase("loading");
+            void refresh();
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (showEmpty || !groups || !counts || !view || !vCounts) {
+    return (
+      <div className="mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
+        <EmptyState />
+      </div>
+    );
+  }
+
+  const others = vCounts.total - vCounts.eligible;
+
   return (
-    <main className="min-h-screen px-4 py-8 sm:px-6 sm:py-12">
-      <div className="mx-auto w-full max-w-3xl">{children}</div>
-    </main>
+    <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+      <div className="grid gap-10 lg:grid-cols-[1fr_360px] lg:items-start lg:gap-14">
+        <MatchSummary counts={vCounts} />
+        <ProfilePanel profile={user} total={counts.total} />
+      </div>
+
+      <div className="mt-8 flex flex-col gap-3">
+        <ChipRow
+          label="Category"
+          options={CATEGORY_CHIPS.map(([k]) => k)}
+          active={category}
+          onSelect={setCategory}
+        />
+        <ChipRow
+          label="Location"
+          options={LOCATION_CHIPS.map(([k]) => k)}
+          active={locationType}
+          onSelect={setLocationType}
+        />
+      </div>
+
+      <div className="mt-8">
+        <FindMore />
+      </div>
+
+      <p className="mt-8 max-w-2xl text-[0.92rem] leading-relaxed text-muted">
+        {category === "All" && locationType === "All"
+          ? `The other ${others} were evaluated too — checked, not skipped. No greyed-out cards. That's how you know the ${vCounts.eligible} are real.`
+          : `Showing ${vCounts.total} opportunit${vCounts.total === 1 ? "y" : "ies"} in this filter. Every one was still evaluated against your profile.`}
+      </p>
+
+      {/* ELIGIBLE */}
+      <section id="eligible" aria-labelledby="eligible-heading" className="mt-6 scroll-mt-28">
+        <SectionHeader
+          id="eligible-heading"
+          kicker="Official check passed"
+          title="Eligible"
+          count={vCounts.eligible}
+          caption="You pass every official criterion. Use the Eligent extension to fill the real form."
+        />
+        <div className="space-y-4">
+          {view.eligible.map((match) => (
+            <EligibilityCard key={match.scholarship.id} match={match} />
+          ))}
+        </div>
+      </section>
+
+      {/* NEAR MISS */}
+      <section id="near-miss" aria-labelledby="near-miss-heading" className="mt-16 scroll-mt-28">
+        <SectionHeader
+          id="near-miss-heading"
+          kicker="Close — but rejected at the cutoff"
+          title="Near miss"
+          count={vCounts.nearMiss}
+          caption="Don't start these applications. The portal will still say no."
+        />
+        <div className="space-y-4">
+          {view.nearMiss.map((match) => (
+            <NearMissCard key={match.scholarship.id} match={match} />
+          ))}
+        </div>
+      </section>
+
+      {/* NOT ELIGIBLE */}
+      <section id="not-eligible" aria-labelledby="not-eligible-heading" className="mt-16 scroll-mt-28">
+        <SectionHeader
+          id="not-eligible-heading"
+          kicker="We checked. Here's why not."
+          title="Not eligible"
+          count={vCounts.notEligible}
+          caption="Every one of these was actually evaluated. Expand any card to see the exact reason."
+        />
+        <div className="space-y-2">
+          {view.notEligible.map((match) => (
+            <RejectedCard key={match.scholarship.id} match={match} />
+          ))}
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="how-it-works" aria-labelledby="how-it-works-heading" className="mt-24 scroll-mt-28">
+        <ClayPanel className="p-8 sm:p-10">
+          <p className="kicker text-cobalt">How it works</p>
+          <h2 id="how-it-works-heading" className="mt-3 max-w-2xl font-display text-3xl font-bold tracking-tight text-ink">
+            Know when to apply.
+            <br />
+            Know when not to.
+          </h2>
+          <p className="mt-3 max-w-2xl text-[0.95rem] leading-relaxed text-muted">
+            ELIGENT is honest in one direction: it won't start an application it
+            knows you can't finish. Everything above was decided by official
+            criteria — nothing guessed, nothing estimated.
+          </p>
+          <ol className="mt-10 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+            {STEPS.map(([title, body], i) => (
+              <li key={title} className="flex items-start gap-3.5">
+                <span
+                  aria-hidden
+                  className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-ink font-display text-[0.95rem] font-bold text-bg"
+                >
+                  {i + 1}
+                </span>
+                <div>
+                  <p className="font-display text-[0.98rem] font-bold text-ink">{title}</p>
+                  <p className="mt-1 text-[0.86rem] leading-relaxed text-muted">{body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </ClayPanel>
+      </section>
+    </div>
   );
 }
 
-/** "6 eligible · 4 near miss · 33 rejected" — the headline number. */
-function CountSummary({ matches }: { matches: Matches }) {
-  const counts: Array<{ key: Evaluation["status"]; n: number; label: string; tone: string }> = [
-    { key: "eligible", n: matches.eligible.length, label: "eligible", tone: "text-positive" },
-    { key: "near_miss", n: matches.near_miss.length, label: "near miss", tone: "text-attention" },
-    { key: "rejected", n: matches.rejected.length, label: "rejected", tone: "text-muted-foreground" },
-  ];
+function ChipRow({
+  label,
+  options,
+  active,
+  onSelect,
+}: {
+  label: string;
+  options: string[];
+  active: string;
+  onSelect: (value: string) => void;
+}) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:gap-x-5">
-      {counts.map((c, i) => (
-        <span key={c.key} className="flex items-baseline gap-1.5">
-          {i > 0 ? <span aria-hidden="true" className="pr-2 text-muted-foreground/50">·</span> : null}
-          <span className={`text-3xl font-bold tabular-nums tracking-tight sm:text-4xl ${c.tone}`}>{c.n}</span>
-          <span className="text-sm text-muted-foreground">{c.label}</span>
-        </span>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-soft">{label}</span>
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={active === option}
+          onClick={() => onSelect(option)}
+          className={`clay-badge !px-3 !py-1.5 text-[0.82rem] transition-[filter,background] hover:brightness-95 ${
+            active === option ? "clay-badge--cobalt" : ""
+          }`}
+        >
+          {option}
+        </button>
       ))}
     </div>
   );
 }
 
-function Notice({
+function SectionHeader({
+  id,
+  kicker,
   title,
-  body,
-  action,
+  count,
+  caption,
 }: {
+  id: string;
+  kicker: string;
   title: string;
-  body: React.ReactNode;
-  action?: React.ReactNode;
+  count: number;
+  caption: string;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-8 text-center">
-      <p className="font-medium">{title}</p>
-      <div className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{body}</div>
-      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
+      <div>
+        <p className="kicker text-muted">{kicker}</p>
+        <h2
+          id={id}
+          className="mt-1 font-display text-[1.7rem] font-bold tracking-tight text-ink sm:text-3xl"
+        >
+          {title} <span className="font-medium text-muted">· {count}</span>
+        </h2>
+      </div>
+      <p className="max-w-sm text-[0.86rem] leading-relaxed text-muted">{caption}</p>
     </div>
-  );
-}
-
-export default function MatchesPage() {
-  const [matches, setMatches] = useState<Matches>(EMPTY);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [needsProfile, setNeedsProfile] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setNeedsProfile(false);
-    try {
-      const result = await apiGet<Matches>("/api/matches");
-      if (!result.ok) {
-        // No profile row yet. An explicit prompt, not a silent redirect that
-        // leaves someone wondering why the page changed under them.
-        if (!isAuthError(result.error) && isMissingProfileError(result.error)) {
-          setNeedsProfile(true);
-          return;
-        }
-        setError(result.error);
-        return;
-      }
-      setNeedsProfile(false);
-      const data = result.data;
-      setMatches({
-        eligible: Array.isArray(data?.eligible) ? data.eligible : [],
-        near_miss: Array.isArray(data?.near_miss) ? data.near_miss : [],
-        rejected: Array.isArray(data?.rejected) ? data.rejected : [],
-      });
-    } finally {
-      // Always clears, on every path above.
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const total = matches.eligible.length + matches.near_miss.length + matches.rejected.length;
-
-  return (
-    <Shell>
-      <header className="mb-8 flex flex-wrap items-start justify-between gap-4 sm:mb-10">
-        <div className="space-y-3">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your matches</h1>
-          {loading ? (
-            <div className="h-9 w-64 animate-pulse rounded bg-muted" aria-hidden="true" />
-          ) : error || needsProfile ? null : (
-            <>
-              <CountSummary matches={matches} />
-              <p className="text-sm text-muted-foreground">
-                {total} scholarship{total === 1 ? "" : "s"} checked against your profile. No guessing —{" "}
-                <Link href="/proof" className="underline underline-offset-2 hover:text-foreground">
-                  here is the arithmetic
-                </Link>
-                .
-              </p>
-            </>
-          )}
-        </div>
-        <Button variant="outline" size="touch" asChild>
-          <Link href="/onboarding">Edit profile</Link>
-        </Button>
-      </header>
-
-      {needsProfile && !loading ? (
-        <Notice
-          title="Finish your profile first."
-          body="We need your marks, year and family income before we can check a single scholarship. It takes about a minute."
-          action={
-            <Button size="touch" asChild>
-              <Link href="/onboarding">Complete your profile</Link>
-            </Button>
-          }
-        />
-      ) : null}
-
-      {error ? (
-        isAuthError(error) ? (
-          <Notice
-            title="You're signed out."
-            body="Sign in again to see which scholarships you qualify for."
-            action={
-              <Button size="touch" asChild>
-                <Link href="/">Sign in</Link>
-              </Button>
-            }
-          />
-        ) : (
-          <Notice
-            title="We couldn't load your matches."
-            body={<span role="alert">{error}</span>}
-            action={
-              <Button variant="outline" size="touch" onClick={() => void load()}>
-                Try again
-              </Button>
-            }
-          />
-        )
-      ) : null}
-
-      {loading && !error ? <MatchesSkeleton /> : null}
-
-      {!loading && !error && !needsProfile && total === 0 ? (
-        <Notice
-          title="No scholarships have been loaded yet."
-          body={
-            <>
-              This is not a filter — the database is empty, so there is nothing to check your profile against.
-              Run the harvester, then{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">pnpm db:push</code> to load them.
-            </>
-          }
-          action={
-            <Button variant="outline" size="touch" onClick={() => void load()}>
-              Check again
-            </Button>
-          }
-        />
-      ) : null}
-
-      {!loading && !error && !needsProfile && total > 0 ? (
-        <div className="space-y-10 sm:space-y-12">
-          {SECTIONS.map((section) => {
-            const items: Match[] = matches[section.key] ?? [];
-            return (
-              <section key={section.key} className="space-y-4">
-                <div className="space-y-1">
-                  <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
-                    {section.title}{" "}
-                    <span className="font-normal text-muted-foreground tabular-nums">({items.length})</span>
-                  </h2>
-                  <p className="text-sm text-muted-foreground">{section.blurb}</p>
-                </div>
-                {items.length === 0 ? (
-                  <p className="rounded-lg border border-dashed px-5 py-6 text-center text-sm text-muted-foreground">
-                    {section.empty}
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {items.map((match, i) => (
-                      <MatchCard key={match?.opportunity?.id ?? `${section.key}-${i}`} match={match} />
-                    ))}
-                  </div>
-                )}
-              </section>
-            );
-          })}
-        </div>
-      ) : null}
-
-      <footer className="mt-14 border-t pt-6 text-center text-xs text-muted-foreground">
-        <Link href="/proof" className="underline underline-offset-2 hover:text-foreground">
-          How eligibility is decided
-        </Link>
-        <span className="mx-2">·</span>
-        We never submit an application for you.
-      </footer>
-    </Shell>
   );
 }

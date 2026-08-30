@@ -1,0 +1,3 @@
+# node_modules here is a symlink into the primary worktree (this worktree has no
+# install of its own). The root .gitignore only matches the directory form.
+node_modules

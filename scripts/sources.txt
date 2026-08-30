@@ -1,6 +1,5 @@
 # One listing/index page URL per line. Lines starting with # (and blank lines) are ignored.
 # Hand-curated — do not auto-populate. Run: pnpm tsx scripts/discover.ts
-https://www.buddy4study.com/page/reliance-foundation-scholarships
-https://www.buddy4study.com/page/kotak-kanya-scholarship
-https://www.buddy4study.com/page/buddy4study-career-test
-https://www.buddy4study.com/elearn
+https://www.buddy4study.com/scholarships/engineering
+https://www.buddy4study.com/scholarships/karnataka
+https://www.indiascholarships.in/scholarships

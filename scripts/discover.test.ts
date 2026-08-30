@@ -73,3 +73,27 @@ test("classify drops empty anchor text", () => {
   const result = classify("/scholarships/merit-2026", "   ", SOURCE);
   assert.ok("skip" in result && result.skip === "empty anchor text");
 });
+
+const BUDDY4STUDY_SOURCE = new URL("https://www.buddy4study.com/scholarships/engineering");
+
+test("classify on a buddy4study source keeps only /scholarship/<slug> detail links", () => {
+  const result = classify("/scholarship/merit-2026", "Merit Scholarship", BUDDY4STUDY_SOURCE);
+  assert.deepEqual(result, { url: "https://www.buddy4study.com/scholarship/merit-2026" });
+});
+
+test("classify on a buddy4study source drops non-/scholarship/ links even when nothing else would", () => {
+  // /page/<slug> is a real buddy4study path (brand aggregator pages) — not a
+  // login/category/pagination link, so the generic checks would have let it
+  // through. The buddy4study-specific scope must still reject it.
+  const result = classify("/page/reliance-foundation-scholarships", "Reliance Foundation", BUDDY4STUDY_SOURCE);
+  assert.ok("skip" in result && result.skip.includes("buddy4study scholarship detail link"));
+
+  const category = classify("/scholarships/karnataka", "Karnataka scholarships", BUDDY4STUDY_SOURCE);
+  assert.ok("skip" in category);
+});
+
+test("classify does not apply the buddy4study scope to other domains", () => {
+  // Same-shaped path, different host — the generic rules apply, not the scope.
+  const result = classify("/page/some-other-scholarship", "Some Scholarship", SOURCE);
+  assert.ok(!("skip" in result));
+});

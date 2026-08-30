@@ -1,14 +1,16 @@
 import { cookies } from "next/headers";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 
-/** Cookie-backed client for Route Handlers — carries the caller's Google OAuth session, so RLS scopes every query to auth.uid(). */
+/** Cookie-backed client for Route Handlers — carries the caller's session (anonymous auth), so RLS scopes every query to auth.uid(). */
 export async function createServerSupabase(): Promise<SupabaseClient> {
   const cookieStore = await cookies();
+  const { url, anonKey } = getSupabaseEnv();
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll: () => cookieStore.getAll(),

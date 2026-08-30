@@ -1,14 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "Cutoff — Scholarship Autofill",
-  "version": "0.1.0",
+  "name": "Eligent — Scholarship Autofill",
+  "version": "0.2.0",
   "description": "Fills a scholarship form from your saved profile, but only for scholarships you are actually eligible for. Never submits anything.",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "http://localhost:3000/*",
     "https://*.vercel.app/*",
     "https://*.buddy4study.com/*",
-    "https://*.reliancefoundation.org/*"
+    "https://*.reliancefoundation.org/*",
+    "http://localhost/*",
+    "file:///*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -23,6 +25,6 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Cutoff"
+    "default_title": "Eligent"
   }
 }

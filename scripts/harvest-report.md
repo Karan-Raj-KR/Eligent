@@ -1,108 +1,516 @@
 # Harvest Report
 
-Generated: 2026-08-29T18:09:30.581Z
-URLs processed: 3
+Generated: 2026-08-29T23:43:13.017Z
+URLs processed: 20
 
-## Reliance Foundation Undergraduate Scholarships 2026-27
+## Reliance Foundation Scholarship 2026-27: UG Apply Online, Eligibility & Selection
 
-- URL: https://www.scholarships.reliancefoundation.org/UG_Scholarship
+- URL: https://www.indiascholarships.in/scholarships/reliance-foundation-undergraduate-scholarship
 - Fetch status: ok
-- Deadline: 2026-10-05
-
-### Criteria extracted (3)
-- `percentage gte 60` — "Have a minimum of 60% marks in Class 12 board exams."
-- `year_of_study eq 1` — "Currently be enrolled in the 1st year (academic year 2026-27) of a regular, full-time degree course, in any stream"
-- `annual_family_income lte 1500000` — "Belong to a household with an income of less than Rs. 15 Lakhs"
-
-### Criteria rejected (0)
-- none
-
-### Unextractable prose (7)
-- Be a resident Indian citizen.
-- Complete the mandatory Aptitude Test
-- Students who are in the 2nd year or higher (have started their courses from academic year 2025-26 or before)
-- Students pursuing their degree through online, hybrid, remote, distance, or any other non-regular mode
-- Students who have passed a diploma after Std. 10th
-- Students pursuing 2-year and 6-year undergraduate degree courses
-- Students who do not attempt the mandatory aptitude test, or are found cheating during the test
-
-### Official documents (8)
-- Applicant's photograph (passport size)
-- Address proof (permanent address)
-- Aadhar Card(mandatory)
-- Marksheets of Class 10 and 12 board examinations
-- Bonafide Student Certificate from the current college/institution of enrolment
-- Official Disability Certificate issued by the relevant Government authority (if applicable)
-- Family income proof issued by the Gram Panchayat/Ward Councillor/Sarpanch, or Income Proof issued by the SDM/DM/CO/Tehsildar
-- PAN and Bank details are also required to be submitted after the application has been submitted
-
----
-
-## Reliance Foundation Postgraduate Scholarships 2026-27
-
-- URL: https://www.scholarships.reliancefoundation.org/PG_Scholarship
-- Fetch status: ok
-- Deadline: 2026-10-05
+- Deadline: 2026-10-14
 
 ### Criteria extracted (2)
-- `year_of_study eq 1` — "First-year PG students who have a GATE score between 550 and 1,000 OR an undergraduate CGPA of 7.5 or above (or percentage normalised to CGPA)."
-- `cgpa gte 7.5` — "First-year PG students who have a GATE score between 550 and 1,000 OR an undergraduate CGPA of 7.5 or above (or percentage normalised to CGPA)."
+- `year_of_study eq 1` — "Only students currently enrolled in the 1st year of a regular full-time undergraduate degree (academic year 2025-26) are eligible."
+- `annual_family_income lte 1500000` — "You must have a household income of ₹15 lakh or less per annum."
 
 ### Criteria rejected (0)
 - none
 
-### Unextractable prose (2)
-- Be a resident Indian citizen
-- GATE score between 550 and 1,000
+### Unextractable prose (0)
+- none
 
-### Official documents (14)
-- Applicant's photograph (passport size)
-- Address proof (permanent address)
-- Aadhar Card(mandatory)
-- Current resume
-- Marksheets of Class 10 and 12 board examinations
-- Marksheet of the GATE Entrance Examination (if applicable)
-- Official transcript/marksheet of the undergraduate degree
-- Bonafide Student Certificate from the current college/institution of enrolment
-- Two essays: Personal Statement and Statement of Purpose
-- Two reference letters: one academic and one character
-- Experience certificate/letter(s) from work experience or internships (if applicable)
-- Official Disability Certificate issued by the relevant Government authority (if applicable)
-- Family income proof issued by the Gram Panchayat/Ward Councillor/Sarpanch, or Income Proof issued by the SDM/DM/CO/Tehsildar
-- PAN and Bank details are also required to be submitted after the application has been submitted
+### Official documents (5)
+- Class 12 Marks memo showing >= 60%
+- Domicile / Indian Citizenship proof
+- Family Income Certificate (< ₹15 Lakhs)
+- College Admission confirmation & regular student bonafide
+- Aadhaar card & passport photo
 
 ---
 
-## Kotak Kanya Scholarship 2026-27
+## Foundation for Excellence (FFE) Scholarship 2026-27: Application Form, Eligibility & Selection List
 
-- URL: https://www.buddy4study.com/application/KKGS5/instruction
+- URL: https://www.indiascholarships.in/scholarships/foundation-for-excellence-ffe-scholarship
 - Fetch status: ok
-- Deadline: 2026-08-31
+- Deadline: 2026-10-30
 
 ### Criteria extracted (3)
-- `percentage gte 75` — "Applicants must have scored at least 75% or more marks or equivalent CGPA in Class 12 board examinations."
-- `annual_family_income lte 600000` — "Applicant's annual family income must not exceed INR 6,00,000."
-- `year_of_study eq 1` — "Meritorious girl students who have secured admission to the first year of graduation programs in the academic year 2026-27 in institutes of repute like NIRF/NAAC accredited for professional graduation degrees, such as Engineering, MBBS, Integrated LLB (5 Years), Integrated BS-MS/BS-Research, in ISER, IISC(Bangalore), or other professional courses (Design, Architecture, etc.)."
+- `percentage gte 70` — "Minimum Marks 70 %"
+- `annual_family_income lte 300000` — "Income Limit Up to ₹3.0 Lakh/year"
+- `category eq "General"` — "Category / Caste General"
 
 ### Criteria rejected (0)
 - none
 
-### Unextractable prose (3)
-- The scholarship amount under Kotak Kanya Scholarship 2026-27 should be utilised to cover academic expenses, including tuition fees, hostel fees, internet, transportation, laptops, books and stationery.
-- Disclaimer: Terms and conditions apply.
-- Scholarship selection and amount are based on the fulfilment of the eligibility criteria and will be at the discretion of Kotak Education Foundation.
+### Unextractable prose (0)
+- none
 
-### Official documents (13)
-- Marksheet of previous qualifying examination (Class 12)
-- Income proof of parents/guardians
-- ITR of parents for FY 2025-26 (if available)
-- Fee structure (for academic year 2026-27)
-- Bonafide student certificate/letter from college
-- College seat allocation document
-- College entrance examination scorecard
-- Masked Aadhaar card
-- Bank passbook
-- A passport-size photograph
-- Disability certificate (if applicable)
-- Death certificate of the parent (for single-parent/orphan candidates)
-- Photographs of the house
+### Official documents (0)
+- none
+
+---
+
+## Siemens Scholarship Program 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/siemens-scholarship-program
+- Fetch status: ok
+- Deadline: 2026-10-30
+
+### Criteria extracted (2)
+- `annual_family_income lte 200000` — "Who can apply? First-year Govt. Engg. students in specified streams, age <=20, income <=2L, min marks.[1][4]"
+- `category eq "General"` — "Category / Caste General"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (1)
+- First-year Govt. Engg. students in specified streams, age <=20, min marks
+
+### Official documents (6)
+- SSC and HSC mark sheets
+- income proof
+- admission letter
+- age proof
+- bank details
+- photos (standard for such scholarships)
+
+---
+
+## SBI Asha Scholarship 2026-27: ₹15,000 | Eligibility, Last Date & Apply Online
+
+- URL: https://www.indiascholarships.in/scholarships/sbi-platinum-jubilee-asha-scholarship
+- Fetch status: ok
+- Deadline: 2026-10-30
+
+### Criteria extracted (3)
+- `percentage gte 75` — "Minimum Marks 75 %"
+- `cgpa gte 7` — "Selection is based on academic merit (minimum 75% marks or 7.0 CGPA in the previous year), financial background (family income ≤₹3L for school, ≤₹6L for college), telephonic interview, and document verification."
+- `annual_family_income lte 600000` — "Income Limit Up to ₹6.0 Lakh/year"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (1)
+- Note: 50% reservation for girls. 50% for SC/ST.
+
+### Official documents (6)
+- Aadhaar Card
+- Passport Photo
+- Previous Year Marksheet
+- Income Certificate
+- Admission Proof
+- Bank Passbook
+
+---
+
+## CM Raitha Vidya Nidhi - Farmer's Children Scholarship (Karnataka) 2026-27
+
+- URL: https://www.indiascholarships.in/scholarships/cm-raitha-vidya-nidhi-farmers-children-scholarship-karnataka
+- Fetch status: ok
+- Deadline: 2026-12-30
+
+### Criteria extracted (1)
+- `state eq "Karnataka"` — "Domicile State Karnataka"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (0)
+- none
+
+### Official documents (5)
+- FRUITS ID (Farmer ID)
+- Aadhaar Card
+- Student ID Proof
+- Previous Year Marksheet
+- Bank Passbook
+
+---
+
+## Labour Department Scheme for Unorganized Workers' Children (Karnataka) 2026-27
+
+- URL: https://www.indiascholarships.in/scholarships/labour-department-scheme-for-unorganized-workers-children-karnataka
+- Fetch status: ok
+- Deadline: 2026-12-30
+
+### Criteria extracted (4)
+- `annual_family_income lte 420000` — "Income Limit Up to ₹4.2 Lakh/year"
+- `state eq "Karnataka"` — "Domicile State Karnataka"
+- `percentage gte 50` — "General category students require at least 50% marks in their previous exam."
+- `percentage gte 45` — "SC/ST students require at least 45% marks."
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (0)
+- none
+
+### Official documents (5)
+- Labour Card / Contribution Proof
+- Aadhaar Card
+- Student Marksheet
+- College Fee Receipt
+- Bank Passbook
+
+---
+
+## SSP Pre-Matric & Post-Matric Scholarship (Karnataka) 2026-27
+
+- URL: https://www.indiascholarships.in/scholarships/ssp-pre-matric-post-matric-scholarship-karnataka
+- Fetch status: ok
+- Deadline: 2026-11-29
+
+### Criteria extracted (2)
+- `state eq "Karnataka"` — "Domicile State Karnataka"
+- `category in ["SC","ST","OBC","Minority","General (EWS)"]` — "Category / Caste SC, ST, OBC, Minority, General (EWS)"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (1)
+- Selected based on Karnataka residency, caste/category (SC/ST/OBC/Minority/EWS), income limits (varying from ₹1.0 Lakh to ₹2.5 Lakhs+ depending on department/category), and automatic verification of student data via the State SATS / Kutumba databases.
+
+### Official documents (0)
+- none
+
+---
+
+## GyanDhan Scholarship 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/gyandhan-scholarship
+- Fetch status: ok
+- Deadline: not stated
+
+### Criteria extracted (2)
+- `branch eq "Engineering"` — "Eligibility Summary Class 11-12, Graduation, Engineering (< ₹8L Income)"
+- `annual_family_income between [0,800000]` — "Eligibility Summary Class 11-12, Graduation, Engineering (< ₹8L Income)"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (0)
+- none
+
+### Official documents (3)
+- Aadhaar Card
+- Proof of enrollment/admission for 2026 intake
+- Resume/CV
+
+---
+
+## Aditya Birla Scholarship Programme 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/aditya-birla-scholarship-programme
+- Fetch status: ok
+- Deadline: 2026-10-30
+
+### Criteria extracted (1)
+- `category eq "General"` — "Category / Caste General"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (1)
+- Only students who are among the top 20 rankers at the time of admission in selected premier institutions (IIMs, select IITs, BITS Pilani, XLRI, and top-tier Law schools) are invited to apply.
+
+### Official documents (5)
+- Aditya Birla Scholarship application form
+- Letters of recommendation from faculty/director
+- Entrance exam scorecard (CAT/JEE/CLAT/etc.)
+- Recent passport size photograph
+- Short essays as specified by the foundation
+
+---
+
+## Bharti Airtel Scholarship Program 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/bharti-airtel-scholarship-program
+- Fetch status: ok
+- Deadline: 2026-10-30
+
+### Criteria extracted (4)
+- `annual_family_income lte 800000` — "Income Limit Up to ₹8.0 Lakh/year"
+- `year_of_study eq 1` — "Candidates must be first-year undergraduate engineering students admitted to a top 50 NIRF-ranked engineering institute for the 2026-27 academic year"
+- `branch eq "engineering"` — "Candidates must be first-year undergraduate engineering students admitted to a top 50 NIRF-ranked engineering institute for the 2026-27 academic year"
+- `gender eq "female"` — "Preference is given to girl students, single-parent households, and disabled candidates"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (1)
+- Renewal conditions require maintaining a minimum CGPA and attendance without backlogs as per the Foundation's guidelines
+
+### Official documents (11)
+- Aadhaar/PAN/Driving License
+- Admission Proof
+- Class 12 Marksheet
+- JEE/University Entrance Scorecard
+- Family Income Proof
+- Bank Account Details (Aadhaar-linked)
+- Institution Bank Details
+- Passport Photo
+- Statement of Purpose
+- Hostel/PG Rent Receipts (if applicable)
+- Proof of Extra-curricular activities/achievements (if applicable)
+
+---
+
+## BITS Pilani Board Topper & Alumni Endowed Scholarships 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/bits-pilani-board-topper-alumni-scholarships
+- Fetch status: ok
+- Deadline: 2026-10-30
+
+### Criteria extracted (3)
+- `percentage gte 80` — "Minimum Marks 80 %"
+- `annual_family_income lte 800000` — "Income Limit Up to ₹8.0 Lakh/year"
+- `category in ["General","OBC","SC","ST"]` — "Category / Caste General, OBC, SC, ST"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (0)
+- none
+
+### Official documents (4)
+- Board Rank Certificate
+- Class 12 Marksheet
+- Parental Income Certificate
+- CGPA Transcript
+
+---
+
+## VIT B.Tech GV School Development Programme (GVSDP) Merit Scholarship 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/viteee-gvsdp-merit-scholarship
+- Fetch status: ok
+- Deadline: 2026-10-30
+
+### Criteria extracted (2)
+- `percentage gte 85` — "Minimum Marks 85 %"
+- `annual_family_income lte 2000000` — "Income Limit Up to ₹20.0 Lakh/year"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (0)
+- none
+
+### Official documents (3)
+- VITEEE Scorecard & Admit card
+- Class 12 Marksheet
+- Parental Income Certificate (optional, for MCN check)
+
+---
+
+## TATA AIA PARAS Scholarship 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/tata-aia-paras-scholarship
+- Fetch status: ok
+- Deadline: 2026-11-29
+
+### Criteria extracted (2)
+- `percentage gte 50` — "Minimum Marks 50 %"
+- `annual_family_income lte 500000` — "Income Limit Up to ₹5.0 Lakh/year"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (0)
+- none
+
+### Official documents (6)
+- Class 12 Marksheet
+- Income Certificate (less than 5 Lakhs)
+- Admission Proof (Fee receipt/College ID)
+- Aadhaar Card
+- Bank Passbook copy
+- Disability or Caste Certificate (if applicable)
+
+---
+
+## Narotam Sekhsaria Postgraduate Scholarship 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/narotam-sekhsaria-postgraduate-scholarship
+- Fetch status: ok
+- Deadline: 2026-10-30
+
+### Criteria extracted (1)
+- `percentage gte 75` — "Minimum Marks 75 %"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (1)
+- Note: Must hold a graduate degree.
+
+### Official documents (6)
+- Degree Certificate
+- Marksheets
+- GRE/GMAT/IELTS scores
+- Admission Letter
+- LORs
+- Passport
+
+---
+
+## Raman Kant Munjal Scholarship 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/raman-kant-munjal-scholarship
+- Fetch status: ok
+- Deadline: 2026-08-30
+
+### Criteria extracted (4)
+- `year_of_study eq 1` — "The Raman Kant Munjal Scholarship 2026 offers up to ₹5.5 Lakhs per year to first-year finance and commerce undergraduate students with family incomes under ₹6 Lakh."
+- `branch eq "finance and commerce"` — "The Raman Kant Munjal Scholarship 2026 offers up to ₹5.5 Lakhs per year to first-year finance and commerce undergraduate students with family incomes under ₹6 Lakh."
+- `annual_family_income lte 600000` — "Income Limit Up to ₹6.0 Lakh/year"
+- `percentage gte 80` — "Minimum Marks 80 %"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (1)
+- Yes, the applicant must be a maximum of 20 years of age as of May 31, 2026.
+
+### Official documents (9)
+- Class 10 Marksheet
+- Class 12 Marksheet
+- Proof of current academic enrollment (College ID/fee receipt)
+- Parent's PAN card & masked Aadhaar card
+- Annual parental income proof (ITR/Income Certificate/salary slips)
+- Applicant's bank account details (passbook/cancelled cheque)
+- Bank account statements of parents
+- Affidavit declaring document authenticity
+- LinkedIn Profile URL
+
+---
+
+## Kotak Kanya Scholarship 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/kotak-kanya-scholarship
+- Fetch status: ok
+- Deadline: 2026-08-30
+
+### Criteria extracted (2)
+- `percentage gte 75` — "Minimum Marks 75 %"
+- `annual_family_income lte 600000` — "Income Limit Up to ₹6.0 Lakh/year"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (1)
+- Eligibility Summary Class 11-12, Graduation, Engineering (< ₹8L Income)
+
+### Official documents (5)
+- Class 10 & 12 marks memo showing >= 75%
+- Family Income Certificate (< ₹6 Lakhs)
+- College Fee receipts & admission letter
+- Student's Aadhaar card & passport photo
+- Aadhaar-seeded bank account details
+
+---
+
+## L'Or'éal India For Young Women in Science (FYWIS) Scholarship 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/loreal-fyws-scholarship
+- Fetch status: ok
+- Deadline: 2026-10-30
+
+### Criteria extracted (4)
+- `percentage gte 85` — "— Shortlisting based on academic merit (minimum 85% in Class 12 Science PCM/B for UG, minimum 60% in graduation for PG) and family income limit (<= ₹6,00,000 per annum)"
+- `percentage gte 60` — "— Shortlisting based on academic merit (minimum 85% in Class 12 Science PCM/B for UG, minimum 60% in graduation for PG) and family income limit (<= ₹6,00,000 per annum)"
+- `annual_family_income lte 600000` — "— Shortlisting based on academic merit (minimum 85% in Class 12 Science PCM/B for UG, minimum 60% in graduation for PG) and family income limit (<= ₹6,00,000 per annum)"
+- `percentage gte 85` — "Minimum Marks 85 %"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (0)
+- none
+
+### Official documents (4)
+- Identity proof
+- Income certificate
+- Academic transcripts
+- Admission proof
+
+---
+
+## Tata Realty Scholarship for Girls 2026-27: Application Form, Eligibility & Selection List
+
+- URL: https://www.indiascholarships.in/scholarships/tata-realty-scholarship-for-girls
+- Fetch status: ok
+- Deadline: 2026-10-30
+
+### Criteria extracted (4)
+- `branch eq "B.Arch"` — "Education Level UG (B.Arch)"
+- `percentage gte 60` — "Minimum Marks 60 %"
+- `annual_family_income lte 500000` — "Income Limit Up to ₹5.0 Lakh/year"
+- `gender eq "female"` — "Note: Exclusively for female students pursuing B.Arch degree."
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (0)
+- none
+
+### Official documents (6)
+- Aadhaar Card
+- Class 10 and 12 Marksheets
+- Income Certificate (less than 5 Lakhs)
+- B.Arch Admission Proof
+- Current Year Fee Receipt
+- Bank Passbook copy
+
+---
+
+## AICTE Pragati Scholarship for Girl Students 2026-27
+
+- URL: https://www.indiascholarships.in/scholarships/aicte-pragati-scholarship-for-girl-students
+- Fetch status: ok
+- Deadline: 2026-10-30
+
+### Criteria extracted (4)
+- `gender eq "Female"` — "Note: Restricted to AICTE-approved institutions and female students."
+- `annual_family_income lte 800000` — "Income Limit Up to ₹8.0 Lakh/year"
+- `percentage gte 33` — "Minimum Marks 33 %"
+- `institution_type eq "AICTE-approved"` — "Note: Restricted to AICTE-approved institutions and female students."
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (0)
+- none
+
+### Official documents (5)
+- Aadhaar card of the girl student
+- Family Income Certificate (< ₹8 Lakhs)
+- Class 10 & 12 marksheets
+- Admission receipt and AICTE approved college bonafide certificate
+- Aadhaar-seeded bank account details
+
+---
+
+## Digital Gujarat Scholarship Portal (Pre-Matric & Post-Matric) 2026-27
+
+- URL: https://www.indiascholarships.in/scholarships/digital-gujarat-scholarship-portal
+- Fetch status: ok
+- Deadline: 2026-09-29
+
+### Criteria extracted (2)
+- `state eq "Gujarat"` — "Domicile State Gujarat"
+- `annual_family_income lte 600000` — "Income Limit Up to ₹6.0 Lakh/year"
+
+### Criteria rejected (0)
+- none
+
+### Unextractable prose (0)
+- none
+
+### Official documents (6)
+- Aadhaar Card
+- Caste Certificate
+- Income Certificate (issued by Mamlatdar/TDO)
+- School/College Leaving Certificate
+- Hostel Certificate (if applicable)
+- Bank passbook page
