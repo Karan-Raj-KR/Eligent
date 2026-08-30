@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "esbuild src/background.ts src/bridge.ts src/popup.ts src/content.ts --bundle --outdir=dist --format=esm --target=chrome100 && cp public/manifest.json public/popup.html public/popup.css public/demo-docdiff.json public/demo-filled.json public/demo-blocked.json dist/",
-    "dev": "esbuild src/background.ts src/bridge.ts src/popup.ts src/content.ts --bundle --outdir=dist --format=esm --target=chrome100 --watch",
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch",
     "test": "esbuild src/mapper.test.ts --bundle --platform=node --outfile=dist/mapper.test.cjs && node dist/mapper.test.cjs && esbuild src/verify.test.ts --bundle --platform=node --format=esm --outfile=dist/verify.test.mjs && node dist/verify.test.mjs",
     "test:e2e": "npm run build && esbuild src/verify-browser.ts --bundle --format=iife --target=chrome100 --outfile=dist/verify-browser.js && node src/verify-dom.mjs && node src/verify-popup.mjs",
     "typecheck": "tsc --noEmit"

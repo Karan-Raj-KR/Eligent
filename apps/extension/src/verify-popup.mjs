@@ -9,6 +9,7 @@ import { readFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert";
 import { chromium } from "playwright";
+import { API_BASE } from "../build.mjs";
 
 const dist = fileURLToPath(new URL("../dist/", import.meta.url));
 const shots = fileURLToPath(new URL("../dist/shots/", import.meta.url));
@@ -77,13 +78,13 @@ async function load(browser, store, { demoCase, scanResult } = {}) {
 }
 
 const SIGNED_IN_STORE = {
-  session: { token: "eyJ.a.b", origin: "http://localhost:3000", applicationId: "app-1", applicationName: "Buddy4Study India Foundation Scholarship", savedAt: Date.now() },
+  session: { token: "eyJ.a.b", origin: API_BASE, applicationId: "app-1", applicationName: "Buddy4Study India Foundation Scholarship", savedAt: Date.now() },
   profile: {
     full_name: "Aarav Sharma", cgpa: 8.6, percentage: 81.4, year_of_study: "2nd Year",
     branch: "Computer Science", state: "Karnataka", annual_family_income: 220000,
     institution_type: "Private", gender: "Male", category: "General",
   },
-  settings: { apiBase: "http://localhost:3000", apiKey: "", llmBase: "https://integrate.api.nvidia.com/v1", llmModel: "meta/llama-3.3-70b-instruct", demo: false, demoCase: "docdiff" },
+  settings: { apiBase: API_BASE, apiKey: "", llmBase: "https://integrate.api.nvidia.com/v1", llmModel: "meta/llama-3.3-70b-instruct", demo: false, demoCase: "docdiff" },
 };
 
 const browser = await chromium.launch();
@@ -171,6 +172,30 @@ await scan("error", { demoCase: "error" }, (cls, text) => {
   assert.ok(cls.includes("error"), "ERROR: plain state");
   assert.ok(text.includes("Browser pages are off limits to extensions"), "ERROR: chrome-page message");
 });
+
+// ---- the build-time origin -----------------------------------------------
+// No stored settings at all, so apiBase falls back to DEFAULTS.apiBase, which is
+// the injected API_BASE. Proves a fresh install calls the domain this build was
+// made for — the one thing a hardcoded URL somewhere else would break.
+{
+  const { settings: _dropped, ...noSettings } = structuredClone(SIGNED_IN_STORE);
+  const page = await load(browser, noSettings);
+  let requested = null;
+  await page.route("**/api/fill/**", (route) => {
+    requested = route.request().url();
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ blocked: false, fields: {}, official_documents: [] }) });
+  });
+  await page.click('.tab[data-tab="scan"]');
+  await page.click("#scan-btn");
+  await page.waitForTimeout(400);
+  assert.ok(requested, "ORIGIN: popup issued no /api/fill request");
+  assert.ok(
+    requested.startsWith(`${API_BASE}/api/fill/`),
+    `ORIGIN: popup called ${requested}, expected ${API_BASE}/api/fill/…`,
+  );
+  await page.close();
+  console.log(`verify-popup: fresh install calls ${API_BASE}/api/fill/…`);
+}
 
 await browser.close();
 console.log("verify-popup: 3 tabs + 4 Scan states render correctly. Screenshots in dist/shots/");

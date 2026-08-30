@@ -7,7 +7,14 @@
 // NOTE: injected as a classic content script, so this module must not emit an
 // `export` — form-scan's exports get inlined by esbuild and disappear here.
 
-import { documentDiff, fillForm, type FieldSpec } from "./form-scan";
+import {
+  clearMarks,
+  documentDiff,
+  fillForm,
+  observeForm,
+  stopObserving,
+  type FieldSpec,
+} from "./form-scan";
 
 interface ScanMessage {
   type: "ELIGENT_SCAN";
@@ -30,11 +37,14 @@ if (!window.__eligentLoaded) {
     if (msg?.type !== "ELIGENT_SCAN") return false;
     try {
       if (msg.blocked) {
+        stopObserving();
         sendResponse({ blocked: true });
         return true;
       }
+      clearMarks(); // an explicit scan starts fresh
       const fill = fillForm(msg.fields ?? {}, msg.extraMap ?? {});
       const diff = documentDiff(msg.officialDocs ?? []);
+      observeForm(msg.fields ?? {}, msg.extraMap ?? {}); // keep filling multi-step portals
       sendResponse({ blocked: false, fill, diff });
     } catch (err) {
       sendResponse({ error: err instanceof Error ? err.message : String(err) });

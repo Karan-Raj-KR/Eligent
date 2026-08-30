@@ -9,7 +9,7 @@
 //   - never set an <input type=file> value — detect and name only
 //   - the document diff is pure string comparison, no model call
 
-import { lookup, type ProfileKey } from "./mapper";
+import { extractLabel, lookup, type ProfileKey } from "./mapper";
 
 export interface FieldSpec {
   value: unknown;
@@ -34,58 +34,38 @@ const norm = (s?: string | null): string => (s ?? "").replace(/\s+/g, " ").trim(
 
 // ------------------------------------------------------------------ labels ----
 
-/** Every string that might name a control, strongest signal first. */
-function labelParts(el: Element): string[] {
-  const out: string[] = [];
-  const id = el.getAttribute("id");
-  if (id) {
-    try {
-      const forEl = document.querySelector(`label[for="${CSS.escape(id)}"]`);
-      if (forEl) out.push(norm(forEl.textContent));
-    } catch {
-      /* malformed id */
-    }
-  }
-  const wrapping = el.closest("label");
-  if (wrapping) out.push(norm(wrapping.textContent));
-  out.push(norm(el.getAttribute("aria-label")));
-  for (const ref of norm(el.getAttribute("aria-labelledby")).split(" ")) {
-    if (ref) out.push(norm(document.getElementById(ref)?.textContent));
-  }
-  out.push(norm(el.getAttribute("placeholder")));
-  out.push(norm(el.getAttribute("name")));
-  out.push(norm(id));
-  out.push(norm(el.getAttribute("title")));
-  return out.filter(Boolean);
+/** A control's label (mapper's priority chain), and the dictionary/learned key
+ *  it resolves to. `label` doubles as the human-readable name in the popup. */
+function resolveKey(label: string, extraMap: Record<string, string>): ProfileKey | null {
+  if (!label) return null;
+  return lookup(label) ?? (extraMap[label] as ProfileKey | undefined) ?? null;
 }
 
-/** Best human-readable name: a real label, else the nearest heading above it. */
-function displayName(el: Element, fallback: string): string {
-  const parts = labelParts(el);
-  if (parts.length) return parts[0];
-  let node: Element | null = el;
-  for (let hop = 0; node && hop < 4; hop += 1) {
-    let sib = node.previousElementSibling;
-    while (sib) {
-      if (/^(H[1-6]|LABEL|LEGEND|STRONG|B|P|SPAN|DIV|TD|TH)$/.test(sib.tagName)) {
-        const t = norm(sib.textContent);
-        if (t && t.length <= 120) return t;
-      }
-      sib = sib.previousElementSibling;
-    }
-    node = node.parentElement;
-  }
-  return fallback;
+// --------------------------------------------------------- visual feedback ----
+
+const STYLE_ID = "eligent-fill-style";
+type Mark = "filled" | "unmatched" | "blocked";
+
+/** Inject the outline CSS once. green = filled, amber = unmatched, red = a field
+ *  Eligent is hard-blocked from touching (declaration checkbox, file input). */
+function ensureStyle(): void {
+  if (typeof document === "undefined" || document.getElementById(STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = STYLE_ID;
+  style.textContent =
+    '[data-eligent="filled"]{outline:2px solid #16a34a!important;outline-offset:1px}' +
+    '[data-eligent="unmatched"]{outline:2px solid #d97706!important;outline-offset:1px}' +
+    '[data-eligent="blocked"]{outline:2px solid #dc2626!important;outline-offset:1px}';
+  (document.head ?? document.documentElement).appendChild(style);
 }
 
-function resolveKey(el: Element, extraMap: Record<string, string>): ProfileKey | null {
-  for (const part of labelParts(el)) {
-    const fromDict = lookup(part);
-    if (fromDict) return fromDict;
-    const learned = extraMap[part];
-    if (learned) return learned as ProfileKey;
-  }
-  return null;
+const mark = (el: Element, state: Mark): void => el.setAttribute("data-eligent", state);
+
+/** Clear every mark so an explicit re-scan starts fresh. The MutationObserver
+ *  path deliberately does NOT call this — a still-marked field is skipped, so
+ *  only genuinely new controls get filled on a portal step change. */
+export function clearMarks(): void {
+  for (const el of document.querySelectorAll("[data-eligent]")) el.removeAttribute("data-eligent");
 }
 
 // -------------------------------------------------------------------- fill -----
@@ -97,11 +77,14 @@ const DECLARATION_RE =
 
 const SKIP_INPUT_TYPES = new Set(["submit", "button", "reset", "image", "hidden", "file", "password"]);
 
-/** Set a value the way a framework-controlled input will actually notice. */
+/** Set a value the way a framework-controlled input will actually notice:
+ *  React/Vue track the native `value` setter, so calling it via the prototype
+ *  descriptor (not `el.value =`) is what makes the change stick. */
 function setNativeValue(
   el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement,
   value: string,
 ): void {
+  el.focus();
   const proto =
     el instanceof HTMLSelectElement
       ? HTMLSelectElement.prototype
@@ -113,6 +96,7 @@ function setNativeValue(
   else el.value = value;
   el.dispatchEvent(new Event("input", { bubbles: true }));
   el.dispatchEvent(new Event("change", { bubbles: true }));
+  el.blur();
 }
 
 function applyValue(
@@ -120,18 +104,16 @@ function applyValue(
   raw: string,
 ): boolean {
   if (el instanceof HTMLSelectElement) {
-    const want = raw.toLowerCase();
-    const opt = Array.from(el.options).find(
-      (o) =>
-        o.value.toLowerCase() === want ||
-        norm(o.text).toLowerCase() === want ||
-        norm(o.text).toLowerCase().includes(want),
-    );
+    const want = norm(raw).toLowerCase();
+    // Exact value first, then exact normalised visible text. No fuzzy contains.
+    const opt =
+      Array.from(el.options).find((o) => o.value === raw) ??
+      Array.from(el.options).find((o) => norm(o.text).toLowerCase() === want);
     if (!opt) return false;
-    setNativeValue(el, opt.value);
+    if (el.value !== opt.value) setNativeValue(el, opt.value);
     return true;
   }
-  setNativeValue(el, raw);
+  if (el.value !== raw) setNativeValue(el, raw);
   return true;
 }
 
@@ -139,6 +121,8 @@ export function fillForm(
   fields: Record<string, FieldSpec>,
   extraMap: Record<string, string>,
 ): FillOutcome {
+  ensureStyle();
+
   const need: string[] = [];
   const unmappedLabels: string[] = [];
   const declarations: string[] = [];
@@ -150,34 +134,84 @@ export function fillForm(
   >("input, select, textarea");
 
   controls.forEach((el) => {
+    if (el.hasAttribute("data-eligent")) return; // resolved on this scan already
+
     if (el instanceof HTMLInputElement) {
       if (SKIP_INPUT_TYPES.has(el.type)) return;
       if (el.type === "checkbox" || el.type === "radio") {
-        const text = labelParts(el).join(" · ");
-        if (DECLARATION_RE.test(text)) declarations.push(displayName(el, "checkbox"));
-        return; // never tick anything, declaration or otherwise
+        const text = extractLabel(el);
+        if (DECLARATION_RE.test(text)) {
+          declarations.push(text || "checkbox");
+          mark(el, "blocked"); // never tick anything — flag it as the human's job
+        }
+        return;
       }
     }
     if (el.disabled || (el as HTMLInputElement).readOnly) return;
 
     found += 1;
-    const label = displayName(el, "this field");
-    const key = resolveKey(el, extraMap);
+    const label = extractLabel(el) || "this field";
+    const key = resolveKey(label, extraMap);
     if (!key) {
       need.push(label);
       unmappedLabels.push(label);
+      mark(el, "unmatched");
       return;
     }
     const value = fields[key]?.value;
     if (value === null || value === undefined || value === "") {
       need.push(label);
+      mark(el, "unmatched");
       return;
     }
-    if (applyValue(el, String(value))) filled += 1;
-    else need.push(label);
+    if (applyValue(el, String(value))) {
+      filled += 1;
+      mark(el, "filled");
+    } else {
+      need.push(label);
+      mark(el, "unmatched");
+    }
   });
 
   return { found, filled, need, unmappedLabels, declarations };
+}
+
+// ------------------------------------------------------------- re-scan hook ---
+
+/** Debounce for the multi-step re-scan. */
+export const OBSERVE_DEBOUNCE_MS = 400;
+
+let activeObserver: MutationObserver | null = null;
+
+/**
+ * Re-run the fill (debounced) whenever the form DOM changes — multi-step portals
+ * swap in the next page of fields without navigating. Marked controls are
+ * skipped, so only genuinely new fields get touched. Calling again re-points the
+ * single observer at the new payload.
+ */
+export function observeForm(
+  fields: Record<string, FieldSpec>,
+  extraMap: Record<string, string>,
+): void {
+  stopObserving();
+  if (typeof MutationObserver === "undefined" || !document.body) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  activeObserver = new MutationObserver(() => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      try {
+        fillForm(fields, extraMap);
+      } catch {
+        /* portal mid-render — the next mutation retries */
+      }
+    }, OBSERVE_DEBOUNCE_MS);
+  });
+  activeObserver.observe(document.body, { childList: true, subtree: true });
+}
+
+export function stopObserving(): void {
+  activeObserver?.disconnect();
+  activeObserver = null;
 }
 
 // --------------------------------------------------------------- doc diff -----
@@ -218,8 +252,12 @@ export function docMatches(pageName: string, official: string): boolean {
 }
 
 export function documentDiff(officialDocs: string[]): DocDiff {
+  ensureStyle();
   const fileInputs = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="file"]'));
-  const names = fileInputs.map((el, i) => displayName(el, `Upload #${i + 1}`));
+  const names = fileInputs.map((el, i) => {
+    mark(el, "blocked"); // Eligent never sets a file input — the human uploads
+    return extractLabel(el) || `Upload #${i + 1}`;
+  });
 
   const unlisted: string[] = [];
   const matched: string[] = [];

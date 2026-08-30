@@ -2,6 +2,15 @@
 // Extension settings. One place that knows every chrome.storage key the popup
 // touches, so "Forget everything" can be exhaustive.
 
+/** Injected by build.mjs via esbuild `define`. Never write the URL by hand. */
+declare const __API_BASE__: string;
+
+/**
+ * The Eligent web app origin this build talks to — the ONLY place the extension
+ * knows it. Override at build time with the ELIGENT_API_BASE env var (see build.mjs).
+ */
+export const API_BASE: string = __API_BASE__;
+
 export interface Settings {
   /** Eligent web app origin — eligibility check + profile live here. */
   apiBase: string;
@@ -18,7 +27,7 @@ export interface Settings {
 export type DemoCase = "docdiff" | "filled" | "blocked" | "error";
 
 export const DEFAULTS: Settings = {
-  apiBase: "https://eligent.karanrajkr.com",
+  apiBase: API_BASE,
   apiKey: "",
   llmBase: "https://integrate.api.nvidia.com/v1",
   llmModel: "meta/llama-3.3-70b-instruct",

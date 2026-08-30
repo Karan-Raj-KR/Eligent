@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter, Space_Grotesk } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { EligentProvider } from "@/components/provider";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <main className="flex-1">{children}</main>
           <SiteFooter />
         </EligentProvider>
+        <Analytics />
       </body>
     </html>
   );

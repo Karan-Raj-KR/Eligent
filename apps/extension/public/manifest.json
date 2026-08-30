@@ -5,9 +5,7 @@
   "description": "Fills an opportunity's application form from your saved profile — only when you actually qualify. It never submits, and never ticks a declaration.",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
-    "https://eligent.karanrajkr.com/*",
-    "http://localhost:3000/*",
-    "https://*.vercel.app/*",
+    "__API_ORIGIN__/*",
     "https://integrate.api.nvidia.com/*"
   ],
   "optional_host_permissions": ["https://*/*"],
@@ -17,11 +15,7 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://eligent.karanrajkr.com/*",
-        "http://localhost:3000/*",
-        "https://*.vercel.app/*"
-      ],
+      "matches": ["__API_ORIGIN__/*"],
       "js": ["bridge.js"],
       "run_at": "document_idle"
     }

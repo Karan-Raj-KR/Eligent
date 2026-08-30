@@ -1,8 +1,12 @@
+/// <reference lib="dom" />
 // Static dictionary: Indian scholarship-portal form labels -> profile keys.
-// Pure, no DOM, no network. The caller passes whatever text it could scrape for
-// a field (label text, aria-label, placeholder, name, id) and gets back a
-// profile key or null. Match is case-insensitive on whitespace-normalised text,
-// comparing whole tokens so "name as per marksheet" hits `name` but not `marks`.
+// `lookup()` is pure (no DOM, no network) — the caller passes scraped text and
+// gets a profile key or null. Match is case-insensitive on whitespace-normalised
+// text, comparing whole tokens so "name as per marksheet" hits `name` but not
+// `marks`.
+//
+// `extractLabel(el)` is the DOM side: the one label an <input>/<select>/<textarea>
+// should be judged by, picked from a priority chain (first non-empty wins).
 
 export type ProfileKey =
   | "full_name"
@@ -150,7 +154,7 @@ const ENTRIES: Array<{ key: ProfileKey; phrases: string[]; not?: string[] }> = [
   },
 ];
 
-/** The one export. label/aria/placeholder/name/id text -> profile key | null. */
+/** label/aria/placeholder/name/id text -> profile key | null. */
 export function lookup(labelText: string): ProfileKey | null {
   const hay = tokens(labelText);
   if (hay.length === 0) return null;
@@ -159,4 +163,99 @@ export function lookup(labelText: string): ProfileKey | null {
     if (phrases.some((p) => hasRun(hay, tokens(p)))) return key;
   }
   return null;
+}
+
+// --------------------------------------------------------------- DOM labels ---
+
+/** Collapse whitespace, drop a trailing "*" or "(required)" marker. Casing and
+ *  inner punctuation are left for `lookup()`'s own `norm` to handle. */
+function tidy(s: string | null | undefined): string {
+  return (s ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\s*\*+$/, "")
+    .replace(/\s*\(\s*required\s*\)$/i, "")
+    .replace(/\s*:$/, "")
+    .trim();
+}
+
+function byLabelledBy(el: Element): string {
+  const ids = (el.getAttribute("aria-labelledby") ?? "").split(/\s+/).filter(Boolean);
+  if (!ids.length) return "";
+  return ids.map((id) => document.getElementById(id)?.textContent ?? "").join(" ");
+}
+
+function byLabelFor(el: Element): string {
+  const id = el.getAttribute("id");
+  if (!id) return "";
+  try {
+    return document.querySelector(`label[for="${CSS.escape(id)}"]`)?.textContent ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** Text nodes sitting immediately before the control ("Name: <input>"), plus a
+ *  bare caption element if that's all that precedes it. */
+function byPrecedingText(el: Element): string {
+  let node: Node | null = el.previousSibling;
+  let text = "";
+  while (node && (node.nodeType === 3 /* text */ || (node as Element).tagName === "BR")) {
+    if (node.nodeType === 3) text = (node.textContent ?? "") + text;
+    node = node.previousSibling;
+  }
+  if (text.trim()) return text;
+  // A bare <label>Foo</label><input> (no `for`, not wrapping) is still a label.
+  const sib = el.previousElementSibling;
+  if (sib && sib.tagName === "LABEL") return sib.textContent ?? "";
+  return "";
+}
+
+/** Nearest heading (h1–h6) above the control, walking up and back. */
+function byPrecedingHeading(el: Element): string {
+  let node: Element | null = el;
+  for (let hop = 0; node && hop < 5; hop += 1) {
+    let sib: Element | null = node.previousElementSibling;
+    while (sib) {
+      if (/^H[1-6]$/.test(sib.tagName)) {
+        const t = tidy(sib.textContent);
+        if (t) return t;
+      }
+      const nested = sib.querySelector("h1,h2,h3,h4,h5,h6");
+      if (nested) {
+        const t = tidy(nested.textContent);
+        if (t) return t;
+      }
+      sib = sib.previousElementSibling;
+    }
+    node = node.parentElement;
+  }
+  return "";
+}
+
+/**
+ * The single label a control should be matched on. Priority chain, first
+ * non-empty wins:
+ *   aria-label / aria-labelledby -> <label for> -> wrapping <label> ->
+ *   fieldset <legend> -> preceding text node -> placeholder -> name -> id ->
+ *   nearest preceding heading.
+ */
+export function extractLabel(el: Element): string {
+  const chain: Array<string | null | undefined> = [
+    el.getAttribute("aria-label"),
+    byLabelledBy(el),
+    byLabelFor(el),
+    el.closest("label")?.textContent,
+    el.closest("fieldset")?.querySelector("legend")?.textContent,
+    byPrecedingText(el),
+    el.getAttribute("placeholder"),
+    el.getAttribute("name"),
+    el.getAttribute("id"),
+    byPrecedingHeading(el),
+  ];
+  for (const candidate of chain) {
+    const t = tidy(candidate);
+    if (t) return t;
+  }
+  return "";
 }
