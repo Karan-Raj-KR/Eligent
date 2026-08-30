@@ -63,7 +63,10 @@ people out rather than in.
 
 ---
 
-## 2. Opportunities deleted, and why
+> **Superseded on the second pass.** Deletion was replaced by exclusion — see
+> "Opportunities excluded" below. All 6 deleted rows were restored.
+
+## 2. Opportunities deleted, and why (superseded)
 
 **55 → 49.** Every deletion is a row that could not quote a single criterion
 from its own page after a clean re-harvest.
@@ -97,17 +100,41 @@ rows, which cascaded. They were demo applications, but they are gone.
 
 ---
 
+## 2b. Opportunities excluded (current policy)
+
+Nothing is deleted any more. An opportunity with no verifiable criteria is
+**kept and excluded from matching**: `/api/matches` gives it no verdict and
+returns it under a separate `unverified` key.
+
+All 6 previously deleted rows were restored from `main`'s `seed.ts`, and
+re-harvested once more — 3 recovered real criteria, 3 could still quote
+nothing:
+
+| Excluded | Category |
+|---|---|
+| The WebMCP Challenge | hackathon |
+| Smart City Hackathon Lahore | hackathon |
+| Veteran Innovation Hackathon | hackathon |
+
+**3 excluded, of 55.**
+
+`supabase/migrations/20260830120000_criteria_status.sql` adds
+`opportunity.criteria_status`. **It has not been applied** — this environment
+has no DDL access. The guard does not need it: a row with zero criterion rows
+is unverified by definition, and that is the check `/api/matches` uses. The
+column records *why*, explicitly, once someone applies the migration.
+
+---
+
 ## 3. Final counts
 
-49 opportunities, 113 criteria, **0 with zero criteria**.
+55 opportunities, 118 criteria, **3 excluded as unverified**, 52 evaluated.
 
-| Category | Count | eligible / near_miss / rejected |
-|---|---:|---|
-| scholarship | 38 | 13 / 1 / 24 |
-| hackathon | 11 | 0 / 0 / 11 |
-
-Volume target was 40; the catalogue is at 49 after deletions, so no extra
-harvesting was needed to reach it.
+| Category | Count |
+|---|---:|
+| scholarship | 38 |
+| hackathon | 16 |
+| internship | 1 |
 
 ### Remaining known gap
 
@@ -126,20 +153,25 @@ private, male** — evaluated as it would actually be stored
 canonicalises on save, and the engine compares with `===`).
 
 ```
-Opportunities in catalog: 49  (target: 40)
-Opportunities with ZERO criteria: 0  (gate: 0)
+Opportunities in catalog: 55  (target: 40)
+Excluded as unverified (no criteria): 3
+Opportunities actually evaluated: 52
 
 eligible:  13
 near_miss: 1
-rejected:  35
+rejected:  38
 ```
+
+Confirmed identical against the running API with a real session:
+`eligible 13, near_miss 1, rejected 38, unverified 3` — total 55, and **zero
+criterion-less rows reached a verdict bucket**.
 
 **These are the real numbers. Nothing was tuned to fill a bucket.** The repo's
 own coverage gate wants ≥3 near-misses and there is 1 — reported as-is.
 
 ### The number that needs a decision
 
-**18 of the 35 rejections are caused *only* by profile fields onboarding never
+**18 of the rejections are caused *only* by profile fields onboarding never
 asks for**, all introduced by the criteria recovered in Task 3:
 
 `team_size` (8), `student_status` (7), `nationality` (7), `age` (6),
