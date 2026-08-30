@@ -362,7 +362,7 @@ function EligibilityBlocked({
             {scholarshipTitle} — we checked, you don't qualify.
           </p>
           <p className="mt-1 text-[0.86rem] leading-relaxed text-coral-deep/80">
-            Cutoff won't fill this form. We're not going to waste your time.
+            Eligent won't fill this form. We're not going to waste your time.
           </p>
         </div>
         <div className="mt-7 flex flex-wrap items-center gap-3">

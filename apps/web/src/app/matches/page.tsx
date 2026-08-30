@@ -86,7 +86,7 @@ export default function MatchesPage() {
     <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
       <div className="grid gap-10 lg:grid-cols-[1fr_360px] lg:items-start lg:gap-14">
         <MatchSummary counts={counts} />
-        <ProfilePanel profile={user} />
+        <ProfilePanel profile={user} total={counts.total} />
       </div>
 
       <p className="mt-10 max-w-2xl text-[0.92rem] leading-relaxed text-muted">

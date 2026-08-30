@@ -66,7 +66,7 @@ export function MatchSummary({ counts }: MatchSummaryProps) {
   );
 }
 
-export function ProfilePanel({ profile }: { profile: UserProfile }) {
+export function ProfilePanel({ profile, total }: { profile: UserProfile; total?: number }) {
   const rows: Array<[string, string]> = [
     ["CGPA", cgpa(profile.cgpa)],
     ["Year of study", String(profile.year)],
@@ -84,7 +84,9 @@ export function ProfilePanel({ profile }: { profile: UserProfile }) {
             What we checked
           </h2>
           <p className="mt-0.5 text-[0.85rem] text-muted">
-            43 scholarships evaluated against your profile.
+            {total === undefined
+              ? "Evaluated against your profile."
+              : `${total} scholarship${total === 1 ? "" : "s"} evaluated against your profile.`}
           </p>
         </div>
         <Link

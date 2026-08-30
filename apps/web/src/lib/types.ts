@@ -34,6 +34,10 @@ export interface CriterionResult {
   reason: string;
   /** Human sentence for the fail/near detail block */
   detail: string;
+  /** The profile's own value, formatted — e.g. "82%". */
+  actual: string;
+  /** What the criterion demands, formatted — e.g. "85%". */
+  required: string;
 }
 
 export type MatchStatus = "ELIGIBLE" | "NEAR_MISS" | "NOT_ELIGIBLE";

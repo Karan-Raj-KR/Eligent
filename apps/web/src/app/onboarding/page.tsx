@@ -22,6 +22,7 @@ import type {
 interface FormErrors {
   name?: string;
   cgpa?: string;
+  percentage?: string;
   year?: string;
   branch?: string;
   state?: string;
@@ -35,6 +36,10 @@ export default function OnboardingPage() {
 
   const [name, setName] = useState(user?.name ?? "");
   const [cgpa, setCgpa] = useState(user ? String(user.cgpa) : "");
+  const [percentage, setPercentage] = useState(
+    user?.percentage != null ? String(user.percentage) : "",
+  );
+  const [gender, setGender] = useState(user?.gender ?? "");
   const [year, setYear] = useState(user ? String(user.year) : "");
   const [branch, setBranch] = useState(user?.branch ?? "");
   const [state, setState] = useState(user?.state ?? "");
@@ -56,6 +61,9 @@ export default function OnboardingPage() {
     const c = Number(cgpa);
     if (cgpa === "" || Number.isNaN(c) || c < 0 || c > 10)
       next.cgpa = "CGPA must be between 0 and 10.";
+    const pct = Number(percentage);
+    if (percentage === "" || Number.isNaN(pct) || pct < 0 || pct > 100)
+      next.percentage = "Percentage must be between 0 and 100.";
     if (!year) next.year = "Select your year of study.";
     if (!branch) next.branch = "Select your branch.";
     if (!state) next.state = "Select your state.";
@@ -78,6 +86,8 @@ export default function OnboardingPage() {
       income: numericIncome,
       institutionType: institutionType as InstitutionType,
       category: (category || "General") as Category,
+      percentage: Number(percentage),
+      gender: gender || null,
     };
     setSaving(true);
     setSaveError(null);
@@ -152,6 +162,27 @@ export default function OnboardingPage() {
               {errors.cgpa && (
                 <p className="text-[0.82rem] font-medium text-coral-deep" role="alert">
                   {errors.cgpa}
+                </p>
+              )}
+            </ClayField>
+            <ClayField
+              label="Aggregate percentage"
+              htmlFor="percentage"
+              hint="Most scholarships state their cutoff as a percentage"
+            >
+              <ClayInput
+                id="percentage"
+                name="percentage"
+                inputMode="decimal"
+                placeholder="e.g. 82"
+                value={percentage}
+                onChange={(e) => setPercentage(e.target.value)}
+                invalid={Boolean(errors.percentage)}
+                aria-invalid={Boolean(errors.percentage)}
+              />
+              {errors.percentage && (
+                <p className="text-[0.82rem] font-medium text-coral-deep" role="alert">
+                  {errors.percentage}
                 </p>
               )}
             </ClayField>
@@ -305,6 +336,26 @@ export default function OnboardingPage() {
                 ))}
               </ClaySelect>
             </ClayField>
+            <ClayField
+              label="Gender"
+              htmlFor="gender"
+              optional
+              hint="Some scholarships are restricted by gender"
+            >
+              <ClaySelect
+                id="gender"
+                name="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+              >
+                <option value="">Prefer not to say</option>
+                {(["Male", "Female", "Other"] as const).map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </ClaySelect>
+            </ClayField>
           </div>
 
           <div className="pt-2">
@@ -328,7 +379,7 @@ export default function OnboardingPage() {
               </p>
             )}
             <p className="mt-3 text-center text-[0.8rem] text-soft">
-              43 scholarships evaluated · official criteria only
+              Evaluated against official criteria only
             </p>
           </div>
         </form>

@@ -8,7 +8,7 @@ import type { MatchResult } from "@/lib/types";
 export function NearMissCard({ match }: { match: MatchResult }) {
   const { scholarship } = match;
   const near = match.nearMisses[0];
-  const isOpenNextYear = near?.criterion.kind === "year";
+  const isOpenNextYear = near?.criterion.kind === "year_of_study";
 
   return (
     <ClayCard topAccent="coral" className="p-6 sm:p-8">
@@ -57,7 +57,7 @@ export function NearMissCard({ match }: { match: MatchResult }) {
                 You're in
               </p>
               <p className="font-display text-2xl font-bold text-ink">
-                Year {scholarship.criteria.find((c) => c.kind === "year")?.value}
+                Year {near?.actual}
               </p>
             </div>
             <div>
@@ -65,7 +65,7 @@ export function NearMissCard({ match }: { match: MatchResult }) {
                 Requires
               </p>
               <p className="font-display text-2xl font-bold text-coral-deep">
-                Year {Number(scholarship.criteria.find((c) => c.kind === "year")?.value)}+
+                Year {near?.required}
               </p>
             </div>
             <div className="sm:row-span-1">
@@ -86,7 +86,7 @@ export function NearMissCard({ match }: { match: MatchResult }) {
                   Your {near.criterion.short}
                 </p>
                 <p className="mt-1 font-display text-3xl font-bold tracking-tight text-ink">
-                  {extractYou(near.criterion.kind, near.detail)}
+                  {near.actual}
                 </p>
               </div>
               <div className="pl-5">
@@ -94,7 +94,7 @@ export function NearMissCard({ match }: { match: MatchResult }) {
                   Required
                 </p>
                 <p className="mt-1 font-display text-3xl font-bold tracking-tight text-coral-deep">
-                  {extractRequired(near.criterion.kind, near.detail)}
+                  {near.required}
                 </p>
               </div>
             </div>
@@ -124,18 +124,4 @@ export function NearMissCard({ match }: { match: MatchResult }) {
       </div>
     </ClayCard>
   );
-}
-
-function extractYou(kind: string, detail: string): string {
-  if (kind === "cgpa") return detail.match(/Your CGPA ([\d.]+)/)?.[1] ?? detail;
-  if (kind === "income")
-    return detail.match(/Your income (₹[\d.,]+L?)/)?.[1] ?? detail;
-  return detail;
-}
-
-function extractRequired(kind: string, detail: string): string {
-  if (kind === "cgpa") return detail.match(/Required ([\d.]+)/)?.[1] ?? detail;
-  if (kind === "income")
-    return detail.match(/Maximum (₹[\d.,]+L?)/)?.[1] ?? detail;
-  return detail;
 }

@@ -119,7 +119,7 @@ export function ExtensionPopup({
             </p>
             <div className="rounded-lg border border-coral/30 bg-coral-tint/60 px-3.5 py-2.5">
               <p className="text-[0.84rem] font-semibold text-coral-deep">
-                Cutoff won't fill this form.
+                Eligent won't fill this form.
               </p>
             </div>
             <p className="text-[0.8rem] text-muted">

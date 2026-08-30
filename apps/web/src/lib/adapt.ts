@@ -125,9 +125,11 @@ function fmt(field: string, value: unknown): string {
 
 /** "0.6 points short" / "₹50k over" — straight from the engine's gap arithmetic. */
 function gapPhrase(gap: NonNullable<ApiEvaluationEntry["gap"]>): string {
-  const amount =
-    gap.unit === "INR" ? inrCompact(gap.amount) : `${Math.round(gap.amount * 100) / 100} ${gap.unit}`;
-  return `${amount} ${gap.direction}`;
+  if (gap.unit === "INR") return `${inrCompact(gap.amount)} ${gap.direction}`;
+  const n = Math.round(gap.amount * 100) / 100;
+  // "1 years over" reads like a bug; singularise the countable units.
+  const unit = n === 1 && gap.unit.endsWith("s") ? gap.unit.slice(0, -1) : gap.unit;
+  return `${n} ${unit} ${gap.direction}`;
 }
 
 function toCriterion(field: string, apiCriteria: ApiCriterion[], displayText?: string): EligibilityCriterion {
@@ -155,7 +157,16 @@ function toResult(
   const actual = fmt(entry.field, entry.profileValue);
   const required = entry.requirement === "unknown" ? "not stated" : fmt(entry.field, entry.requirement);
 
-  const comparison = `${criterion.short} ${actual} ${symbol} ${required}`.replace(/\s+/g, " ").trim();
+  // A passing row reads as the true statement it is ("CGPA 8.4 ≥ 8"). A failing
+  // one must not: "Family income ₹3L ≤ ₹2L" asserts something false, so failures
+  // state the value and what was required instead.
+  const comparison = (
+    status === "pass"
+      ? `${criterion.short} ${actual} ${symbol} ${required}`
+      : `${criterion.short} ${actual} · requires ${symbol === "=" ? "" : symbol} ${required}`
+  )
+    .replace(/\s+/g, " ")
+    .trim();
   const reason = entry.gap
     ? gapPhrase(entry.gap)
     : status === "pass"
@@ -170,6 +181,8 @@ function toResult(
     comparison,
     reason,
     detail: criterion.label,
+    actual,
+    required,
   };
 }
 
@@ -282,6 +295,8 @@ export function fromUserProfile(u: UserProfile): Record<string, unknown> {
     annual_family_income: u.income,
     institution_type: u.institutionType,
     category: u.category,
+    percentage: u.percentage ?? null,
+    gender: u.gender ?? null,
   };
 }
 
