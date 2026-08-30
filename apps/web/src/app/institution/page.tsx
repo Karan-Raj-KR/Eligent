@@ -5,20 +5,38 @@ import { Download, Upload } from "lucide-react";
 import { ClayBadge, ClayButton, ClayCard } from "@/components/clay";
 import { ErrorState } from "@/components/states";
 import { inr, inrCompact } from "@/lib/format";
+import { cn } from "@/lib/cn";
 
 interface Breakdown { key: string; students: number; qualified: number }
+interface OppRow { id: string; name: string; provider: string; amount: string | null; students: number }
 
 interface Result {
   students: number;
-  qualified: number;
-  opportunities: number;
-  totalAid: number;
-  unpricedMatches: number;
-  topOpportunities: Array<{ id: string; name: string; provider: string; amount: string | null; students: number }>;
-  zeroMatch: number;
+  catalogue: {
+    total: number;
+    funded: number;
+    open: number;
+    unverified: number;
+    fundedWithoutAmount: number;
+  };
+  funded: {
+    qualified: number;
+    totalAid: number;
+    studentsWithUnpricedBest: number;
+    topOpportunities: OppRow[];
+    mostMissed: { name: string; nearMiss: number; eligible: number } | null;
+    withinCgpaReach: number;
+    cgpaReach: number;
+  };
+  open: {
+    qualified: number;
+    topOpportunities: OppRow[];
+  };
+  qualifiedNothing: number;
   topBlocker: { criterion: string; students: number } | null;
   byBranch: Breakdown[];
   byYear: Breakdown[];
+  breakdownIsFlat: boolean;
 }
 
 function csvCell(value: string | number): string {
@@ -39,31 +57,89 @@ function toCsv(r: Result): string {
   const rows: Array<Array<string | number>> = [
     ["metric", "value"],
     ["students", r.students],
-    ["students qualifying for at least one opportunity", r.qualified],
-    ["students with zero matches", r.zeroMatch],
-    ["opportunities evaluated", r.opportunities],
-    ["total aid value eligible for (INR)", r.totalAid],
+    ["funded opportunities scored", r.catalogue.funded],
+    ["open opportunities scored", r.catalogue.open],
+    ["excluded — no published criteria", r.catalogue.unverified],
+    [],
+    ["students qualifying for at least one FUNDED opportunity", r.funded.qualified],
+    ["total aid value (highest single award per qualifying student, INR)", r.funded.totalAid],
+    ["qualifying students whose best award has no published amount", r.funded.studentsWithUnpricedBest],
+    ["funded opportunities with no parseable amount", r.catalogue.fundedWithoutAmount],
+    [`students within ${r.funded.cgpaReach} CGPA of qualifying`, r.funded.withinCgpaReach],
+    [],
+    ["students qualifying for at least one OPEN opportunity", r.open.qualified],
+    [],
+    ["students qualifying for NOTHING", r.qualifiedNothing],
     ["most common blocking criterion", r.topBlocker?.criterion ?? "n/a"],
+    ["students blocked by it", r.topBlocker?.students ?? 0],
     [],
-    ["top opportunity", "provider", "amount", "qualifying students"],
-    ...r.topOpportunities.map((o) => [o.name, o.provider, o.amount ?? "", o.students]),
+    ["most missed opportunity", r.funded.mostMissed?.name ?? "n/a"],
+    ["  students who nearly qualify", r.funded.mostMissed?.nearMiss ?? 0],
+    ["  students who qualify", r.funded.mostMissed?.eligible ?? 0],
     [],
-    ["branch", "students", "qualifying"],
+    ["top funded opportunity", "provider", "amount", "qualifying students"],
+    ...r.funded.topOpportunities.map((o) => [o.name, o.provider, o.amount ?? "", o.students]),
+    [],
+    ["top open opportunity", "provider", "qualifying students"],
+    ...r.open.topOpportunities.map((o) => [o.name, o.provider, o.students]),
+    [],
+    ["branch", "students", "qualifying (funded)"],
     ...r.byBranch.map((b) => [b.key, b.students, b.qualified]),
     [],
-    ["year", "students", "qualifying"],
+    ["year", "students", "qualifying (funded)"],
     ...r.byYear.map((b) => [b.key, b.students, b.qualified]),
   ];
   return rows.map((row) => row.map(csvCell).join(",")).join("\n") + "\n";
 }
 
-function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function Stat({
+  label,
+  value,
+  sub,
+  formula,
+  tone,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  /** Shown on hover and focus — a number this size has to show its working. */
+  formula?: string;
+  tone?: "coral";
+}) {
   return (
-    <ClayCard className="p-5">
-      <p className="text-[0.8rem] font-medium uppercase tracking-wide text-muted">{label}</p>
+    <ClayCard className="p-5" tone={tone}>
+      <p
+        className={cn(
+          "text-[0.8rem] font-medium uppercase tracking-wide text-muted",
+          formula && "cursor-help underline decoration-dotted decoration-line-strong underline-offset-4",
+        )}
+        title={formula}
+        tabIndex={formula ? 0 : undefined}
+      >
+        {label}
+      </p>
       <p className="mt-2 font-[family-name:var(--font-space-grotesk)] text-3xl font-bold text-ink">{value}</p>
-      {sub && <p className="mt-1 text-[0.82rem] text-muted">{sub}</p>}
+      {sub && <p className="mt-1 text-[0.82rem] leading-relaxed text-muted">{sub}</p>}
+      {formula && <p className="mt-2 text-[0.72rem] leading-relaxed text-soft">{formula}</p>}
     </ClayCard>
+  );
+}
+
+/** One opportunity list, shared by the funded and open blocks. */
+function OppList({ rows, empty }: { rows: OppRow[]; empty: string }) {
+  return (
+    <ul className="mt-3 divide-y divide-black/5">
+      {rows.map((o) => (
+        <li key={o.id} className="flex items-baseline justify-between gap-4 py-2">
+          <span>
+            <span className="font-medium text-ink">{o.name}</span>{" "}
+            <span className="text-[0.85rem] text-muted">{o.provider}</span>
+          </span>
+          <span className="shrink-0 tabular-nums font-semibold text-ink">{o.students}</span>
+        </li>
+      ))}
+      {rows.length === 0 && <li className="py-2 text-muted">{empty}</li>}
+    </ul>
   );
 }
 
@@ -75,9 +151,10 @@ function BreakdownTable({ title, rows }: { title: string; rows: Breakdown[] }) {
         <table className="w-full text-left text-[0.9rem]">
           <thead>
             <tr className="text-[0.78rem] uppercase tracking-wide text-muted">
-              <th className="py-1.5 font-medium">{title.includes("year") ? "Year" : "Branch"}</th>
+              <th className="py-1.5 font-medium">{title.toLowerCase().includes("year") ? "Year" : "Branch"}</th>
               <th className="py-1.5 text-right font-medium">Students</th>
               <th className="py-1.5 text-right font-medium">Qualifying</th>
+              <th className="py-1.5 text-right font-medium">Rate</th>
             </tr>
           </thead>
           <tbody>
@@ -86,6 +163,9 @@ function BreakdownTable({ title, rows }: { title: string; rows: Breakdown[] }) {
                 <td className="py-1.5 text-ink">{r.key}</td>
                 <td className="py-1.5 text-right tabular-nums text-muted">{r.students}</td>
                 <td className="py-1.5 text-right tabular-nums font-semibold text-ink">{r.qualified}</td>
+                <td className="py-1.5 text-right tabular-nums text-muted">
+                  {r.students === 0 ? "—" : `${Math.round((r.qualified / r.students) * 100)}%`}
+                </td>
               </tr>
             ))}
           </tbody>
