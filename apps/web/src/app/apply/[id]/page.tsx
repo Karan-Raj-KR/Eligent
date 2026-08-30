@@ -156,6 +156,19 @@ export default function ApplyPage() {
         </div>
       </div>
 
+      {/* Handoff to the Chrome extension. The extension needs the *application*
+          id (that's what /api/fill/:application_id takes), which only exists
+          once this page has created the application row — it can't be derived
+          from the URL, which carries the opportunity id. apps/extension/src/bridge.ts
+          reads these attributes. */}
+      {app && (
+        <span
+          hidden
+          data-eligent-application-id={app.applicationId}
+          data-eligent-application-name={sc.title}
+        />
+      )}
+
       <div className="mt-8">
         <EligibilityVerified match={match} />
       </div>
