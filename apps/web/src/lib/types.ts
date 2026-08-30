@@ -1,23 +1,25 @@
-export type CriterionKind =
-  | "cgpa"
-  | "income"
-  | "year"
-  | "state"
-  | "branch"
-  | "category"
-  | "institution";
+// Shapes the UI renders. Adapted from the teammate's prototype types so his
+// components render unchanged, but widened where our real API differs from his
+// mock data. Every divergence is deliberate and noted — nothing is invented to
+// satisfy a shape.
+
+/** Our profile columns, not a closed union: the engine accepts any field. */
+export type CriterionKind = string;
+
+/** Mirrors packages/engine Operator. */
+export type CriterionOperator = "gte" | "lte" | "eq" | "in" | "not_in" | "between";
 
 export interface EligibilityCriterion {
   id: string;
   kind: CriterionKind;
-  operator: "gte" | "lte" | "in";
-  /** Threshold value (number) or allowed list (string[]) */
-  value: number | string[];
-  /** Human readable label, e.g. "Minimum CGPA" */
+  operator: CriterionOperator;
+  value: number | string | Array<number | string>;
+  /** Human readable statement, e.g. "Minimum CGPA 8.0" (criterion.display_text). */
   label: string;
-  /** Short label used inside comparison rows, e.g. "CGPA" */
+  /** Short label used inside comparison rows, e.g. "CGPA". */
   short: string;
-  /** Static clarification text */
+  /** The verbatim sentence from the provider's own page (criterion.source_text). */
+  sourceText?: string;
   note?: string;
 }
 
@@ -28,7 +30,7 @@ export interface CriterionResult {
   status: CriterionStatus;
   /** e.g. "CGPA 8.4 ≥ 8.0" */
   comparison: string;
-  /** e.g. "0.2 CGPA short" */
+  /** e.g. "0.2 points short" */
   reason: string;
   /** Human sentence for the fail/near detail block */
   detail: string;
@@ -42,7 +44,6 @@ export interface Requirement {
   id: string;
   label: string;
   source: RequirementSource;
-  /** Handy note, e.g. "Photocopy, self-attested" */
   note?: string;
   communityReportCount?: number;
 }
@@ -51,26 +52,24 @@ export interface Scholarship {
   id: string;
   title: string;
   provider: string;
-  amount: number;
-  amountNote?: string;
-  deadline: string;
-  summary: string;
+  /**
+   * Display string as published ("₹1.5 Lakh+"), not a number: the source pages
+   * state ranges and qualifiers that no single integer can carry honestly.
+   */
+  amount: string | null;
+  deadline: string | null;
+  url: string;
+  /** Not returned by our API — see EXT/MORNING report. Optional, never faked. */
+  summary?: string;
   officialRequirements: Requirement[];
   communityRequirements: Requirement[];
   criteria: EligibilityCriterion[];
-  /** Semester / cadence, e.g. "Every year" */
   cadence?: string;
   openFor?: string;
 }
 
 export type InstitutionType = "Government" | "Private" | "Aided";
-export type Category =
-  | "General"
-  | "OBC"
-  | "SC"
-  | "ST"
-  | "EWS"
-  | "Other";
+export type Category = "General" | "OBC" | "SC" | "ST" | "EWS" | "Other";
 
 export interface UserProfile {
   name: string;
@@ -81,24 +80,40 @@ export interface UserProfile {
   income: number;
   institutionType: InstitutionType;
   category: Category;
+  percentage?: number | null;
+  gender?: string | null;
 }
 
 export interface MatchResult {
   scholarship: Scholarship;
   status: MatchStatus;
   results: CriterionResult[];
-  /** Failing criteria shown for NOT_ELIGIBLE */
   failures: CriterionResult[];
-  /** Near criteria making a NEAR_MISS hiscore */
   nearMisses: CriterionResult[];
+}
+
+export interface MatchGroups {
+  eligible: MatchResult[];
+  nearMiss: MatchResult[];
+  notEligible: MatchResult[];
+}
+
+export interface MatchCounts {
+  total: number;
+  eligible: number;
+  nearMiss: number;
+  notEligible: number;
 }
 
 export type ItemAvailability = "have" | "dont" | "unanswered";
 
 export interface ApplicationState {
   scholarshipId: string;
+  /** application row id from our API */
+  applicationId: string;
   /** requirement id -> availability */
   items: Record<string, ItemAvailability>;
+  requirements: Requirement[];
   lastUpdated: number;
 }
 

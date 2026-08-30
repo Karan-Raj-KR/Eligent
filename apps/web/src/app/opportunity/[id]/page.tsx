@@ -15,14 +15,11 @@ import {
 import { useEligent } from "@/components/provider";
 import { ClayBadge, ClayButton, ClayCard } from "@/components/clay";
 import { DetailLoading, EmptyState } from "@/components/states";
-import { getScholarship } from "@/lib/data/scholarships";
-import { evaluate } from "@/lib/eligibility";
-import { inr } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
 export default function OpportunityPage() {
   const params = useParams<{ id: string }>();
-  const { hydrated, signedIn, user } = useEligent();
+  const { hydrated, signedIn, user, getMatch } = useEligent();
   const router = useRouter();
 
   useEffect(() => {
@@ -39,8 +36,9 @@ export default function OpportunityPage() {
     );
   }
 
-  const scholarship = getScholarship(params.id);
-  if (!scholarship) {
+  const match = getMatch(params.id);
+  const scholarship = match?.scholarship;
+  if (!match || !scholarship) {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
         <EmptyState
@@ -53,7 +51,6 @@ export default function OpportunityPage() {
     );
   }
 
-  const match = evaluate(scholarship, user);
   const qualifies = match.status === "ELIGIBLE";
 
   return (
@@ -89,22 +86,26 @@ export default function OpportunityPage() {
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-[0.95rem] font-semibold">
-        <span className="flex items-center gap-1.5 text-cobalt-deep">
-          <IndianRupee size={16} aria-hidden />
-          {inr(scholarship.amount)}
-        </span>
+        {scholarship.amount && (
+          <span className="flex items-center gap-1.5 text-cobalt-deep">
+            <IndianRupee size={16} aria-hidden />
+            {scholarship.amount}
+          </span>
+        )}
         <span className="flex items-center gap-1.5 font-medium text-muted">
           <CalendarClock size={16} aria-hidden />
-          Deadline {scholarship.deadline}
+          {scholarship.deadline ? `Deadline ${scholarship.deadline}` : "Deadline not stated"}
         </span>
         {scholarship.cadence && (
           <span className="font-medium text-muted">{scholarship.cadence}</span>
         )}
       </div>
 
-      <p className="mt-6 max-w-2xl text-[1rem] leading-relaxed text-muted">
-        {scholarship.summary}
-      </p>
+      {scholarship.summary && (
+        <p className="mt-6 max-w-2xl text-[1rem] leading-relaxed text-muted">
+          {scholarship.summary}
+        </p>
+      )}
 
       <section aria-labelledby="why-heading" className="mt-10">
         <h2 id="why-heading" className="font-display text-xl font-bold tracking-tight text-ink">
@@ -142,7 +143,7 @@ export default function OpportunityPage() {
                   result.status === "pass" ? "text-muted" : "text-coral-deep",
                 )}
               >
-                {result.detail}
+                {result.status === "pass" ? result.detail : result.reason}
               </span>
             </div>
           ))}
@@ -161,7 +162,9 @@ export default function OpportunityPage() {
           Official requirements
         </h2>
         <p className="mt-1 text-[0.86rem] text-muted">
-          The complete list of documents the portal will ask for.
+          {scholarship.officialRequirements.length > 0
+            ? "The complete list of documents the portal will ask for."
+            : "Start the application to pull the document checklist for this scholarship."}
         </p>
         <ul className="mt-4 space-y-2">
           {scholarship.officialRequirements.map((req) => (
@@ -204,7 +207,7 @@ export default function OpportunityPage() {
               variant={qualifies ? "primary" : "soft"}
               icon={<ArrowRight size={17} />}
             >
-              {qualifies ? "Apply with Cutoff" : "See what I qualify for"}
+              {qualifies ? "Apply with Eligent" : "See what I qualify for"}
             </ClayButton>
           </Link>
         </div>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ArrowRight, CalendarClock, Check, IndianRupee } from "lucide-react";
 import { ClayBadge, ClayButton, ClayCard } from "@/components/clay";
-import { inr } from "@/lib/format";
 import type { CriterionResult, MatchResult } from "@/lib/types";
 
 function PassRow({ result }: { result: CriterionResult }) {
@@ -45,13 +44,15 @@ export function EligibilityCard({ match }: { match: MatchResult }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.9rem] font-semibold">
-            <span className="flex items-center gap-1.5 text-cobalt-deep">
-              <IndianRupee size={15} aria-hidden />
-              {inr(scholarship.amount)}
-            </span>
+            {scholarship.amount && (
+              <span className="flex items-center gap-1.5 text-cobalt-deep">
+                <IndianRupee size={15} aria-hidden />
+                {scholarship.amount}
+              </span>
+            )}
             <span className="flex items-center gap-1.5 font-medium text-muted">
               <CalendarClock size={15} aria-hidden />
-              Deadline {scholarship.deadline}
+              {scholarship.deadline ? `Deadline ${scholarship.deadline}` : "Deadline not stated"}
             </span>
             {scholarship.cadence && (
               <span className="font-medium text-muted">{scholarship.cadence}</span>
@@ -73,7 +74,7 @@ export function EligibilityCard({ match }: { match: MatchResult }) {
           <div className="flex flex-col gap-2.5">
             <Link href={`/apply/${scholarship.id}`}>
               <ClayButton variant="primary" block icon={<ArrowRight size={16} />}>
-                Apply with Cutoff
+                Apply with Eligent
               </ClayButton>
             </Link>
             <p className="text-center text-[0.78rem] text-soft">

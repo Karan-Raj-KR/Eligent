@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEligent } from "@/components/provider";
 import {
@@ -13,12 +13,11 @@ import { MatchSummary, ProfilePanel } from "@/components/matches/match-summary";
 import { EligibilityCard } from "@/components/matches/eligibility-card";
 import { NearMissCard } from "@/components/matches/near-miss-card";
 import { RejectedCard } from "@/components/matches/rejected-card";
-import { getMatches, getMatchCounts } from "@/lib/eligibility";
 
 type Phase = "loading" | "ready" | "error";
 
 const STEPS = [
-  ["QUALIFY", "Free check against 43 official criteria sets."],
+  ["QUALIFY", "Free check against every scholarship we hold official criteria for."],
   ["UNDERSTAND", "Exactly why you qualify — or by how much you miss."],
   ["CHECK", "Every document, official and community-reported."],
   ["PREPARE", "₹99 Apply Mode gets what you need, counted, no guesswork."],
@@ -27,7 +26,7 @@ const STEPS = [
 ] as const;
 
 export default function MatchesPage() {
-  const { hydrated, signedIn, user } = useEligent();
+  const { hydrated, signedIn, user, groups, counts, loading, error, refresh } = useEligent();
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("loading");
 
@@ -41,18 +40,10 @@ export default function MatchesPage() {
       router.replace("/onboarding");
       return;
     }
-    const t = setTimeout(() => setPhase("ready"), 800);
-    return () => clearTimeout(t);
-  }, [hydrated, signedIn, user, router]);
-
-  const { counts, groups } = useMemo(() => {
-    if (!user) return { counts: null, groups: null };
-    try {
-      return { counts: getMatchCounts(user), groups: getMatches(user) };
-    } catch {
-      return { counts: null, groups: null };
-    }
-  }, [user]);
+    if (error) setPhase("error");
+    else if (loading || !groups) setPhase("loading");
+    else setPhase("ready");
+  }, [hydrated, signedIn, user, router, loading, error, groups]);
 
   const notHydrated = !hydrated || !user;
   const showSkeleton = notHydrated || phase === "loading";
@@ -74,7 +65,7 @@ export default function MatchesPage() {
         <ErrorState
           onRetry={() => {
             setPhase("loading");
-            setTimeout(() => setPhase("ready"), 800);
+            void refresh();
           }}
         />
       </div>
@@ -110,7 +101,7 @@ export default function MatchesPage() {
           kicker="Official check passed"
           title="Eligible"
           count={counts.eligible}
-          caption="You pass every official criterion. Use the Cutoff extension to fill the real form."
+          caption="You pass every official criterion. Use the Eligent extension to fill the real form."
         />
         <div className="space-y-4">
           {groups.eligible.map((match) => (

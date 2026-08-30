@@ -11,7 +11,7 @@ import {
   ClayInput,
   ClaySelect,
 } from "@/components/clay";
-import { BRANCH_OPTIONS, STATE_OPTIONS } from "@/lib/data/scholarships";
+import { BRANCH_OPTIONS, STATE_OPTIONS } from "@/lib/form-options";
 import { inrCompact } from "@/lib/format";
 import type {
   Category,
@@ -44,6 +44,8 @@ export default function OnboardingPage() {
   );
   const [category, setCategory] = useState(user?.category ?? "");
   const [errors, setErrors] = useState<FormErrors>({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const numericIncome = Number(income.replace(/,/g, ""));
   const isEditing = Boolean(user);
@@ -64,7 +66,7 @@ export default function OnboardingPage() {
     return Object.keys(next).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
     const profile: UserProfile = {
@@ -77,8 +79,18 @@ export default function OnboardingPage() {
       institutionType: institutionType as InstitutionType,
       category: (category || "General") as Category,
     };
-    setProfile(profile);
-    router.push("/matches");
+    setSaving(true);
+    setSaveError(null);
+    try {
+      // Persists to Postgres and refreshes matches before we navigate, so
+      // /matches never renders against a profile the server hasn't stored.
+      await setProfile(profile);
+      router.push("/matches");
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Could not save your profile.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -301,10 +313,20 @@ export default function OnboardingPage() {
               variant="primary"
               block
               size="lg"
+              disabled={saving}
               icon={<ArrowRight size={18} />}
             >
-              {isEditing ? "Update details & see matches" : "See what I qualify for"}
+              {saving
+                ? "Saving…"
+                : isEditing
+                  ? "Update details & see matches"
+                  : "See what I qualify for"}
             </ClayButton>
+            {saveError && (
+              <p role="alert" className="mt-3 text-center text-[0.85rem] font-semibold text-coral-deep">
+                {saveError}
+              </p>
+            )}
             <p className="mt-3 text-center text-[0.8rem] text-soft">
               43 scholarships evaluated · official criteria only
             </p>

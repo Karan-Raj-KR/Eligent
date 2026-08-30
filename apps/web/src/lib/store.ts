@@ -1,4 +1,6 @@
-import type { ApplicationState, ScholarshipReport, UserProfile } from "@/lib/types";
+// Browser-local UI preferences only. Profile, matches, applications and
+// reports all live in Postgres and are reached through the provider.
+import type { ScholarshipReport, UserProfile } from "@/lib/types";
 
 export const STORAGE_KEYS = {
   user: "eligent.user",
@@ -26,33 +28,6 @@ export function writeStorage<T>(key: string, value: T): void {
   } catch {
     /* storage unavailable — ignore */
   }
-}
-
-export function defaultApplicationState(
-  scholarshipId: string,
-  officialLabels: string[],
-): ApplicationState {
-  const items: ApplicationState["items"] = {};
-  for (const label of officialLabels) {
-    const have =
-      /marksheet|income certificate/i.test(label);
-    items[label] = have ? "have" : "dont";
-  }
-  return { scholarshipId, items, lastUpdated: Date.now() };
-}
-
-export function applicationReadyCount(
-  application: ApplicationState | undefined,
-  officialLabels: string[],
-  communityLabels: string[],
-): { ready: number; total: number } {
-  const total = officialLabels.length + communityLabels.length;
-  const flag = (a: ApplicationState | undefined, label: string) =>
-    a?.items[label] === "have";
-  const ready =
-    officialLabels.filter((l) => flag(application, l)).length +
-    communityLabels.filter((l) => flag(application, l)).length;
-  return { ready, total };
 }
 
 export function newReportId(): string {

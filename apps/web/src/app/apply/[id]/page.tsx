@@ -23,10 +23,6 @@ import {
 import { ReadinessCount } from "@/components/application/readiness-count";
 import { ApplyModeGate } from "@/components/application/apply-mode-gate";
 import { ReportModal } from "@/components/behavior/report-modal";
-import { getScholarship } from "@/lib/data/scholarships";
-import { evaluate } from "@/lib/eligibility";
-import { defaultApplicationState, applicationReadyCount } from "@/lib/store";
-import { inr } from "@/lib/format";
 import type { ApplicationState, ReportTopic } from "@/lib/types";
 
 export default function ApplyPage() {
@@ -37,13 +33,38 @@ export default function ApplyPage() {
     user,
     applyMode,
     unlockApplyMode,
-    getApplication,
-    upsertApplication,
+    getMatch,
+    startApplication,
+    setRequirement,
     submitReport,
-    getReports,
+    reports,
   } = useEligent();
   const router = useRouter();
   const [reportOpen, setReportOpen] = useState(false);
+  const [app, setApp] = useState<ApplicationState | null>(null);
+  const [appError, setAppError] = useState<string | null>(null);
+
+  const match = getMatch(params.id);
+  const eligible = match?.status === "ELIGIBLE";
+
+  // Creating the application is what materialises its document checklist
+  // (official rows + community-reported extras) server-side. Only ever for a
+  // scholarship the engine already cleared.
+  useEffect(() => {
+    if (!eligible || app) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const next = await startApplication(params.id);
+        if (!cancelled) setApp(next);
+      } catch (err) {
+        if (!cancelled) setAppError(err instanceof Error ? err.message : "Could not open this application.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [eligible, app, params.id, startApplication]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -59,41 +80,31 @@ export default function ApplyPage() {
     );
   }
 
-  const scholarship = getScholarship(params.id);
-  if (!scholarship) {
+  if (!match) {
     router.replace("/matches");
     return null;
   }
-  const sc = scholarship;
+  const sc = match.scholarship;
 
-  const match = evaluate(sc, user);
-  const officialLabels = sc.officialRequirements.map((r) => r.label);
-  const communityLabels = sc.communityRequirements.map((r) => r.label);
+  const allRequired = app?.requirements ?? [];
+  const officialReqs = allRequired.filter((r) => r.source === "official");
+  const communityReqs = allRequired.filter((r) => r.source === "community");
+  const total = allRequired.length;
+  const ready = allRequired.filter((r) => app?.items[r.id] === "have").length;
+  const firstMissing = allRequired.find((r) => app?.items[r.id] !== "have");
 
-  const stored = getApplication(sc.id);
-  const app: ApplicationState =
-    stored ?? defaultApplicationState(sc.id, officialLabels);
-  const { ready, total } = applicationReadyCount(
-    app,
-    officialLabels,
-    communityLabels,
-  );
-
-  const allRequired = [
-    ...sc.officialRequirements,
-    ...sc.communityRequirements,
-  ];
-  const firstMissing = allRequired.find((r) => app.items[r.label] !== "have");
-
-  function setAvailability(label: string, value: "have" | "dont") {
-    upsertApplication(sc.id, { ...app.items, [label]: value });
+  function setAvailability(requirementId: string, value: "have" | "dont") {
+    setApp((prev) =>
+      prev ? { ...prev, items: { ...prev.items, [requirementId]: value }, lastUpdated: Date.now() } : prev,
+    );
+    if (app) void setRequirement(app.applicationId, requirementId, value);
   }
 
   function handleReport(topic: ReportTopic, details: string) {
-    submitReport({ scholarshipId: sc.id, topic, details });
+    void submitReport({ scholarshipId: sc.id, topic, details });
   }
 
-  const existingReports = getReports(sc.id);
+  const existingReports = reports.filter((r) => r.scholarshipId === sc.id);
 
   if (match.status !== "ELIGIBLE") {
     return (
@@ -101,7 +112,7 @@ export default function ApplyPage() {
         matchLabel={match.status === "NEAR_MISS" ? "near miss" : "not eligible"}
         lines={match.results
           .filter((r) => r.status !== "pass")
-          .map((r) => r.detail)}
+          .map((r) => r.criterion.sourceText ?? r.detail)}
         scholarshipTitle={sc.title}
         onReport={() => setReportOpen(true)}
         onNavigate={() => router.push("/matches")}
@@ -132,13 +143,15 @@ export default function ApplyPage() {
           {sc.title}
         </h1>
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-[0.95rem] font-semibold">
-          <span className="flex items-center gap-1.5 text-cobalt-deep">
-            <IndianRupee size={16} aria-hidden />
-            {inr(sc.amount)}
-          </span>
+          {sc.amount && (
+            <span className="flex items-center gap-1.5 text-cobalt-deep">
+              <IndianRupee size={16} aria-hidden />
+              {sc.amount}
+            </span>
+          )}
           <span className="flex items-center gap-1.5 font-medium text-muted">
             <CalendarClock size={16} aria-hidden />
-            Deadline {sc.deadline}
+            {sc.deadline ? `Deadline ${sc.deadline}` : "Deadline not stated"}
           </span>
         </div>
       </div>
@@ -158,20 +171,33 @@ export default function ApplyPage() {
             Listed by the scholarship
           </p>
         </div>
+        {appError && (
+          <p role="alert" className="mt-4 text-[0.88rem] font-semibold text-coral-deep">
+            {appError}
+          </p>
+        )}
+        {!app && !appError && (
+          <p className="mt-4 text-[0.88rem] text-muted">Loading your document checklist…</p>
+        )}
+        {app && officialReqs.length === 0 && (
+          <p className="mt-4 text-[0.88rem] text-muted">
+            This scholarship has no official document list recorded yet.
+          </p>
+        )}
         <ul className="mt-4 space-y-2.5">
-          {sc.officialRequirements.map((req) => (
+          {officialReqs.map((req) => (
             <RequirementItem
               key={req.id}
               item={req}
-              value={app.items[req.label]}
-              onChange={(v) => setAvailability(req.label, v)}
+              value={app?.items[req.id]}
+              onChange={(v) => setAvailability(req.id, v)}
             />
           ))}
         </ul>
       </section>
 
       {/* COMMUNITY REQUIREMENTS */}
-      {sc.communityRequirements.length > 0 && (
+      {communityReqs.length > 0 && (
         <section aria-labelledby="community-heading" className="mt-12">
           <h2 id="community-heading" className="font-display text-xl font-bold tracking-tight text-ink">
             Community-reported
@@ -183,12 +209,12 @@ export default function ApplyPage() {
             </p>
           </div>
           <ul className="mt-4 space-y-2.5">
-            {sc.communityRequirements.map((req) => (
+            {communityReqs.map((req) => (
               <CommunityRequirement
                 key={req.id}
                 item={req}
-                value={app.items[req.label]}
-                onChange={(v) => setAvailability(req.label, v)}
+                value={app?.items[req.id]}
+                onChange={(v) => setAvailability(req.id, v)}
               />
             ))}
           </ul>

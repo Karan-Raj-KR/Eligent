@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ArrowDownRight, CalendarClock, IndianRupee } from "lucide-react";
 import { ClayBadge, ClayButton, ClayCard } from "@/components/clay";
-import { inr } from "@/lib/format";
 import type { MatchResult } from "@/lib/types";
 
 export function NearMissCard({ match }: { match: MatchResult }) {
@@ -38,13 +37,15 @@ export function NearMissCard({ match }: { match: MatchResult }) {
             </p>
           </div>
           <div className="flex items-center gap-4 text-[0.9rem] font-semibold">
-            <span className="flex items-center gap-1.5 text-ink">
-              <IndianRupee size={15} aria-hidden />
-              {inr(scholarship.amount)}
-            </span>
+            {scholarship.amount && (
+              <span className="flex items-center gap-1.5 text-ink">
+                <IndianRupee size={15} aria-hidden />
+                {scholarship.amount}
+              </span>
+            )}
             <span className="flex items-center gap-1.5 font-medium text-muted">
               <CalendarClock size={15} aria-hidden />
-              Deadline {scholarship.deadline}
+              {scholarship.deadline ? `Deadline ${scholarship.deadline}` : "Deadline not stated"}
             </span>
           </div>
         </div>
