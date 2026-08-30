@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
 //
 // FAIL-OPEN DESIGN: any error in here must degrade to "not signed in", never
 // to a 500. A broken session refresh is far less damaging than a dead site.
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   try {
     // Guard: if Supabase isn't configured, skip silently.
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
