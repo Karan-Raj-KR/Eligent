@@ -18,13 +18,18 @@ community doc list improves itself.
 
 Until it exists the extension fills and shows the diff but records nothing.
 
-## 2. (Nice to have) `opportunity.official_documents` confirmed on the fill payload
+## 2. (Nice to have) `opportunity.official_documents` and `opportunity.url` confirmed on the fill payload
 
 `GET /api/fill/:application_id` returns `opportunity` via `select("*, opportunity(*)")`,
-so `official_documents` is included today. The extension depends on that column
-staying on that payload (it is the input to the document diff). If the select is
-ever narrowed, keep `official_documents` in it, or add the official rows to the
-returned `requirements` array explicitly.
+so both `official_documents` and `url` are included today. The extension now depends
+on **both**:
+
+- `official_documents` — input to the document diff.
+- `url` — shown in the popup as "Rather not autofill? Open <host>", so a student
+  who doesn't want the autofill can go straight to the real application page.
+
+If the select is ever narrowed, keep both columns on it (or add the official
+rows to `requirements` explicitly, and surface `opportunity.url` some other way).
 
 Nothing else is required. Auth, eligibility gating, and the field/requirement
 shapes are all already provided.

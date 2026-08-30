@@ -59,6 +59,9 @@ interface Store {
   profileSyncedAt: number | null;
   /** Values you typed into Eligent here, in this browser. Overlaid on `profile`. */
   localProfile: Record<string, string>;
+  /** The open application's own live page (`opportunity.url`), remembered from
+   *  the last fill payload so "apply it yourself" is one click, scan or no scan. */
+  applyUrl: string | null;
 }
 
 const store: Store = {
@@ -67,6 +70,7 @@ const store: Store = {
   profile: null,
   profileSyncedAt: null,
   localProfile: {},
+  applyUrl: null,
 };
 
 function mergedProfile(): ProfileRow {
@@ -186,6 +190,9 @@ interface FillPayload {
   fields: Record<string, { value: unknown }>;
   officialDocs: string[];
   opportunityName?: string | null;
+  /** The opportunity's own live application page — so a student who'd rather
+   *  not autofill can just go do it by hand. From `opportunity.url`. */
+  applyUrl?: string | null;
 }
 interface BlockedPayload {
   blocked: true;
@@ -193,6 +200,7 @@ interface BlockedPayload {
   clauseText: string;
   sourceText?: string | null;
   sourceUrl?: string | null;
+  applyUrl?: string | null;
 }
 type Payload = FillPayload | BlockedPayload;
 
@@ -254,9 +262,16 @@ function normalisePayload(raw: Record<string, unknown>): Payload {
           : "You don't meet a stated criterion."),
       sourceText: (raw.source_text as string | null) ?? null,
       sourceUrl: (raw.source_url as string | null) ?? null,
+      // A rejected student already gets a "Source page" link in the result box;
+      // the panel's "apply it yourself" link is for the eligible path only.
+      applyUrl: (raw.opportunity as { url?: string } | null)?.url ?? null,
     };
   }
-  const opp = (raw.opportunity ?? null) as { name?: string; official_documents?: string[] } | null;
+  const opp = (raw.opportunity ?? null) as {
+    name?: string;
+    official_documents?: string[];
+    url?: string;
+  } | null;
   const reqs = (raw.requirements ?? []) as Array<{ document_type: string; source?: string }>;
   const officialDocs =
     Array.isArray(opp?.official_documents) && opp!.official_documents!.length
@@ -267,6 +282,7 @@ function normalisePayload(raw: Record<string, unknown>): Payload {
     fields: (raw.fields ?? {}) as Record<string, { value: unknown }>,
     officialDocs,
     opportunityName: opp?.name ?? null,
+    applyUrl: opp?.url ?? null,
   };
 }
 
@@ -285,6 +301,7 @@ async function runScan() {
       if (payload.error === "__demo_error__") return renderError(BROWSER_PAGE_MESSAGE);
       return renderError(payload.error);
     }
+    rememberApplyUrl(payload.applyUrl);
 
     if (payload.blocked) return renderBlocked(payload);
 
@@ -350,6 +367,36 @@ function sendScan(
   });
 }
 
+// --------------------------------------------------- apply-it-yourself link ---
+
+/** Show / hide the "open the application page" link under the Scan button. */
+function renderApplyLink() {
+  const a = $<HTMLAnchorElement>("scan-apply");
+  const has = Boolean(store.applyUrl);
+  if (has) {
+    a.href = store.applyUrl!;
+    let host = "";
+    try {
+      host = new URL(store.applyUrl!).hostname.replace(/^www\./, "");
+    } catch {
+      /* keep the generic label */
+    }
+    $("scan-apply-label").textContent = host
+      ? `Rather not autofill? Open ${host}`
+      : "Rather not autofill? Open the application page";
+  }
+  show(a, has);
+}
+
+/** Remember the opportunity's live page from a fill payload (persists so the
+ *  link is there next time the popup opens, before any scan). */
+function rememberApplyUrl(url: string | null | undefined) {
+  if (!url || url === store.applyUrl) return;
+  store.applyUrl = url;
+  chrome.storage.local.set({ applyUrl: url });
+  renderApplyLink();
+}
+
 // --------------------------------------------------------- scan: renderers ---
 
 function paint(view: { cls: string; html: string }) {
@@ -400,13 +447,14 @@ async function applySettings(patch: Partial<Settings>) {
 async function boot() {
   const [settings, stored] = await Promise.all([
     loadSettings(),
-    chrome.storage.local.get(["session", "profile", "profileSyncedAt", "localProfile"]),
+    chrome.storage.local.get(["session", "profile", "profileSyncedAt", "localProfile", "applyUrl"]),
   ]);
   store.settings = settings;
   store.session = (stored.session as Session | undefined) ?? null;
   store.profile = (stored.profile as ProfileRow | undefined) ?? null;
   store.profileSyncedAt = (stored.profileSyncedAt as number | undefined) ?? null;
   store.localProfile = (stored.localProfile as Record<string, string> | undefined) ?? {};
+  store.applyUrl = (stored.applyUrl as string | undefined) ?? null;
 
   // tabs
   for (const tab of document.querySelectorAll<HTMLElement>(".tab")) {
@@ -424,11 +472,14 @@ async function boot() {
     chrome.tabs.create({ url: `${store.settings.apiBase.replace(/\/+$/, "")}/onboarding` }),
   );
   $("chk-application").addEventListener("click", () =>
-    chrome.tabs.create({ url: `${store.settings.apiBase.replace(/\/+$/, "")}/matches` }),
+    chrome.tabs.create({
+      url: store.applyUrl ?? `${store.settings.apiBase.replace(/\/+$/, "")}/matches`,
+    }),
   );
 
   // scan
   $("scan-btn").addEventListener("click", () => void runScan());
+  renderApplyLink();
 
   // setup
   $("cfg-save").addEventListener("click", async () => {
@@ -452,12 +503,14 @@ async function boot() {
     if (!window.confirm("Forget the session, cached mappings, local values and settings from this browser?"))
       return;
     await forgetEverything();
-    await chrome.storage.local.remove(["profile", "profileSyncedAt", "localProfile"]);
+    await chrome.storage.local.remove(["profile", "profileSyncedAt", "localProfile", "applyUrl"]);
     store.session = null;
     store.profile = null;
     store.localProfile = {};
+    store.applyUrl = null;
     store.settings = { ...DEFAULTS };
     renderSetup();
+    renderApplyLink();
     renderHome();
     selectTab("home");
   });

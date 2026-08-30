@@ -116,6 +116,20 @@ async function scan(name, opts, assertFn) {
   const cls = await box.getAttribute("class");
   const text = await box.textContent();
   await assertFn(cls, text);
+
+  // "Rather not autofill?" link — present whenever the payload carried a URL.
+  const apply = await page.$("#scan-apply");
+  const applyHidden = await apply.evaluate((el) => el.classList.contains("hidden"));
+  const applyHref = await apply.getAttribute("href");
+  if (opts.expectApplyHost) {
+    assert.ok(!applyHidden, `${name}: apply-it-yourself link is shown`);
+    assert.ok(
+      applyHref && applyHref.includes(opts.expectApplyHost),
+      `${name}: apply link points at ${opts.expectApplyHost} (got ${applyHref})`,
+    );
+  } else {
+    assert.ok(applyHidden, `${name}: no apply link (payload had no URL)`);
+  }
   await page.close();
 }
 
@@ -133,8 +147,7 @@ const WALK = {
 
 await scan(
   "docdiff",
-  {
-    demoCase: "docdiff",
+  { demoCase: "docdiff", expectApplyHost: "buddy4study.com",
     scanResult: {
       blocked: false,
       ...WALK,
@@ -150,8 +163,7 @@ await scan(
 
 await scan(
   "filled",
-  {
-    demoCase: "filled",
+  { demoCase: "filled", expectApplyHost: "buddy4study.com",
     scanResult: { blocked: false, ...WALK, diff: { formDemands: 6, pageListed: 6, unlisted: [], matched: [] } },
   },
   (cls, text) => {

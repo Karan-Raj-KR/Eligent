@@ -49,8 +49,14 @@ panel when present but not counted toward the checklist.
 
 ### TAB 2 — SCAN (the action)
 
-One primary button, **Scan this page**. Then exactly one of four full-width
-states:
+One primary button, **Scan this page**, and — whenever the fill payload carried
+`opportunity.url` — a **"Rather not autofill? Open <host>"** link right under it.
+The link is remembered in `chrome.storage.local` (`applyUrl`), so it's there the
+next time the popup opens, before any scan. A student who doesn't want the
+autofill has a one-click path to the real application page; the same URL is used
+by the HOME "Open an application" card when known.
+
+Then exactly one of four full-width states:
 
 | state | when | shows |
 |---|---|---|
@@ -173,6 +179,9 @@ renders BLOCKED without ever injecting the content script.
     DOC DIFF names the 2 extras, FILLED shows `12 / 10 / 2` and the 2 decoys,
     BLOCKED shows the clause + quote + escape hatch, ERROR shows the
     browser-page message.
+  - SCAN → the "Rather not autofill?" link points at `opportunity.url`
+    (`buddy4study.com`) after DOC DIFF and FILLED, and stays hidden for the ERROR
+    case (no payload URL).
 
   All pass.
 

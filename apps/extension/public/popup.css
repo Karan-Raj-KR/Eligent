@@ -337,6 +337,31 @@ button.card:hover {
   border-color: #313945;
 }
 
+/* "I'd rather do it myself" — the opportunity's own application page. */
+.apply {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.apply:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.apply svg {
+  flex: none;
+}
+
 .result {
   border-radius: var(--radius);
   border: 1px solid var(--border);

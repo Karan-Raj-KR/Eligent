@@ -5,3 +5,11 @@
 # in hundreds of non-detail links from index pages like
 # https://www.indiascholarships.in/scholarships . Add a line here only for a
 # one-off listing page that does not warrant a sources.ts entry.
+https://www.buddy4study.com/scholarships/engineering
+https://www.buddy4study.com/scholarships/karnataka
+https://www.buddy4study.com/scholarships/undergraduate
+https://www.buddy4study.com/scholarships/merit-based
+https://www.buddy4study.com/scholarships/means-based
+https://www.indiascholarships.in/scholarships
+https://scholarships.gov.in/
+https://ssp.karnataka.gov.in/Students don't have an option, or nobody has any option, to directly go visit the website if they don't want to apply through our extension. If they don't want to apply through apply mode, I need you to add a real live link. 
