@@ -97,14 +97,13 @@ export function EligentProvider({ children }: { children: ReactNode }) {
   const [reports, setReports] = useState<ScholarshipReport[]>([]);
 
   // Built on first use, never during render. This provider sits in the root
-  // layout, so it renders during static prerendering too — and createClient() is
-  // a *browser* client whose env read throws by design when unset. Constructing
-  // it eagerly meant every static page (/_not-found included) tried to build a
-  // Supabase client on the server at build time and crashed the build.
-  // Every caller below runs in an effect or an event handler, i.e. the browser.
-  const supabaseRef = useRef<SupabaseClient | null>(null);
-  const getSupabase = useCallback(() => {
-    if (!supabaseRef.current) supabaseRef.current = createClient();
+  // layout so it renders during static prerendering — constructing the client
+  // eagerly would crash every static page when env vars are absent.
+  // createClient() now returns null when env vars are missing; every caller
+  // below checks for null and degrades to "not signed in".
+  const supabaseRef = useRef<SupabaseClient | null | undefined>(undefined);
+  const getSupabase = useCallback((): SupabaseClient | null => {
+    if (supabaseRef.current === undefined) supabaseRef.current = createClient();
     return supabaseRef.current;
   }, []);
 
@@ -113,12 +112,21 @@ export function EligentProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
+      const sb = getSupabase();
+      if (!sb) {
+        // Supabase not configured — degrade to "not signed in", don't crash.
+        setSignedIn(false);
+        setUser(null);
+        setGroups(null);
+        return;
+      }
+
       // The profile is read straight from Postgres rather than through an
       // endpoint: RLS already scopes `profile` to auth.uid(), and /api/profile
       // is write-only. Reading it here avoids growing the API for the UI.
       const {
         data: { user: authUser },
-      } = await getSupabase().auth.getUser();
+      } = await sb.auth.getUser();
       if (!authUser) {
         setSignedIn(false);
         setUser(null);
@@ -126,7 +134,7 @@ export function EligentProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data: profileRow } = await getSupabase()
+      const { data: profileRow } = await sb
         .from("profile")
         .select("*")
         .eq("id", authUser.id)
@@ -162,14 +170,21 @@ export function EligentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const {
-        data: { session },
-      } = await getSupabase().auth.getSession();
-      if (cancelled) return;
-
-      if (session) {
-        setSignedIn(true);
-        await load();
+      try {
+        const sb = getSupabase();
+        if (sb) {
+          const {
+            data: { session },
+          } = await sb.auth.getSession();
+          if (cancelled) return;
+          if (session) {
+            setSignedIn(true);
+            await load();
+          }
+        }
+        // If sb is null, env vars are missing — stay not-signed-in.
+      } catch (err) {
+        console.error("[EligentProvider] init error:", err);
       }
       setApplyMode(readStorage(STORAGE_KEYS.applyMode, false));
       if (!cancelled) setHydrated(true);
@@ -181,7 +196,12 @@ export function EligentProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async () => {
     setError(null);
-    const { error: authError } = await getSupabase().auth.signInAnonymously();
+    const sb = getSupabase();
+    if (!sb) {
+      setError("Supabase is not configured. Please contact support.");
+      return;
+    }
+    const { error: authError } = await sb.auth.signInAnonymously();
     if (authError) {
       setError(authError.message);
       return;
@@ -191,7 +211,8 @@ export function EligentProvider({ children }: { children: ReactNode }) {
   }, [getSupabase, load]);
 
   const signOut = useCallback(async () => {
-    await getSupabase().auth.signOut();
+    const sb = getSupabase();
+    if (sb) await sb.auth.signOut();
     setSignedIn(false);
     setUser(null);
     setGroups(null);
