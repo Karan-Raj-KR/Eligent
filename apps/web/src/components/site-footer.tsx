@@ -38,8 +38,13 @@ export function SiteFooter() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/matches#how-it-works" className="transition-colors hover:text-ink">
+                  <Link href="/#how-it-works" className="transition-colors hover:text-ink">
                     How it works
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#pricing" className="transition-colors hover:text-ink">
+                    Pricing
                   </Link>
                 </li>
                 <li>
@@ -62,17 +67,17 @@ export function SiteFooter() {
               </p>
               <ul className="space-y-2.5 text-[0.86rem] font-medium text-muted">
                 <li>
-                  <Link href="/matches#eligible" className="transition-colors hover:text-ink">
+                  <Link href="/#how-it-works" className="transition-colors hover:text-ink">
                     Eligibility
                   </Link>
                 </li>
                 <li>
-                  <Link href="/matches#how-it-works" className="transition-colors hover:text-ink">
+                  <Link href="/#apply-mode" className="transition-colors hover:text-ink">
                     Apply Mode
                   </Link>
                 </li>
                 <li>
-                  <Link href="/matches#how-it-works" className="transition-colors hover:text-ink">
+                  <Link href="/extension" className="transition-colors hover:text-ink">
                     Community reports
                   </Link>
                 </li>
@@ -86,7 +91,7 @@ export function SiteFooter() {
               </p>
               <ul className="space-y-2.5 text-[0.86rem] font-medium text-muted">
                 <li>
-                  <Link href="/matches#how-it-works" className="transition-colors hover:text-ink">
+                  <Link href="/#about" className="transition-colors hover:text-ink">
                     About
                   </Link>
                 </li>
@@ -96,9 +101,14 @@ export function SiteFooter() {
                   </a>
                 </li>
                 <li>
-                  <span className="text-soft cursor-not-allowed">
+                  <Link href="/privacy" className="transition-colors hover:text-ink">
                     Privacy
-                  </span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="transition-colors hover:text-ink">
+                    Terms
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -114,9 +124,9 @@ export function SiteFooter() {
                 Run a free check against every official opportunity.
               </p>
               <div className="mt-4">
-                <Link href="/onboarding">
+                <Link href="/signin">
                   <ClayButton variant="primary" block size="sm" icon={<ArrowRight size={14} />}>
-                    Check my eligibility
+                    Start checking
                   </ClayButton>
                 </Link>
               </div>
@@ -136,9 +146,13 @@ export function SiteFooter() {
         <div className="mt-7 flex flex-col gap-3 border-t border-line/70 pt-5 text-[0.82rem] font-medium text-soft sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 ELIGENT. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <span className="transition-colors hover:text-muted cursor-pointer">Privacy</span>
+            <Link href="/privacy" className="transition-colors hover:text-muted">
+              Privacy
+            </Link>
             <span aria-hidden>·</span>
-            <span className="transition-colors hover:text-muted cursor-pointer">Terms</span>
+            <Link href="/terms" className="transition-colors hover:text-muted">
+              Terms
+            </Link>
           </div>
         </div>
       </div>

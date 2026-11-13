@@ -28,11 +28,18 @@ function NavLinks({ onNavigate, signedIn }: { onNavigate?: () => void; signedIn:
         Opportunities
       </Link>
       <Link
-        href="/matches#how-it-works"
+        href="/#how-it-works"
         onClick={onNavigate}
         className="rounded-lg px-2 py-1.5 text-[0.9rem] font-medium text-muted transition-colors hover:text-ink"
       >
         How it works
+      </Link>
+      <Link
+        href="/#pricing"
+        onClick={onNavigate}
+        className="rounded-lg px-2 py-1.5 text-[0.9rem] font-medium text-muted transition-colors hover:text-ink"
+      >
+        Pricing
       </Link>
     </>
   );
@@ -129,7 +136,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-line/70 bg-bg/85 backdrop-blur-sm">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
-          <Link href={signedIn ? "/matches" : "/signin"} aria-label="ELIGENT home">
+          <Link href={signedIn ? "/matches" : "/"} aria-label="ELIGENT home">
             <Logo />
           </Link>
           <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">

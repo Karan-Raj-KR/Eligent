@@ -1,9 +1,6 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Refund policy — ELIGENT",
-  description: "₹99, one time. If it doesn't work for you, we refund it, no questions asked.",
-};
+export const metadata = pageMetadata("refund", "/refund");
 
 export default function RefundPage() {
   return (
