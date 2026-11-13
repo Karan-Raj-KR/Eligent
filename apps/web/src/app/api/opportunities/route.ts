@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/supabase/server";
+import { isPastDeadline } from "@/lib/deadlines";
+import { describeError, isUpstreamFailure } from "@/lib/upstream";
+
+const CATALOGUE_DOWN = "The opportunity catalogue is unreachable.";
 
 export async function GET(request: Request) {
+  try {
+    return await listOpportunities(request);
+  } catch (err) {
+    console.error("[api/opportunities]", describeError(err));
+    return NextResponse.json({ opportunities: [], error: CATALOGUE_DOWN }, { status: 503 });
+  }
+}
+
+async function listOpportunities(request: Request) {
   const { supabase, user } = await getSessionUser();
   const { searchParams } = new URL(request.url);
 
@@ -39,9 +52,24 @@ export async function GET(request: Request) {
   }
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error) {
+    console.error("[api/opportunities]", error.message);
+    const down = isUpstreamFailure(error.message);
+    return NextResponse.json(
+      {
+        opportunities: [],
+        error: down ? CATALOGUE_DOWN : "The catalogue could not be loaded.",
+      },
+      { status: down ? 503 : 500 },
+    );
+  }
 
-  return NextResponse.json({ opportunities: data ?? [] });
+  const rows = data ?? [];
+  const opportunities = creatorOnly
+    ? rows
+    : rows.filter((row) => !isPastDeadline(typeof row.deadline === "string" ? row.deadline : null));
+
+  return NextResponse.json({ opportunities });
 }
 
 export async function POST(request: Request) {

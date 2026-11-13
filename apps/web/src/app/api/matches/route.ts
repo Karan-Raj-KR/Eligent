@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { Criterion, Evaluation } from "@opportunity/engine";
 import { getSessionUser } from "@/lib/supabase/server";
 import { evaluateOpportunity, loadProfile } from "@/lib/eligibility";
+import { isPastDeadline } from "@/lib/deadlines";
 
 // Engine runs server-side only, inside this Route Handler — never shipped to the browser.
 export async function GET() {
@@ -46,6 +47,9 @@ export async function GET() {
   const unverified: Array<{ opportunity: Record<string, unknown> }> = [];
 
   for (const row of opportunities ?? []) {
+    const rawDeadline = (row as { deadline?: unknown }).deadline;
+    if (isPastDeadline(typeof rawDeadline === "string" ? rawDeadline : null)) continue;
+
     const { criterion, ...opportunity } = row as { criterion: Criterion[] } & Record<string, unknown>;
     const criteria = criterion ?? [];
 

@@ -1,22 +1,34 @@
 "use client";
 
 /**
- * AppShell — wraps all page content inside the EligentProvider.
- * Shows <EligentLoading variant="initial" /> until the provider finishes
- * restoring auth + profile + matches. Prevents flash-of-uninitialized-content.
- *
- * IMPORTANT: This does NOT add artificial delay. It only gates on
- * `initializing`, which is true until the provider's init effect resolves.
+ * AppShell — wraps page content inside the EligentProvider.
+ * Signed-in app routes wait for the provider's first auth read so they don't
+ * flash an empty profile. Public pages render immediately: the gate starts
+ * closed, and hiding them would leave crawlers with only the loading state.
  */
 
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { useEligent } from "@/components/provider";
 import { EligentLoading } from "@/components/eligent-loading";
 
+const PUBLIC_EXACT = new Set([
+  "/",
+  "/opportunities",
+  "/signin",
+  "/privacy",
+  "/terms",
+  "/refund",
+  "/extension",
+]);
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { initializing } = useEligent();
-
-  if (initializing) {
+  const pathname = usePathname();
+  // Public pages must be in the first HTML response. The loading gate is a
+  // client state that starts true, so leaving it on `/` meant crawlers only
+  // received the spinner.
+  if (initializing && !PUBLIC_EXACT.has(pathname)) {
     return <EligentLoading variant="initial" />;
   }
 

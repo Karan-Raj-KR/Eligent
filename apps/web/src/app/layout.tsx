@@ -6,6 +6,7 @@ import "./globals.css";
 import { EligentProvider } from "@/components/provider";
 import { AppShell } from "@/components/app-shell";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
+import { PAGE_COPY, SITE_NAME, SITE_URL, siteJsonLd } from "@/lib/site";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -20,13 +21,27 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "ELIGENT — Know which opportunities you qualify for",
-    template: "%s · ELIGENT",
+    default: PAGE_COPY.home.title,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "Free tells you whether you qualify. ₹99 gets you ready to submit.",
-  metadataBase: new URL("https://eligent.in"),
+  description: PAGE_COPY.home.description,
+  applicationName: SITE_NAME,
+  authors: [{ name: "Karan Raj KR", url: SITE_URL }],
+  creator: "Karan Raj KR",
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    siteName: SITE_NAME,
+    title: PAGE_COPY.home.title,
+    description: PAGE_COPY.home.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: PAGE_COPY.home.title,
+    description: PAGE_COPY.home.description,
+  },
 };
 
 // Emits <meta name="color-scheme" content="only light">, so a browser in dark
@@ -49,6 +64,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </main>
           <SiteFooter />
         </EligentProvider>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(siteJsonLd()).replace(/</g, "\\u003c"),
+          }}
+        />
         <Analytics />
       </body>
     </html>
